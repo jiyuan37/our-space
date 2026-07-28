@@ -1,0 +1,2 @@
+# 请勿手工修改已经应用到共享环境的 migration provider。
+provider = "postgresql"

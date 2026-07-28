@@ -1,0 +1,8 @@
+.next
+node_modules
+coverage
+playwright-report
+test-results
+package-lock.json
+prisma/migrations
+docs/OUR_SPACE_MASTER_SPEC.md

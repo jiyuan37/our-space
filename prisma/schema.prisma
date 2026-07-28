@@ -1,0 +1,218 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SpaceStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum ResidentRole {
+  OWNER
+  RESIDENT
+}
+
+enum ResidentStatus {
+  ACTIVE
+  LEFT
+}
+
+enum LifePointVisibility {
+  PRIVATE
+  SHARED_WITH_RESIDENT
+  SHARED_WITH_HOME
+}
+
+enum LifePointStatus {
+  DRAFT
+  PUBLISHED
+  REMOVED
+}
+
+enum MediaType {
+  IMAGE
+  AUDIO
+}
+
+enum ResponseType {
+  TEXT
+  IMAGE
+  RECEIVED
+  HOLD_FOR_LATER
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String?
+  imageUrl     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  createdSpaces  Space[]      @relation("SpaceCreator")
+  archivedSpaces Space[]      @relation("SpaceArchiver")
+  residencies    Resident[]
+  mediaAssets    MediaAsset[]
+}
+
+model Space {
+  id               String      @id @default(cuid())
+  name             String
+  status           SpaceStatus @default(ACTIVE)
+  createdByUserId  String
+  archivedAt       DateTime?
+  archivedByUserId String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  createdBy     User           @relation("SpaceCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  archivedBy    User?          @relation("SpaceArchiver", fields: [archivedByUserId], references: [id], onDelete: SetNull)
+  residents     Resident[]
+  lifePoints    LifePoint[]
+  sharedMoments SharedMoment[]
+  invitations   Invitation[]
+  mediaAssets   MediaAsset[]
+
+  @@index([status])
+  @@index([createdByUserId])
+}
+
+model Resident {
+  id          String         @id @default(cuid())
+  spaceId     String
+  userId      String
+  displayName String
+  avatarUrl   String?
+  role        ResidentRole
+  status      ResidentStatus @default(ACTIVE)
+  joinedAt    DateTime       @default(now())
+  leftAt      DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  space      Space       @relation(fields: [spaceId], references: [id], onDelete: Restrict)
+  user       User        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  presence   Presence?
+  lifePoints LifePoint[]
+  responses  Response[]
+
+  @@unique([spaceId, userId])
+  @@index([spaceId, status])
+  @@index([userId, status])
+}
+
+model Presence {
+  id         String   @id @default(cuid())
+  residentId String   @unique
+  shortText  String?
+  mood       String?
+  context    String?
+  updatedAt  DateTime @updatedAt
+
+  resident Resident @relation(fields: [residentId], references: [id], onDelete: Restrict)
+}
+
+model LifePoint {
+  id           String              @id @default(cuid())
+  spaceId      String
+  residentId   String
+  text         String?             @db.Text
+  mediaAssetId String?             @unique
+  mediaType    MediaType?
+  visibility   LifePointVisibility @default(SHARED_WITH_HOME)
+  status       LifePointStatus     @default(DRAFT)
+  occurredAt   DateTime
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  space        Space         @relation(fields: [spaceId], references: [id], onDelete: Restrict)
+  resident     Resident      @relation(fields: [residentId], references: [id], onDelete: Restrict)
+  mediaAsset   MediaAsset?   @relation("LifePointMedia", fields: [mediaAssetId], references: [id], onDelete: SetNull)
+  responses    Response[]
+  sharedMoment SharedMoment?
+
+  @@index([spaceId, status, occurredAt])
+  @@index([residentId, status])
+  @@index([spaceId, visibility, status])
+}
+
+model Response {
+  id           String       @id @default(cuid())
+  lifePointId  String
+  residentId   String
+  text         String?      @db.Text
+  mediaAssetId String?      @unique
+  responseType ResponseType
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  lifePoint  LifePoint   @relation(fields: [lifePointId], references: [id], onDelete: Restrict)
+  resident   Resident    @relation(fields: [residentId], references: [id], onDelete: Restrict)
+  mediaAsset MediaAsset? @relation("ResponseMedia", fields: [mediaAssetId], references: [id], onDelete: SetNull)
+
+  @@index([lifePointId, createdAt])
+  @@index([residentId])
+}
+
+model SharedMoment {
+  id            String    @id @default(cuid())
+  spaceId       String
+  lifePointId   String    @unique
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  lastVisitedAt DateTime?
+  visitCount    Int       @default(0)
+
+  space     Space     @relation(fields: [spaceId], references: [id], onDelete: Restrict)
+  lifePoint LifePoint @relation(fields: [lifePointId], references: [id], onDelete: Restrict)
+
+  @@index([spaceId, createdAt])
+  @@index([spaceId, lastVisitedAt])
+}
+
+model Invitation {
+  id         String           @id @default(cuid())
+  spaceId    String
+  email      String?
+  token      String           @unique
+  status     InvitationStatus @default(PENDING)
+  expiresAt  DateTime
+  createdAt  DateTime         @default(now())
+  acceptedAt DateTime?
+
+  space Space @relation(fields: [spaceId], references: [id], onDelete: Restrict)
+
+  @@index([spaceId, status])
+  @@index([expiresAt, status])
+}
+
+model MediaAsset {
+  id               String   @id @default(cuid())
+  spaceId          String
+  uploadedByUserId String
+  storageKey       String   @unique
+  mimeType         String
+  sizeBytes        Int
+  createdAt        DateTime @default(now())
+
+  space          Space      @relation(fields: [spaceId], references: [id], onDelete: Restrict)
+  uploadedBy     User       @relation(fields: [uploadedByUserId], references: [id], onDelete: Restrict)
+  lifePointUsage LifePoint? @relation("LifePointMedia")
+  responseUsage  Response?  @relation("ResponseMedia")
+
+  @@index([spaceId, createdAt])
+  @@index([uploadedByUserId])
+}

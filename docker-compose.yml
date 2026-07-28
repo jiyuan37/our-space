@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: our-space-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: our_space
+      POSTGRES_PASSWORD: our_space_dev
+      POSTGRES_DB: our_space
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U our_space -d our_space"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    volumes:
+      - our-space-postgres-data:/var/lib/postgresql/data
+      - ./infra/postgres/init:/docker-entrypoint-initdb.d:ro
+
+volumes:
+  our-space-postgres-data:
