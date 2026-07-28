@@ -4,21 +4,21 @@
 
 ## 状态
 
-**当前状态：阶段 1 — 已完成，等待最终 Review**
+**当前状态：阶段 1 — 已完成并通过最终 Review**
 
-阶段 0、Phase 1 功能范围及其收尾修正已完成。当前停止实施并等待最终 Review，不进入 Phase 2。Phase 2 尚未获得批准。
+阶段 0、Phase 1 功能范围及其收尾修正已完成，Phase 1 已通过最终 Review。当前只完成 Phase 2 开始前的架构与安全决策收口，不进入 Phase 2 功能实施。Phase 2 尚未获得明确实施批准。
 
 ## 单一事实来源
 
 [`OUR_SPACE_MASTER_SPEC.md`](./OUR_SPACE_MASTER_SPEC.md) 是产品范围、语言、领域规则、技术方向和验收标准的单一事实来源。如果本计划与 Master Spec 冲突，应以 Master Spec 为准，并修正本计划。
 
-## 仓库基线
+## 阶段 0 开始时的历史仓库基线
 
-开始规划时，仓库中仅包含：
+阶段 0 开始规划时，仓库中仅包含：
 
 - `OUR_SPACE_MASTER_SPEC.md`
 
-当前没有应用脚手架、依赖清单、数据库 Schema、测试配置、CI 配置、环境变量示例或仓库专用的 `AGENTS.md`。
+当时没有应用脚手架、依赖清单、数据库 Schema、测试配置、CI 配置、环境变量示例或仓库专用的 `AGENTS.md`。该描述只保留为历史基线；当前仓库已经完成 Phase 1 基础设施。
 
 ## 交付原则
 
@@ -74,7 +74,7 @@
 
 ## 阶段 1 — 基础设施
 
-状态：**已完成，等待最终 Review**
+状态：**已完成并通过最终 Review**
 
 依赖：阶段 0 获得批准。
 
@@ -125,9 +125,21 @@
 
 ## 阶段 2 — 身份认证与 Space
 
-状态：未开始。
+状态：**未开始，等待明确批准。**
 
 依赖：阶段 1。
+
+已决策但尚未实施的安全与架构约束：
+
+- Credentials email/password 认证；Auth.js 管理登录、登出、session cookie 和认证边界，使用最小身份字段的 JWT session。
+- email 统一规范化后持久化和查询；MVP 注册后立即可登录，不伪装 email verification。
+- 密码使用服务端 Argon2id，长度为 15–128 个字符，不使用组合字符规则或静默截断。
+- Invitation 原始 token 只出现在复制链接中，数据库只保存 SHA-256 hash；默认 7 天过期，同一 ACTIVE Space 同时只允许一个有效 `PENDING` Invitation。
+- Space/OWNER Resident 创建与 Invitation 接受分别使用事务；接受流程使用 PostgreSQL `Serializable` 和有限冲突重试。
+- Server Actions、Route Handlers、origin/cookie、ACTIVE Resident/OWNER 授权和客户端 view model 必须遵循 DEC-037/DEC-038。
+- Phase 2 必须定义可替换 RateLimiter，并按 DEC-039 的账户与 IP 双维度默认策略执行。
+- 数据库集成测试必须使用独立真实 PostgreSQL，应用正式 migration；Phase 2 退出前必须运行真实浏览器 E2E。
+- 精确 Auth.js/NextAuth 与 Argon2id package 版本必须在实施前依据官方兼容性证据锁定；本轮不安装依赖。
 
 计划工作：
 

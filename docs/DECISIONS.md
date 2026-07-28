@@ -340,3 +340,158 @@
 - 考虑过的替代方案：
   - 继续允许 Node.js 20.9–24 — 拒绝，因为范围过宽且与 `@types/node`、实际验证版本不一致。
   - 升级到 Node.js 24 — 拒绝，因为本任务要求优先使用 Node.js 22 LTS，且无必要扩大 Phase 1 变更。
+
+## DEC-032 — Phase 2 使用 Credentials 与最小 JWT session
+
+- 日期：2026-07-28
+- 状态：已接受，取代 DEC-012 中认证与 session strategy 的待决定部分；尚未实施
+- 决策：
+  - MVP 使用 email/password Credentials 认证。
+  - 注册、密码 hash 和密码验证逻辑位于 Service 层，不直接写入 React 组件或 Auth.js callback。
+  - Auth.js 只负责登录、登出、session cookie 和认证边界，并使用 JWT session；Phase 2 不新增数据库 Session 表，除非实施前的官方兼容性证据表明当前组合必须使用。
+  - session/JWT 只保存最低限度身份字段：`userId`、`email` 和 `name`。不得包含 `passwordHash`、Invitation token、Life Point 或其他 Space 内容、完整 Prisma User 对象。
+  - 实施前必须依据官方文档和 package metadata，验证与 Next.js 15、React 19、Node.js 22 的兼容性，并锁定精确 Auth.js/NextAuth 版本。
+  - 没有明确兼容性证据时不得采用 beta、alpha 或 RC 版本。本轮不选择或安装依赖。
+- 理由：Credentials 满足本地可运行 MVP；最小 JWT 避免增加 Session 表，同时限制 cookie/JWT 中的敏感数据和过期数据。将凭据规则保留在 Service 层可独立测试并防止 callback 成为业务层。
+- 考虑过的替代方案：
+  - database session — 当前 MVP 不采用，因为会新增 Session 持久化和清理复杂度；若官方兼容性证据要求，必须追加新决策。
+  - 在 Auth.js callback 中直接查询和验证密码 — 拒绝，因为会把业务规则耦合到 transport/auth adapter。
+  - 未经验证使用 prerelease — 拒绝，因为当前运行时组合需要可复现的稳定兼容证据。
+
+## DEC-033 — Email 规范化与账户错误披露
+
+- 日期：2026-07-28
+- 状态：已接受，取代 DEC-012 中 email 和本地注册策略的待决定部分；尚未实施
+- 决策：
+  - email 通过格式验证后执行 `trim` 和小写规范化；唯一性检查、登录查询和数据库持久化统一使用规范化值。
+  - MVP 注册完成后立即可登录，不实现虚假的 email verification 流程。生产 email verification 作为后续扩展；在真正发送前，UI 不得声称已发送验证邮件。
+  - 登录失败统一返回平静的通用错误，不披露 email 是否存在。注册时重复 email 可以返回明确错误，但不得泄露额外账户信息。
+  - 不得记录原始密码、密码 hash 内容或认证秘密。
+- 理由：单一规范化路径避免大小写和空白产生重复账户；登录错误最小披露可降低账户枚举风险，同时注册冲突仍需提供可操作反馈。
+- 考虑过的替代方案：
+  - 保留用户输入的 email 大小写 — 拒绝，因为会使唯一性和登录查询不一致。
+  - MVP 伪造 email verification — 拒绝，因为没有真实发送和验证能力。
+  - 登录时区分“账户不存在”和“密码错误” — 拒绝，因为会披露账户存在性。
+
+## DEC-034 — 密码使用服务端 Argon2id 与长度型策略
+
+- 日期：2026-07-28
+- 状态：已接受，取代 DEC-012 中密码算法的待决定部分；尚未实施
+- 决策：
+  - 密码使用 Argon2id，hash 与验证只能在服务端 Service 层完成。
+  - 密码最短 15 个字符、最长 128 个字符；不强制数字、大写字母或特殊符号组合。
+  - 支持密码管理器粘贴和 Unicode，不静默截断密码。
+  - Argon2id hash 参数必须在 Phase 2 实施时集中配置、依据目标运行环境校准并记录；不得散落硬编码。
+  - `passwordHash` 不得返回客户端，也不得写入普通日志、错误消息或 telemetry。
+  - 环境变量和配置不得包含真实示例密码。
+- 理由：长密码和 Argon2id 提供现代抗离线破解能力，同时避免复杂字符规则降低可用性；明确最大长度可控制资源消耗。
+- 考虑过的替代方案：
+  - bcrypt-compatible hashing — 未采用，因为 Argon2id 更符合本项目的新实现安全基线。
+  - 强制字符类别 — 拒绝，因为会妨碍密码管理器和 passphrase，安全收益有限。
+  - 静默截断超长密码 — 拒绝，因为会制造不可见的认证行为和碰撞风险。
+
+## DEC-035 — Invitation 使用原始链接 token 与数据库 token hash
+
+- 日期：2026-07-28
+- 状态：已接受，补充 Invitation 生命周期；尚未实施
+- 决策：
+  - 只有 Space 的 `ACTIVE` `OWNER` Resident 可以创建或撤销 Invitation。
+  - token 由至少 32 个加密安全随机字节生成并编码为 URL-safe 字符串。复制链接使用原始 token；数据库只保存原始 token 的 SHA-256 hash，不保存可直接使用的 token。
+  - Invitation 默认有效期为 7 天。每个 `ACTIVE` Space 同时只允许一个有效的 `PENDING` Invitation；创建新 Invitation 时，旧的有效 pending Invitation 必须在同一事务中变为 `REVOKED`。
+  - MVP 不发送真实邮件，只生成可复制邀请链接。如果 Invitation 指定 email，接受邀请的登录账户必须匹配其规范化 email。
+  - `expiresAt` 是过期判断的事实来源；读取或接受过期 Invitation 时可将状态更新为 `EXPIRED`，不引入后台定时任务。
+  - Invitation preview 只展示 Space 名称、邀请者 display name 和是否仍可接受；不得展示其他 Resident 详情、Presence、Life Point 或任何 Space 内容。
+  - `acceptedAt` 只有在状态为 `ACCEPTED` 时才允许非空。
+  - 当前 Schema 的 `token` 命名和约束不满足上述最终设计。未来获批 Phase 2 必须通过新 migration 引入 token hash 语义、单一有效 pending 和 `acceptedAt` 生命周期约束；不得修改 Phase 1 migration。
+- 理由：原始 bearer token 只出现一次可降低数据库泄漏后的直接邀请接管风险；短期有效、单一 pending 和最小 preview 可减少攻击面和隐私披露。
+- 考虑过的替代方案：
+  - 数据库存储原始 token — 拒绝，因为数据库读取权限将等同于邀请使用权限。
+  - 同一 Space 保留多个有效 pending Invitation — 拒绝，因为 MVP 只邀请一位 Resident，会增加撤销和并发语义。
+  - 后台任务统一过期 — 未采用，因为 `expiresAt` 可在访问时可靠判定，MVP 不需要调度基础设施。
+
+## DEC-036 — Space 创建与 Invitation 接受使用 Serializable 事务
+
+- 日期：2026-07-28
+- 状态：已接受；尚未实施
+- 决策：
+  - Space 创建和 `OWNER` Resident 创建必须位于同一数据库事务。
+  - Invitation 接受必须位于单一 PostgreSQL `Serializable` 事务，并在事务内重新检查：Invitation 存在、token hash 匹配、状态为 `PENDING`、未过期、指定 email 匹配、Space 为 `ACTIVE`、User 没有其他 `ACTIVE` Resident、Space 的 `ACTIVE` Resident 少于两人，以及 User 尚不是该 Space 的 Resident。
+  - 只有全部检查通过后，才能创建或按既定生命周期规则恢复 Resident、将 Invitation 更新为 `ACCEPTED` 并设置 `acceptedAt`。
+  - 可识别的序列化冲突进行有限重试，默认最多执行 3 次总尝试；不得无限重试或重试非瞬时领域错误。
+  - 数据库约束与事务化 Service 共同维护不变量；并发接受绝不能使 `ACTIVE` Resident 超过两人。
+- 理由：事务内重查与 Serializable 隔离可以关闭 Invitation 状态、Space 容量和 User active residency 之间的竞态窗口。
+- 考虑过的替代方案：
+  - 事务外先检查再写入 — 拒绝，因为并发接受可能突破两人上限。
+  - 只依赖应用锁 — 拒绝，因为多进程和生产部署下不可靠。
+  - 无限重试 — 拒绝，因为会掩盖持续冲突并消耗资源。
+
+## DEC-037 — Transport 入口保持薄层并逐操作授权
+
+- 日期：2026-07-28
+- 状态：已接受，补充 DEC-005 与 DEC-022；尚未实施
+- 决策：
+  - 已认证应用的一方写操作继续默认使用 Server Actions。Auth.js、Invitation URL preview、认证 callback，以及其他天然需要 HTTP 语义的边界可以使用 Route Handlers。
+  - transport 层只负责读取请求、Zod 验证、获取 session、调用 Service，以及将 typed domain error 映射为用户可理解的结果。
+  - 所有业务规则、权限、事务和成员资格验证位于 Service 层。每个 Server Action 都视为可直接访问的入口，不能只依赖页面重定向或客户端隐藏。
+  - 每次 Space 读写都在服务端重新验证 `ACTIVE` Resident；OWNER 专属操作额外验证 `Resident.role`。
+  - 不得在没有明确需求时配置跨域 `allowedOrigins`。
+  - 不得把 Prisma 原始对象返回客户端；`passwordHash`、token hash 和内部审计字段不得出现在客户端 view model。
+- 理由：薄 transport 和逐操作授权可使 Server Action、Route Handler 与未来调用方共享一致的安全规则，并避免页面守卫成为唯一防线。
+- 考虑过的替代方案：
+  - 在各 Action/Handler 重复业务规则 — 拒绝，因为容易产生授权漂移。
+  - 只在布局或 middleware 检查成员资格 — 拒绝，因为直接入口仍可被调用。
+  - 默认放宽跨域 origin — 拒绝，因为当前没有跨域产品需求。
+
+## DEC-038 — Same-origin、CSRF 与认证 Cookie 策略
+
+- 日期：2026-07-28
+- 状态：已接受，取代认证 CSRF/origin 的待决定部分；尚未实施
+- 决策：
+  - Server Actions 优先使用框架提供的 same-origin 保护。
+  - 需要 Route Handler 的状态修改操作必须验证适用的 origin、session 和请求方法。
+  - 认证 cookie 在实施时必须设置 `HttpOnly`、`SameSite=Lax` 或更严格，并在 production 环境设置 `Secure`。
+  - 不自行创建可由 JavaScript 读取的长期认证 token。
+  - 不得在 URL query、日志或错误消息中泄露 session token、Invitation 原始 token 或环境变量秘密。
+  - 如果未来部署使用可信反向代理或确需跨 origin，必须通过新决策明确允许，不得默认放宽。
+- 理由：same-origin、cookie 属性和显式 Route Handler 校验共同缩小 CSRF 与 token 泄漏面，同时避免提前引入无需求的跨域配置。
+- 考虑过的替代方案：
+  - 所有状态修改只依赖 cookie 而不校验 origin/method — 拒绝，因为 Route Handler 需要明确请求边界。
+  - 将长期 token 存入可由 JavaScript 读取的存储 — 拒绝，因为会扩大 XSS 后果。
+  - 全局允许跨域 — 拒绝，因为当前产品没有该需求。
+
+## DEC-039 — Phase 2 使用可替换的双维度 RateLimiter
+
+- 日期：2026-07-28
+- 状态：已接受；尚未实施
+- 决策：
+  - Phase 2 定义可替换的 `RateLimiter` 接口；本地开发可使用进程内 adapter，生产环境必须可替换为共享存储 adapter。
+  - 默认限制：
+    - 登录：每个规范化 email 最多 10 次/15 分钟；
+    - 登录：每个 IP 最多 50 次/15 分钟；
+    - 注册：每个 IP 最多 5 次/小时；
+    - Invitation 创建：每个 User 最多 10 次/小时；
+    - Invitation preview/accept：每个 IP 最多 30 次/15 分钟。
+  - 账户维度与 IP 维度分别限制，不得只使用组合 key。
+  - 限流失败使用 typed domain error，并映射为 HTTP 429 或等价 Action 结果；用户文案保持平静，不展示 bucket、计数或防护策略。
+  - 不把 IP 地址或认证标识写入普通应用日志。本轮不实现 RateLimiter。
+- 理由：账户和网络来源分别限制可同时缓解定向撞库与广泛滥用；adapter 边界允许本地简单运行并为多实例生产部署保留正确实现。
+- 考虑过的替代方案：
+  - 只按 email 与 IP 的组合 key 限制 — 拒绝，因为攻击者可轮换其中一个维度。
+  - 生产继续使用进程内 adapter — 拒绝，因为多实例间不共享计数。
+  - 在错误中展示精确计数 — 拒绝，因为会泄露防护策略且不符合平静文案。
+
+## DEC-040 — Phase 2 使用独立真实 PostgreSQL 与真实浏览器 E2E
+
+- 日期：2026-07-28
+- 状态：已接受，补充 DEC-026 并取代测试拓扑的待决定部分；尚未实施
+- 决策：
+  - 数据库集成测试必须使用独立 `TEST_DATABASE_URL`，不得复用开发数据库；测试前应用正式 migration。
+  - 事务、约束和并发规则必须使用真实 PostgreSQL，不能只使用 Prisma mock。
+  - 数据库集成测试默认串行运行，除非已经实现并证明安全的独立数据库隔离；每个测试必须可靠清理数据或使用隔离事务策略。
+  - Phase 2 必须覆盖注册、登录、受保护路由、Space/OWNER Resident 原子创建、Invitation 创建/preview/接受、过期/撤销/已接受状态、email 不匹配、User 已有 ACTIVE Space、Space 已满、非 OWNER 创建 Invitation、并发接受不超过两名 ACTIVE Resident，以及未授权用户不能读取 Space 数据。
+  - Phase 2 退出前必须运行真实浏览器 E2E，不得只枚举 Playwright 测试。
+- 理由：Phase 2 的关键风险集中在 PostgreSQL 事务、partial unique index、并发和浏览器 session/cookie 行为，mock 或测试枚举无法证明这些安全不变量。
+- 考虑过的替代方案：
+  - 复用开发数据库 — 拒绝，因为会污染或破坏开发数据。
+  - 只使用 Prisma mock — 拒绝，因为无法验证数据库隔离、约束和序列化冲突。
+  - 只运行 `playwright test --list` — Phase 1 可接受，但 Phase 2 退出时拒绝，因为无法验证真实认证流程。

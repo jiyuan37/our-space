@@ -24,9 +24,10 @@ git remote -v
 git status --short
 git branch --show-current
 git log -1 --oneline
+git rev-list --left-right --count main...origin/main
 ```
 
-必须将命令结果与 `docs/CURRENT_STATE.md` 记录的远程仓库、默认分支、最后验证提交和同步状态进行核对。
+必须将命令结果与 `docs/CURRENT_STATE.md` 记录的远程仓库、默认分支、最后验证提交和同步状态进行核对；ahead/behind 必须符合文档记录。
 
 - 如果实际 Git 状态与 `docs/CURRENT_STATE.md` 不一致，必须立即停止并向用户报告差异。
 - 未经用户明确批准，不得执行 force push、reset、覆盖远程历史或其他可能丢失提交的操作。

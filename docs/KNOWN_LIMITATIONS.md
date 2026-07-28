@@ -48,10 +48,6 @@
 以下缺口必须在受影响阶段开始前于 `DECISIONS.md` 中解决：
 
 - 本地 Docker Compose 运行仍需在具备 Docker CLI 的主机上做一次 smoke test。
-- Auth.js session strategy、密码哈希参数、email 规范化、session 生命周期和本地注册验证策略。
-- 适合所选变更与身份认证设计的 CSRF/origin 策略。
-- 身份认证和 Invitation 操作的限流 adapter 与具体限制。
-- Invitation token 长度/编码、过期时长、重发/撤销策略，以及 email 发送是否只通过可复制链接模拟。
 - 上传 MIME allowlist、字节/尺寸限制、内容检查、metadata 策略、转换和孤立文件清理。
 - 另一名 Resident 回应后，Life Point 的编辑规则。
 - 已被回应的 Life Point 后续改为 private 或被移除时，其可见性与重访行为。
@@ -64,6 +60,22 @@
 - Home 结果数量限制，以及时间戳相同时的确定性排序。
 - 支持的浏览器/设备矩阵和具体可访问性审查工具。
 - 部署与 CI/CD 平台；MVP 只强制要求可在本地运行。
+
+## 已决策、尚未实施
+
+以下原开放问题已由 DEC-032 至 DEC-040 收口，但这不构成 Phase 2 实施授权：
+
+- Credentials email/password 与最小身份字段 JWT session 已确定；Auth.js/NextAuth 精确稳定版本仍须在获批实施前依据官方兼容性证据锁定。
+- email 的 `trim`、小写规范化、统一查询/持久化和错误披露策略已确定。
+- Argon2id、服务端 hash、15–128 字符长度范围及密码日志/客户端边界已确定；具体 hash 参数和精确 package 版本须在实施时集中配置并记录。
+- Invitation 的 OWNER 权限、随机 token、SHA-256 hash 存储、7 天有效期、单一 pending、预览最小披露和按需过期策略已确定。
+- 现有 Schema 尚未实现 `tokenHash` 命名、单一有效 `PENDING` Invitation 和 `acceptedAt` 生命周期数据库约束；需要在获批 Phase 2 中创建新的 migration，不得修改已有 migration。
+- Space/OWNER Resident 原子创建、Invitation 接受的 PostgreSQL `Serializable` 事务、事务内重查和有限序列化冲突重试已确定。
+- Server Actions/Route Handlers 职责、ACTIVE Resident/OWNER 服务端授权、客户端 view model 最小化、CSRF/origin 和认证 cookie 策略已确定。
+- RateLimiter 接口、开发/生产 adapter 边界、账户与 IP 双维度默认限制和 typed domain error 已确定，但尚未实现生产共享存储 adapter。
+- 独立 `TEST_DATABASE_URL`、真实 PostgreSQL、正式 migration、串行数据库集成测试和 Phase 2 真实浏览器 E2E 要求已确定；目前不存在 Phase 2 测试实现或结果。
+
+本节及其他开放事项只描述未来实施边界，不授权开始 Phase 2，也不授权修改 Schema、依赖或应用代码。
 
 ## 需要关注的预期技术债务
 

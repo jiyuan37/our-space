@@ -16,10 +16,22 @@
 
 - 添加根目录 `AGENTS.md`，规定新 Codex 会话的读取顺序、Phase 授权边界、证据要求和简体中文规则。
 - 添加 `docs/CURRENT_STATE.md` 和 `docs/PHASE_1_REVIEW.md`，记录可由仓库验证的当前状态与 Phase 1 Review 证据。
+- 添加 Git 连续性检查规则，要求新会话核对 remote、工作树、分支、最新提交和本地/远程 ahead/behind；状态不一致时停止，禁止自行改写历史。
+
+### Review
+
+- Phase 1 已通过最终 Review。
+- Phase 1 最后验证代码提交为 `1d277064a27ab29105e890bcf0f2373ac3b42196`。
+- 后续 `49eadaa1bdf40925cd7bfbf1c30565dab427841e` 只包含 Git 连续性文档更新，不改变 Phase 1 代码验证基线。
+
+### 架构决策（尚未实施）
+
+- 完成 Phase 2 的 Credentials/JWT session、email 规范化、Argon2id 密码、Invitation token hash 与生命周期、Serializable 事务、transport/授权、CSRF/cookie、RateLimiter 和真实 PostgreSQL/E2E 测试拓扑决策。
+- 上述条目只记录 Phase 2 开始前的架构与安全边界，不代表任何功能、Schema、migration、依赖或测试已经实施。
 
 ### 后续
 
-- 等待 Phase 1 Review；尚未开始 Phase 2。
+- Phase 2 尚未开始，尚未获得功能实施批准。
 
 ## [0.1.0] — 2026-07-28
 

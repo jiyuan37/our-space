@@ -7,17 +7,18 @@
 ## 当前 Phase
 
 - 当前 Phase：Phase 1 — 基础设施。
-- 当前状态：Phase 1 及其目录/连续性收尾修正已完成，全部要求的根目录验证已通过，等待最终 Review。
+- 当前状态：Phase 1 已完成并通过最终 Review。当前仅完成 Phase 2 开始前的架构与安全决策收口，没有进入功能实施。
 - 实际项目根目录：`/Users/yuan/Desktop/our-space`
 - 下一项是否已获批准：否。
-- **Phase 2 尚未获得批准，不得开始。**
+- **Phase 2 尚未开始，尚未获得功能实施批准，不得开始。**
 
 ## Git 连续性
 
 - 远程仓库：`https://github.khoury.northeastern.edu/liujiyuan/our-space.git`
 - 仓库可见性：Private
 - 默认分支：`main`
-- 最后验证提交：`1d277064a27ab29105e890bcf0f2373ac3b42196`
+- Phase 1 最后验证代码提交：`1d277064a27ab29105e890bcf0f2373ac3b42196`
+- 后续文档连续性提交：`49eadaa1bdf40925cd7bfbf1c30565dab427841e`；该提交只更新文档，不改变 Phase 1 代码验证基线。
 - 同步状态：当前本地 `main` 与 `origin/main` 同步。
 - 核对证据：`git fetch --prune origin` 成功；`git rev-list --left-right --count main...origin/main` 返回 `0 0`。
 - 安全要求：若实际 Git 状态与本节不一致，必须停止并报告；不得自行 force push、reset 或覆盖远程历史。
@@ -34,10 +35,14 @@
 - Vitest、Testing Library 和 Playwright 配置。
 - 应用工程已从误用的 `docs` 目录迁移到真实项目根目录；旧 `node_modules`、`.next` 和测试生成目录未移动。
 - 根目录 `AGENTS.md` 与 Phase 连续性文档。
+- Phase 1 已通过最终 Review。
+- Phase 2 的认证、session、email、密码、Invitation、事务、授权、CSRF、cookie、限流和测试拓扑已完成架构决策，但均尚未实施。
 
 ## 尚未完成内容
 
 - Phase 2 及后续全部产品功能：认证、Space 创建、Invitation、Home、Presence、Life Point、Response、Shared Moment、Visit 和 Settings。
+- 尚未选择或安装与当前运行时兼容的精确 Auth.js/NextAuth 和 Argon2id package 版本；必须在 Phase 2 获准后依据官方文档与 package metadata 验证，且不得无证据采用 prerelease。
+- 现有 Invitation Schema 仍使用 `token` 字段，尚未实施 token hash 命名、单一有效 `PENDING` Invitation 和 `acceptedAt` 生命周期约束；这些属于未来获批 Phase 2 migration。
 - 实际浏览器 E2E 尚不属于本轮强制执行项；本轮只要求 `test:e2e:list`。
 
 ## 数据库与 migration 状态
