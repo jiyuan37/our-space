@@ -6,11 +6,11 @@
 
 ## 当前 Phase
 
-- 当前 Phase：Phase 1 — 基础设施。
-- 当前状态：Phase 1 已完成并通过最终 Review。当前仅完成 Phase 2 开始前的架构与安全决策收口，没有进入功能实施。
+- 当前 Phase：Phase 2 — 身份认证与 Space。
+- 当前状态：Phase 2 已完成实施与本地验证，等待最终 Review。
 - 实际项目根目录：`/Users/yuan/Desktop/our-space`
 - 下一项是否已获批准：否。
-- **Phase 2 尚未开始，尚未获得功能实施批准，不得开始。**
+- **Phase 3 尚未获得批准，不得开始。**
 
 ## Git 连续性
 
@@ -36,11 +36,11 @@
 - 应用工程已从误用的 `docs` 目录迁移到真实项目根目录；旧 `node_modules`、`.next` 和测试生成目录未移动。
 - 根目录 `AGENTS.md` 与 Phase 连续性文档。
 - Phase 1 已通过最终 Review。
-- Phase 2 的认证、session、email、密码、Invitation、事务、授权、CSRF、cookie、限流和测试拓扑已完成架构决策，但均尚未实施。
+- Credentials/JWT session、email 规范化、Argon2id、Space/OWNER Resident 事务、Invitation lifecycle、授权、限流和真实数据库/E2E 已实施。
 
 ## 尚未完成内容
 
-- Phase 2 及后续全部产品功能：认证、Space 创建、Invitation、Home、Presence、Life Point、Response、Shared Moment、Visit 和 Settings。
+- Phase 3 及后续功能：Home、Presence、Life Point、Response、Shared Moment、Visit 和 Settings。
 - 尚未选择或安装与当前运行时兼容的精确 Auth.js/NextAuth 和 Argon2id package 版本；必须在 Phase 2 获准后依据官方文档与 package metadata 验证，且不得无证据采用 prerelease。
 - 现有 Invitation Schema 仍使用 `token` 字段，尚未实施 token hash 命名、单一有效 `PENDING` Invitation 和 `acceptedAt` 生命周期约束；这些属于未来获批 Phase 2 migration。
 - 实际浏览器 E2E 尚不属于本轮强制执行项；本轮只要求 `test:e2e:list`。

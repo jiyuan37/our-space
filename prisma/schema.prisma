@@ -187,7 +187,7 @@ model Invitation {
   id         String           @id @default(cuid())
   spaceId    String
   email      String?
-  token      String           @unique
+  tokenHash  String           @unique
   status     InvitationStatus @default(PENDING)
   expiresAt  DateTime
   createdAt  DateTime         @default(now())

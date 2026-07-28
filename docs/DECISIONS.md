@@ -495,3 +495,10 @@
   - 复用开发数据库 — 拒绝，因为会污染或破坏开发数据。
   - 只使用 Prisma mock — 拒绝，因为无法验证数据库隔离、约束和序列化冲突。
   - 只运行 `playwright test --list` — Phase 1 可接受，但 Phase 2 退出时拒绝，因为无法验证真实认证流程。
+
+## DEC-041 — Phase 2 锁定认证与密码依赖
+
+- 日期：2026-07-28
+- 状态：已接受
+- 决策：精确锁定 `next-auth@4.24.15` 与 `argon2@0.45.1`。NextAuth v4 使用 Credentials provider、JWT session、`NEXTAUTH_URL` 和显式 `AUTH_SECRET`；Argon2id 集中使用 `memoryCost=19456`、`timeCost=2`、`parallelism=1`、`hashLength=32`。
+- 理由：npm metadata 证明该版本支持 Next.js 15、React 19 与 Node.js 22；本机 Argon2 smoke test 和 production audit 通过。

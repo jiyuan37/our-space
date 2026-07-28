@@ -2,7 +2,7 @@
 
 Our Space 是一个属于两个人的私密共同生活空间。它的使命是“即使相隔，也一起生活”，产品目标是增加 Presence，而不是增加 engagement。
 
-当前仓库只完成 Phase 1 基础设施。身份认证、Space 创建、Invitation、Home、Life Point、Response、Shared Moment 和 Visit 尚未实施。
+当前仓库已完成 Phase 2 实施：Credentials 注册/登录、JWT session、受保护路由、Space/OWNER Resident 原子创建和 Invitation 流程。Home、Presence、Life Point、Response、Shared Moment 和 Visit 尚未实施。
 
 ## 产品原则
 
@@ -43,6 +43,9 @@ cp .env.example .env
 - `APP_URL`：应用本地地址。
 - `DATABASE_URL`：开发数据库连接。
 - `TEST_DATABASE_URL`：独立测试数据库连接；涉及数据库的测试不得复用开发数据库。
+- `NEXTAUTH_URL`：NextAuth v4 对外应用地址。
+- `AUTH_SECRET`：至少 32 字符的高熵认证 secret；production 必填。
+- `TRUST_PROXY`：仅在已配置可信反向代理时设为 `true`。
 
 ## 启动 PostgreSQL
 
@@ -73,7 +76,7 @@ npm run dev
 
 打开 [http://localhost:3000](http://localhost:3000)。
 
-当前最小 Shell 只用于验证 Phase 1 的布局、Design Tokens 和工具链。由于 Settings 尚未实现，因此不会展示 Settings 导航。
+可通过 `/register` 注册、`/login` 登录，并在 `/space` 创建 Space 与可复制的邀请链接。认证后页面仍是 Phase 2 过渡边界，不是 Home；由于 Settings 尚未实现，因此不会展示 Settings 导航。
 
 ## 验证命令
 
@@ -93,6 +96,8 @@ npm run build
 npx playwright install
 npm run test:e2e
 ```
+
+数据库集成测试必须显式提供独立的 `TEST_DATABASE_URL`。当前仍没有 demo seed 或 demo account。
 
 ## 目录结构
 

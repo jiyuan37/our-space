@@ -172,6 +172,83 @@ h1 {
   font-size: var(--font-size-sm);
 }
 
+.calm-form {
+  display: grid;
+  gap: var(--space-4);
+  margin-block: var(--space-5);
+}
+.form-field {
+  display: grid;
+  gap: var(--space-2);
+}
+.form-field label {
+  font-weight: var(--font-weight-medium);
+}
+.field-hint {
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+input {
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  background: var(--surface-raised);
+  transition:
+    border-color var(--motion-direct) var(--motion-easing),
+    box-shadow var(--motion-direct) var(--motion-easing);
+}
+.button,
+.link-row a {
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-pill);
+  color: var(--surface-raised);
+  background: var(--accent-strong);
+  font: inherit;
+  cursor: pointer;
+}
+.button-secondary {
+  color: var(--accent-strong);
+  background: transparent;
+}
+button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+.notice {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+}
+.notice-error {
+  border: 1px solid color-mix(in srgb, var(--danger) 38%, transparent);
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 7%, var(--surface-raised));
+}
+.notice-quiet {
+  color: var(--text-secondary);
+  background: var(--surface-soft);
+}
+button:focus-visible,
+input:focus-visible,
+a:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+.link-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+[role="alert"] {
+  color: var(--danger);
+}
+
 @keyframes settle-in {
   from {
     opacity: 0;

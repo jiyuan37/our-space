@@ -4,6 +4,14 @@
 
 ## [未发布]
 
+### Phase 2
+
+- 实现 Credentials 注册/登录/登出、最小 JWT session 与受保护路由。
+- 实现 Space 与 OWNER Resident 原子创建、单一 ACTIVE Space 和两名 ACTIVE Resident 上限。
+- 实现 Invitation token hash、创建、preview、撤销、过期、email 限制与 Serializable 接受。
+- 添加 Argon2id、email 规范化、可替换 RateLimiter、类型化错误及温暖响应式 Phase 2 UI 基础组件。
+- 新增 `20260728170000_phase_2_invitations` migration；foundation migration 未修改。
+
 ### 修正
 
 - 将误建于 `docs` 的应用代码、数据库、测试和工程配置迁移到真实项目根目录，删除旧生成目录，并保留首个 migration 内容不变。

@@ -2,7 +2,9 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./tests/e2e",
-  fullyParallel: true,
+  fullyParallel: false,
+  workers: 1,
+  timeout: 60_000,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
   reporter: "html",
@@ -16,18 +18,21 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     env: {
       APP_URL: "http://127.0.0.1:3000",
+      NEXTAUTH_URL: "http://127.0.0.1:3000",
+      AUTH_SECRET: "playwright-only-fake-auth-secret-32-characters",
       DATABASE_URL:
-        "postgresql://our_space:our_space_dev@127.0.0.1:5432/our_space?schema=public",
+        process.env.TEST_DATABASE_URL ??
+        "postgresql://our_space:our_space_test@127.0.0.1:5432/our_space_test?schema=public",
     },
   },
   projects: [
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      use: { ...devices["Desktop Chrome"], channel: "chrome" },
     },
     {
       name: "mobile-chrome",
-      use: { ...devices["Pixel 7"] },
+      use: { ...devices["Pixel 7"], channel: "chrome" },
     },
   ],
 });

@@ -6,11 +6,13 @@
 
 ## 当前仓库限制
 
-- 当前只完成 Phase 1 基础设施和最小应用 Shell。
-- 尚未实现身份认证、Space 创建、Invitation、Home、Presence 编辑、Life Point、Response、Shared Moment、Visit 或 Settings。
+- 当前完成 Phase 2；认证后 `/space` 是明确的过渡体验，不是 Phase 3 Home。
+- 尚未实现 Home、Presence 编辑、Life Point、Response、Shared Moment、Visit 或 Settings。
 - 尚无 seed data 或 demo account；这两项属于后续阶段。
 - Playwright 已配置并成功枚举桌面端与移动端测试，但本轮未下载浏览器或运行实际浏览器 E2E；Phase 1 的强制验证范围只要求 unit tests。
 - 当前主机没有 Docker CLI，因此无法实际执行 `docker compose config` 或容器启动；`docker-compose.yml` 已通过 YAML 解析验证，clean migration 则已在一次性 PostgreSQL 16.14 全新数据库中实际通过。
+- 本地 `MemoryRateLimiter` 只适合单进程开发与测试；多实例 production 必须替换为共享存储 adapter。
+- Password reset、email verification 与 production email delivery 不属于 Phase 2，尚未实现。
 
 ## 有意排除在 MVP 之外
 
