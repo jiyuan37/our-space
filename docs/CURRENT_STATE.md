@@ -12,6 +12,17 @@
 - 下一项是否已获批准：否。
 - **Phase 2 尚未获得批准，不得开始。**
 
+## Git 连续性
+
+- 远程仓库：`https://github.khoury.northeastern.edu/liujiyuan/our-space.git`
+- 仓库可见性：Private
+- 默认分支：`main`
+- 最后验证提交：`1d277064a27ab29105e890bcf0f2373ac3b42196`
+- 同步状态：当前本地 `main` 与 `origin/main` 同步。
+- 核对证据：`git fetch --prune origin` 成功；`git rev-list --left-right --count main...origin/main` 返回 `0 0`。
+- 安全要求：若实际 Git 状态与本节不一致，必须停止并报告；不得自行 force push、reset 或覆盖远程历史。
+- 秘密管理：不得记录密码、Token、SSH 私钥或任何环境变量秘密。
+
 ## 已完成内容
 
 - Next.js 15、React 19、严格模式 TypeScript 和 Tailwind CSS 4 基础工程。

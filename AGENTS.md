@@ -15,6 +15,23 @@
 
 不得依赖旧聊天记录覆盖仓库中的事实；如聊天内容与仓库证据冲突，先停止并明确报告差异。
 
+## Git 连续性检查
+
+每个新的 Codex 会话在修改任何代码前，必须从项目根目录依次运行：
+
+```bash
+git remote -v
+git status --short
+git branch --show-current
+git log -1 --oneline
+```
+
+必须将命令结果与 `docs/CURRENT_STATE.md` 记录的远程仓库、默认分支、最后验证提交和同步状态进行核对。
+
+- 如果实际 Git 状态与 `docs/CURRENT_STATE.md` 不一致，必须立即停止并向用户报告差异。
+- 未经用户明确批准，不得执行 force push、reset、覆盖远程历史或其他可能丢失提交的操作。
+- 不得在仓库文档、提交、日志或用户可见输出中记录密码、Token、SSH 私钥或任何环境变量秘密。
+
 ## Phase 与范围
 
 - 一次只执行一个已经获得用户明确批准的 Phase。
