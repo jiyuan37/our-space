@@ -20,6 +20,7 @@ export default defineConfig({
       APP_URL: "http://127.0.0.1:3000",
       NEXTAUTH_URL: "http://127.0.0.1:3000",
       AUTH_SECRET: "playwright-only-fake-auth-secret-32-characters",
+      TRUST_PROXY: "true",
       DATABASE_URL:
         process.env.TEST_DATABASE_URL ??
         "postgresql://our_space:our_space_test@127.0.0.1:5432/our_space_test?schema=public",
@@ -28,11 +29,19 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"], channel: "chrome" },
+      use: {
+        ...devices["Desktop Chrome"],
+        channel: "chrome",
+        extraHTTPHeaders: { "x-forwarded-for": "198.51.100.100" },
+      },
     },
     {
       name: "mobile-chrome",
-      use: { ...devices["Pixel 7"], channel: "chrome" },
+      use: {
+        ...devices["Pixel 7"],
+        channel: "chrome",
+        extraHTTPHeaders: { "x-forwarded-for": "198.51.100.200" },
+      },
     },
   ],
 });

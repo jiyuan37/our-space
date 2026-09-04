@@ -502,3 +502,17 @@
 - 状态：已接受
 - 决策：精确锁定 `next-auth@4.24.15` 与 `argon2@0.45.1`。NextAuth v4 使用 Credentials provider、JWT session、`NEXTAUTH_URL` 和显式 `AUTH_SECRET`；Argon2id 集中使用 `memoryCost=19456`、`timeCost=2`、`parallelism=1`、`hashLength=32`。
 - 理由：npm metadata 证明该版本支持 Next.js 15、React 19 与 Node.js 22；本机 Argon2 smoke test 和 production audit 通过。
+
+## DEC-042 — NextAuth v4 Credentials 使用安全错误码表达限流
+
+- 日期：2026-09-02
+- 状态：已接受
+- 决策：`next-auth@4.24.15` 的 Credentials callback 会把 `authorize()` 抛出的错误编码到 callback error，并返回 HTTP 401，不能由 provider callback 直接返回 429。Phase 2 因此让 invalid credentials 返回 `null`，让 rate limit 抛出固定的 `RATE_LIMIT_EXCEEDED` 安全错误码，并由 LoginForm 映射为平静文案。其他内部异常只映射为固定 `AUTHENTICATION_UNAVAILABLE`，不传输数据库错误或 stack。登录 email/IP bucket 在凭据查询前分别消耗。
+- 理由：保持 NextAuth 自带 CSRF/session 流程，同时让 rate limit 与账户是否存在无关、与 invalid credentials 可区分，并避免泄露内部异常。
+
+## DEC-043 — 使用精确 transitive override 修复 Phase 2 production advisory
+
+- 日期：2026-09-02
+- 状态：已接受
+- 决策：保持 Next.js 15.5.22、Prisma 6.19.3、NextAuth 4.24.15 和 Argon2 0.45.1 不变；使用 npm override 将 PostCSS 的 `nanoid` 锁定为安全的同 major `3.3.18`，将 `@prisma/config` 的 `deepmerge-ts` 锁定为 `8.0.2`。后者保持 Prisma 使用的 `deepmerge` ESM export，并支持 Node.js 22。必须通过 Prisma generate/validate、clean migration、全部测试、production build 和 production audit 验证。
+- 理由：避免 `npm audit fix --force` 所建议的不安全降级或跨 major Prisma 升级，同时消除 production dependency graph 中已确认的 high severity advisory。

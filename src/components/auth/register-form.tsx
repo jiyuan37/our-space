@@ -8,11 +8,24 @@ import {
   Notice,
   PrimaryButton,
 } from "@/components/ui/form-controls";
+import {
+  DEFAULT_AUTH_CALLBACK,
+  safeCallbackPath,
+} from "@/lib/auth/callback-url";
 
-export function RegisterForm() {
+export function RegisterForm({
+  callbackUrl = DEFAULT_AUTH_CALLBACK,
+}: {
+  callbackUrl?: string;
+}) {
   const [state, action, pending] = useActionState(registerAction, {});
   return (
     <form action={action} className="calm-form">
+      <input
+        type="hidden"
+        name="callbackUrl"
+        value={safeCallbackPath(callbackUrl)}
+      />
       <FormField
         label="你的名字"
         id="name"

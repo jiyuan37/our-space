@@ -1,6 +1,6 @@
 # Our Space — 已知限制
 
-最后更新：2026-07-28
+最后更新：2026-09-03
 
 本文档记录有意设置的 MVP 边界、尚未解决的实现细节、技术债务和未来改进。本文档不授权实施 Master Spec 范围外的功能。
 
@@ -9,8 +9,8 @@
 - 当前完成 Phase 2；认证后 `/space` 是明确的过渡体验，不是 Phase 3 Home。
 - 尚未实现 Home、Presence 编辑、Life Point、Response、Shared Moment、Visit 或 Settings。
 - 尚无 seed data 或 demo account；这两项属于后续阶段。
-- Playwright 已配置并成功枚举桌面端与移动端测试，但本轮未下载浏览器或运行实际浏览器 E2E；Phase 1 的强制验证范围只要求 unit tests。
-- 当前主机没有 Docker CLI，因此无法实际执行 `docker compose config` 或容器启动；`docker-compose.yml` 已通过 YAML 解析验证，clean migration 则已在一次性 PostgreSQL 16.14 全新数据库中实际通过。
+- Playwright 已配置 desktop Google Chrome 与 Pixel 7；Phase 2 Repair 的完整真实 E2E 已在独立 PostgreSQL 16 测试数据库上以 6/6 通过。
+- 当前主机没有 Docker CLI，因此无法实际执行 `docker compose config` 或容器启动；`docker-compose.yml` 已通过 YAML 解析验证，clean migration 已在本机 PostgreSQL 16.15 全新数据库中以 2/2 通过。
 - 本地 `MemoryRateLimiter` 只适合单进程开发与测试；多实例 production 必须替换为共享存储 adapter。
 - Password reset、email verification 与 production email delivery 不属于 Phase 2，尚未实现。
 
@@ -63,27 +63,27 @@
 - 支持的浏览器/设备矩阵和具体可访问性审查工具。
 - 部署与 CI/CD 平台；MVP 只强制要求可在本地运行。
 
-## 已决策、尚未实施
+## Phase 2 已实施的决策
 
-以下原开放问题已由 DEC-032 至 DEC-040 收口，但这不构成 Phase 2 实施授权：
+以下原开放问题已由 DEC-032 至 DEC-041 收口并在 Phase 2 实施：
 
-- Credentials email/password 与最小身份字段 JWT session 已确定；Auth.js/NextAuth 精确稳定版本仍须在获批实施前依据官方兼容性证据锁定。
+- Credentials email/password、最小身份字段 JWT session 和 `next-auth@4.24.15` 已实施。
 - email 的 `trim`、小写规范化、统一查询/持久化和错误披露策略已确定。
-- Argon2id、服务端 hash、15–128 字符长度范围及密码日志/客户端边界已确定；具体 hash 参数和精确 package 版本须在实施时集中配置并记录。
+- Argon2id、服务端 hash、15–128 字符长度范围与集中参数已实施。
 - Invitation 的 OWNER 权限、随机 token、SHA-256 hash 存储、7 天有效期、单一 pending、预览最小披露和按需过期策略已确定。
-- 现有 Schema 尚未实现 `tokenHash` 命名、单一有效 `PENDING` Invitation 和 `acceptedAt` 生命周期数据库约束；需要在获批 Phase 2 中创建新的 migration，不得修改已有 migration。
+- `tokenHash`、单一 `PENDING` Invitation 和 `acceptedAt` lifecycle constraint 已通过 Phase 2 migration 实施。
 - Space/OWNER Resident 原子创建、Invitation 接受的 PostgreSQL `Serializable` 事务、事务内重查和有限序列化冲突重试已确定。
 - Server Actions/Route Handlers 职责、ACTIVE Resident/OWNER 服务端授权、客户端 view model 最小化、CSRF/origin 和认证 cookie 策略已确定。
-- RateLimiter 接口、开发/生产 adapter 边界、账户与 IP 双维度默认限制和 typed domain error 已确定，但尚未实现生产共享存储 adapter。
-- 独立 `TEST_DATABASE_URL`、真实 PostgreSQL、正式 migration、串行数据库集成测试和 Phase 2 真实浏览器 E2E 要求已确定；目前不存在 Phase 2 测试实现或结果。
+- RateLimiter 接口、账户/IP 维度和 typed domain error 已实施；生产共享存储 adapter 仍是明确限制。
+- 独立 `TEST_DATABASE_URL`、真实 PostgreSQL integration、并发测试和真实浏览器 E2E 已在 PostgreSQL 16.15 完成 Repair 验证。
 
-本节及其他开放事项只描述未来实施边界，不授权开始 Phase 2，也不授权修改 Schema、依赖或应用代码。
+本节不授权开始 Phase 3。
 
 ## 需要关注的预期技术债务
 
 开发过程中，本节必须记录任何刻意接受的折中。目前已知：
 
-- 完整 `npm audit` 在 ESLint 开发依赖链中报告 9 个 high severity advisory，来源是旧版 `minimatch`/`brace-expansion` 的潜在 DoS。该依赖只在本地 lint 中处理仓库维护者控制的路径 pattern，不进入 production bundle；`npm audit --omit=dev` 为 0。强制修复会破坏 Next.js 15 的 ESLint 插件兼容性，应在兼容上游版本发布后升级。
+- 完整 `npm audit` 当前在开发工具链中报告 2 个 high severity advisory（`brace-expansion` 与 `js-yaml`）；二者不在 production dependency audit 中。`npm audit --omit=dev` 为 0，应在兼容的上游工具链版本发布后升级。
 - 需要生产环境 adapter 的本地存储和限流。
 - 只在隔离测试环境中绕过生产身份认证的测试 helper。
 - 初始 allowlist 不接受的浏览器专有图片格式。

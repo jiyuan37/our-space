@@ -1,12 +1,12 @@
 # Our Space — 实施计划
 
-最后更新：2026-07-28
+最后更新：2026-09-03
 
 ## 状态
 
-**当前状态：阶段 2 — 已完成实施，等待最终 Review**
+**当前状态：Phase 2 Repair 完成，等待重新 Final Review。**
 
-阶段 0、Phase 1 功能范围及其收尾修正已完成，Phase 1 已通过最终 Review。当前只完成 Phase 2 开始前的架构与安全决策收口，不进入 Phase 2 功能实施。Phase 2 尚未获得明确实施批准。
+阶段 0、Phase 1 已完成，Phase 1 已通过最终 Review。Phase 2 已实施，并在首次 Final Review 后完成 Repair 及全部验证，等待重新进行独立 Final Review。Phase 3 尚未获得批准，也未开始。
 
 ## 单一事实来源
 
@@ -125,7 +125,7 @@
 
 ## 阶段 2 — 身份认证与 Space
 
-状态：**已完成实施，等待最终 Review。**
+状态：**Phase 2 Repair 完成，等待重新 Final Review。**
 
 依赖：阶段 1。
 
@@ -156,13 +156,17 @@
 
 验证：
 
-- 注册、登录、受保护路由、Space 创建和两人加入流程均可运行。
-- 并发接受 Invitation 不会使有效 Resident 超过两人。
-- 未授权用户无法读取 Space 数据或邀请中的私密数据。
+- [x] PostgreSQL 16.15 全新数据库成功应用 2/2 正式 migrations。
+- [x] 14 个 Vitest 文件共 50 个测试全部通过，其中 Phase 2 database integration 10/10，无 required database test skip。
+- [x] 并发创建与接受验证通过；最大 ACTIVE Resident 为 2，超过 2 人的 Space 为 0。
+- [x] desktop Chrome 与 Pixel 7 的完整真实 Playwright E2E 6/6 通过，覆盖 callback、两名 Resident、第三人 Space full 拒绝和非 OWNER 拒绝。
+- [x] Prisma generate/validate、lint、typecheck、format check、production build、Argon2id smoke、`git diff --check` 全部通过。
+- [x] `npm audit --omit=dev` 为 0 vulnerabilities。
 
 退出标准：
 
 - 两个已认证 User 可以安全地成为同一个私密 Space 中的两名 Resident。
+- Repair 验证完成后停止，等待独立 Final Review；不得自行进入 Phase 3。
 
 ## 阶段 3 — 核心 Home 与 Presence
 

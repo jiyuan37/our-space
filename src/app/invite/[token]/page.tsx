@@ -10,10 +10,7 @@ import { DomainError } from "@/server/errors/domain-error";
 import { InvitationService } from "@/server/services/invitation-service";
 import { getClientIp } from "@/lib/http/client-ip";
 import { rateLimiter } from "@/server/rate-limit/default-limiter";
-import {
-  enforceRateLimit,
-  privateBucket,
-} from "@/server/rate-limit/rate-limiter";
+import { enforceInvitationPreviewRateLimit } from "@/server/rate-limit/rate-limiter";
 
 export default async function InvitePage({
   params,
@@ -24,18 +21,14 @@ export default async function InvitePage({
   const session = await getServerSession(authOptions);
   try {
     const ip = getClientIp(await headers());
-    await enforceRateLimit(rateLimiter, {
-      key: privateBucket("invite-preview-ip", ip),
-      limit: 30,
-      windowMs: 15 * 60_000,
-    });
+    await enforceInvitationPreviewRateLimit(rateLimiter, ip);
     const preview = await new InvitationService(prisma).preview(token);
     return (
       <AppShell>
         <section className="foundation-card">
           <p className="eyebrow">{preview.spaceName}</p>
           <h1>Welcome Home</h1>
-          <p>{preview.inviterName} 邀请你来到这个 Space。</p>
+          <p>{preview.inviterDisplayName} 邀请你来到这个 Space。</p>
           {preview.acceptable ? (
             session ? (
               <AcceptInvitationForm token={token} />

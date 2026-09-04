@@ -1,4 +1,8 @@
-import type { InputHTMLAttributes, ReactNode } from "react";
+import type {
+  ButtonHTMLAttributes,
+  InputHTMLAttributes,
+  ReactNode,
+} from "react";
 
 export function FormField({
   label,
@@ -38,9 +42,38 @@ export function FormField({
 export function PrimaryButton({
   children,
   pending,
-}: Readonly<{ children: ReactNode; pending?: boolean }>) {
+  className = "",
+  disabled,
+  ...button
+}: Readonly<
+  {
+    children: ReactNode;
+    pending?: boolean;
+  } & ButtonHTMLAttributes<HTMLButtonElement>
+>) {
   return (
-    <button className="button button-primary" disabled={pending}>
+    <button
+      className={`button button-primary ${className}`.trim()}
+      disabled={pending || disabled}
+      {...button}
+    >
+      {children}
+    </button>
+  );
+}
+
+export function SecondaryButton({
+  children,
+  className = "",
+  ...button
+}: Readonly<
+  { children: ReactNode } & ButtonHTMLAttributes<HTMLButtonElement>
+>) {
+  return (
+    <button
+      className={`button button-secondary ${className}`.trim()}
+      {...button}
+    >
       {children}
     </button>
   );

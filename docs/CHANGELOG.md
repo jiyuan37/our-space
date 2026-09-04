@@ -4,6 +4,20 @@
 
 ## [未发布]
 
+### Phase 2 Repair
+
+- 修正 Invitation create/accept RateLimiter 接线，并移除 create Space 对 Invitation bucket 的错误消耗。
+- 将 NextAuth Credentials rate limit 与 invalid credentials 安全区分。
+- 修复 Invitation 登录/注册 callback 回跳，并拒绝外部 callback/open redirect。
+- 将 Space 并发创建的 ACTIVE Resident unique conflict 映射为 typed domain error。
+- 统一 revoke 等 Server Action 错误映射，补齐 Phase 2 按钮 touch target。
+- 修复无 `TEST_DATABASE_URL` 时 integration suite 初始化崩溃，并扩充 Auth、Space、Invitation lifecycle、authorization、preview 和 concurrency 测试。
+- 扩充 desktop Chrome 与 Pixel 7 E2E，覆盖 callback、两名 Resident、第三人拒绝和非 OWNER 拒绝。
+- 修复 E2E 登录 helper 未等待 Credentials response 的测试同步缺口，并将 Space full alert locator 收窄到业务错误；产品认证、callback 安全和 RateLimiter 行为未放宽。
+- 使用精确 override `deepmerge-ts@8.0.2` 与 `nanoid@3.3.18` 修复 production advisory；`npm audit --omit=dev` 为 0。
+- 在 PostgreSQL 16.15 全新数据库完成 2/2 migrations、10/10 database integration、真实并发上限验证、14 files / 50 tests、desktop Chrome 与 Pixel 7 E2E 6/6、production build 和完整质量矩阵。
+- Phase 2 Repair 完成，等待重新 Final Review；尚未声称 Final Review 通过。
+
 ### Phase 2
 
 - 实现 Credentials 注册/登录/登出、最小 JWT session 与受保护路由。
@@ -32,14 +46,13 @@
 - Phase 1 最后验证代码提交为 `1d277064a27ab29105e890bcf0f2373ac3b42196`。
 - 后续 `49eadaa1bdf40925cd7bfbf1c30565dab427841e` 只包含 Git 连续性文档更新，不改变 Phase 1 代码验证基线。
 
-### 架构决策（尚未实施）
+### Phase 2 前架构决策
 
-- 完成 Phase 2 的 Credentials/JWT session、email 规范化、Argon2id 密码、Invitation token hash 与生命周期、Serializable 事务、transport/授权、CSRF/cookie、RateLimiter 和真实 PostgreSQL/E2E 测试拓扑决策。
-- 上述条目只记录 Phase 2 开始前的架构与安全边界，不代表任何功能、Schema、migration、依赖或测试已经实施。
+- 在 Phase 2 开始前完成 Credentials/JWT session、email 规范化、Argon2id、Invitation lifecycle、Serializable 事务、transport/授权、CSRF/cookie、RateLimiter 和真实 PostgreSQL/E2E 测试拓扑决策；这些决策随后已在 Phase 2 实施。
 
 ### 后续
 
-- Phase 2 尚未开始，尚未获得功能实施批准。
+- 重新进行独立 Phase 2 Final Review；Phase 3 尚未获得批准，也未开始。
 
 ## [0.1.0] — 2026-07-28
 

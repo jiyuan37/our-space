@@ -1,79 +1,83 @@
 # Our Space — 当前状态
 
-最后更新：2026-07-28
-
-最后验证日期：2026-07-28
+最后更新：2026-09-03
 
 ## 当前 Phase
 
-- 当前 Phase：Phase 2 — 身份认证与 Space。
-- 当前状态：Phase 2 已完成实施与本地验证，等待最终 Review。
-- 实际项目根目录：`/Users/yuan/Desktop/our-space`
+- 当前 Phase：Phase 2 Repair — 身份认证与 Space 修复。
+- 当前状态：**Phase 2 Repair 完成，等待重新 Final Review。**
+- 实际项目根目录：`/Users/yuan/Desktop/our-space`。
 - 下一项是否已获批准：否。
-- **Phase 3 尚未获得批准，不得开始。**
+- **Phase 3 尚未获得批准，也未开始。**
 
 ## Git 连续性
 
-- 远程仓库：`https://github.khoury.northeastern.edu/liujiyuan/our-space.git`
-- 仓库可见性：Private
-- 默认分支：`main`
-- Phase 1 最后验证代码提交：`1d277064a27ab29105e890bcf0f2373ac3b42196`
-- 后续文档连续性提交：`49eadaa1bdf40925cd7bfbf1c30565dab427841e`；该提交只更新文档，不改变 Phase 1 代码验证基线。
-- 同步状态：当前本地 `main` 与 `origin/main` 同步。
-- 核对证据：`git fetch --prune origin` 成功；`git rev-list --left-right --count main...origin/main` 返回 `0 0`。
-- 安全要求：若实际 Git 状态与本节不一致，必须停止并报告；不得自行 force push、reset 或覆盖远程历史。
-- 秘密管理：不得记录密码、Token、SSH 私钥或任何环境变量秘密。
+- 正式远程仓库：`https://github.com/jiyuan37/our-space.git`。
+- `origin` 与 `public` 当前都指向该仓库；remote 名称整理不属于 Phase 2 Repair。
+- 默认分支：`main`。
+- Phase 1 最后验证代码提交：`1d277064a27ab29105e890bcf0f2373ac3b42196`。
+- Phase 2 实施基线：`f2e8f518db8516a33abfac32ce7aa73d354347b5`。
+- Repair 开始前已成功执行 `git fetch origin`；`main...origin/main` 为 `0 0`，工作树干净。
+- Repair 已完成全部验证；重新 Final Review 尚未执行。
 
-## 已完成内容
+## Phase 2 已实现能力
 
-- Next.js 15、React 19、严格模式 TypeScript 和 Tailwind CSS 4 基础工程。
-- PostgreSQL 16、Prisma Schema 和首个 migration。
-- Space 与 Resident 生命周期字段和数据库完整性约束。
-- 可复现 Docker Compose PostgreSQL 开发配置。
-- Zod 环境变量验证和 `.env.example`。
-- 基础 Design Tokens、最小应用 Shell、Domain Errors 和 Service 层约定。
-- Vitest、Testing Library 和 Playwright 配置。
-- 应用工程已从误用的 `docs` 目录迁移到真实项目根目录；旧 `node_modules`、`.next` 和测试生成目录未移动。
-- 根目录 `AGENTS.md` 与 Phase 连续性文档。
-- Phase 1 已通过最终 Review。
-- Credentials/JWT session、email 规范化、Argon2id、Space/OWNER Resident 事务、Invitation lifecycle、授权、限流和真实数据库/E2E 已实施。
+- Credentials 注册、登录、登出和最小 JWT session。
+- Email 规范化和 Argon2id 密码 hash/verify。
+- `/space` protected route。
+- Space 与 OWNER Resident 原子创建，以及单一 ACTIVE Space 数据库保护。
+- Invitation token hash、创建、preview、撤销、过期、email 限制和 Serializable 接受。
+- 双维度 RateLimiter、typed domain errors 和 Phase 2 响应式表单 UI。
 
-## 尚未完成内容
+## 本轮 Repair 已完成
 
+- 修正 Invitation create/preview/accept 与 login/register 的 RateLimiter 入口接线。
+- NextAuth Credentials 将 rate limit 映射为可识别的安全错误码，同时保留统一 invalid credentials 行为。
+- Invitation 登录/注册 callback 使用仅允许站内相对路径的 sanitizer。
+- Space 并发创建的 ACTIVE Resident `P2002` 映射为 `ActiveSpaceAlreadyExistsError`。
+- revoke 等 Server Action 统一返回平静的 typed error view model。
+- 无 `TEST_DATABASE_URL` 时 integration suite 可明确 skip，不再在 module load 崩溃。
+- 扩充 Auth、Space、Invitation lifecycle、authorization、preview 和 concurrency integration tests。
+- 扩充 desktop Chrome 与 Pixel 7 E2E，包括 callback、两名 Resident、第三人拒绝和非 OWNER 拒绝。
+- 修复 E2E 登录 helper 未等待 Credentials response 的同步缺口，并收窄 Space full alert locator；未改变认证、callback 或限流产品逻辑。
+- Production dependency override 锁定 `deepmerge-ts@8.0.2` 与 `nanoid@3.3.18`；`npm audit --omit=dev` 当前为 0。
+
+## 尚未完成
+
+- Phase 2 尚未进行重新 Final Review。
 - Phase 3 及后续功能：Home、Presence、Life Point、Response、Shared Moment、Visit 和 Settings。
-- 尚未选择或安装与当前运行时兼容的精确 Auth.js/NextAuth 和 Argon2id package 版本；必须在 Phase 2 获准后依据官方文档与 package metadata 验证，且不得无证据采用 prerelease。
-- 现有 Invitation Schema 仍使用 `token` 字段，尚未实施 token hash 命名、单一有效 `PENDING` Invitation 和 `acceptedAt` 生命周期约束；这些属于未来获批 Phase 2 migration。
-- 实际浏览器 E2E 尚不属于本轮强制执行项；本轮只要求 `test:e2e:list`。
+- Seed data 与 demo account 属于后续阶段。
 
-## 数据库与 migration 状态
+## Migration 状态
 
 - Provider：PostgreSQL 16。
-- Migration：`20260728060000_foundation`。
-- Migration 文件在目录修正中只移动、未修改、未重新生成。
-- 目录修正前曾在全新 PostgreSQL 16.14 数据库成功应用。
-- 目录修正后已从真实项目根目录再次在全新 PostgreSQL 16.14 数据库成功执行 `prisma migrate deploy`；只发现并应用 `20260728060000_foundation`。
-- Migration SHA-256：`69a9a905bc0d713a9fb57bf68a7aaaf436899c83472a207313708874df0df20f`。
+- Foundation migration：`20260728060000_foundation`。
+- Phase 2 migration：`20260728170000_phase_2_invitations`。
+- Foundation migration SHA-256：`69a9a905bc0d713a9fb57bf68a7aaaf436899c83472a207313708874df0df20f`。
+- Repair 未修改 Prisma Schema 或任何 migration。
 
-## 验证状态
+## 当前验证状态
 
-| 检查                        | 当前状态                                            |
-| --------------------------- | --------------------------------------------------- |
-| `npm ci`                    | 通过；安装 467 个 package                           |
-| `npm run prisma:generate`   | 通过；Prisma Client 6.19.3                          |
-| `npm run prisma:validate`   | 通过                                                |
-| `npm run lint`              | 通过；0 warning                                     |
-| `npm run typecheck`         | 通过                                                |
-| `npm test`                  | 通过；4 个测试文件、8 个测试                        |
-| `npm run format:check`      | 通过                                                |
-| `npm run test:e2e:list`     | 通过；2 个项目测试                                  |
-| 实际浏览器 E2E              | 未运行；本轮不要求                                  |
-| `npm run build`             | 通过；Next.js 15.5.22 production build              |
-| `npm run db:migrate:deploy` | 通过；全新 PostgreSQL 16.14 数据库成功应用 1 项迁移 |
-| `npm audit --omit=dev`      | 通过；0 vulnerabilities                             |
+| 检查                                        | 当前结果                                    |
+| ------------------------------------------- | ------------------------------------------- |
+| Node.js                                     | `v22.22.2`                                  |
+| `npm ci`                                    | 通过；安全 override 已实际安装              |
+| `npm run prisma:generate`                   | 通过；Prisma Client 6.19.3                  |
+| `npm run prisma:validate`                   | 通过                                        |
+| `npm run lint`                              | 通过                                        |
+| `npm run typecheck`                         | 通过                                        |
+| `npm test`                                  | 通过；14 files / 50 tests，无 required skip |
+| Phase 2 database integration                | 通过；10/10                                 |
+| `npm audit --omit=dev`                      | 通过；0 vulnerabilities                     |
+| Argon2id smoke                              | 通过；2/2                                   |
+| PostgreSQL integration / clean migration    | PostgreSQL 16.15；2/2 migrations            |
+| concurrency                                 | 最大 ACTIVE Resident = 2；违规 Space = 0    |
+| 真实 E2E                                    | 通过；desktop Chrome + Pixel 7，6/6         |
+| `npm run build`                             | 通过                                        |
+| `npm run format:check` / `git diff --check` | 通过                                        |
 
-## 当前阻塞与已知限制
+## 安全要求
 
-- 当前主机未提供 Docker CLI，需要使用一次性 PostgreSQL 16 进程验证 clean migration；Docker Compose 真实启动 smoke test 仍需在具备 Docker 的主机完成。
-- 当前主机默认 `node` 为 `v24.15.0`，不是项目要求的 Node.js 22；本轮使用隔离的 Node.js `v22.23.1` 完成验证，未安装系统级软件。开发者进入仓库后应运行 `nvm use`。
-- Playwright 浏览器尚未下载，因此不运行实际浏览器 E2E。
-- 其他限制与技术债见 [`KNOWN_LIMITATIONS.md`](./KNOWN_LIMITATIONS.md)。
+- 不得使用 `DATABASE_URL` 代替独立 `TEST_DATABASE_URL`。
+- 不得记录密码、Invitation raw token、hash、认证 secret 或数据库凭据。
+- Repair 完成不等于 Final Review 通过；必须重新进行独立 Final Review。

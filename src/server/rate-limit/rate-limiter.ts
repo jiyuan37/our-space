@@ -47,3 +47,66 @@ export async function enforceRateLimit(
   if (!(await limiter.consume(input)).allowed)
     throw new RateLimitExceededError();
 }
+
+export async function enforceLoginRateLimits(
+  limiter: RateLimiter,
+  email: string,
+  ip: string,
+): Promise<void> {
+  await Promise.all([
+    enforceRateLimit(limiter, {
+      key: privateBucket("login-email", email),
+      limit: 10,
+      windowMs: 15 * 60_000,
+    }),
+    enforceRateLimit(limiter, {
+      key: privateBucket("login-ip", ip),
+      limit: 50,
+      windowMs: 15 * 60_000,
+    }),
+  ]);
+}
+
+export async function enforceRegistrationRateLimit(
+  limiter: RateLimiter,
+  ip: string,
+): Promise<void> {
+  await enforceRateLimit(limiter, {
+    key: privateBucket("register-ip", ip),
+    limit: 5,
+    windowMs: 60 * 60_000,
+  });
+}
+
+export async function enforceInvitationCreateRateLimit(
+  limiter: RateLimiter,
+  userId: string,
+): Promise<void> {
+  await enforceRateLimit(limiter, {
+    key: privateBucket("invite-create-user", userId),
+    limit: 10,
+    windowMs: 60 * 60_000,
+  });
+}
+
+export async function enforceInvitationPreviewRateLimit(
+  limiter: RateLimiter,
+  ip: string,
+): Promise<void> {
+  await enforceRateLimit(limiter, {
+    key: privateBucket("invite-preview-ip", ip),
+    limit: 30,
+    windowMs: 15 * 60_000,
+  });
+}
+
+export async function enforceInvitationAcceptRateLimit(
+  limiter: RateLimiter,
+  ip: string,
+): Promise<void> {
+  await enforceRateLimit(limiter, {
+    key: privateBucket("invite-accept-ip", ip),
+    limit: 30,
+    windowMs: 15 * 60_000,
+  });
+}

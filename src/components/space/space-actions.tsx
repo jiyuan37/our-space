@@ -8,6 +8,7 @@ import {
   createSpaceAction,
   revokeInvitationAction,
 } from "@/app/actions";
+import { PrimaryButton, SecondaryButton } from "@/components/ui/form-controls";
 
 export function CreateSpaceForm() {
   const [state, action, pending] = useActionState(createSpaceAction, {});
@@ -16,7 +17,7 @@ export function CreateSpaceForm() {
       <label htmlFor="space-name">Space 名称</label>
       <input id="space-name" name="name" required maxLength={80} />
       {state.error && <p role="alert">{state.error}</p>}
-      <button disabled={pending}>Create our space</button>
+      <PrimaryButton pending={pending}>Create our space</PrimaryButton>
     </form>
   );
 }
@@ -24,35 +25,51 @@ export function CreateSpaceForm() {
 export function InvitationForm() {
   const [state, action, pending] = useActionState(createInvitationAction, {});
   return (
-    <form action={action} className="calm-form">
-      <label htmlFor="invite-email">邀请邮箱（可选）</label>
-      <input id="invite-email" name="email" type="email" />
-      {state.error && <p role="alert">{state.error}</p>}
-      {state.invitationUrl && (
-        <label>
-          邀请链接
-          <input readOnly value={state.invitationUrl} aria-label="邀请链接" />
-        </label>
-      )}
+    <>
+      <form action={action} className="calm-form">
+        <label htmlFor="invite-email">邀请邮箱（可选）</label>
+        <input id="invite-email" name="email" type="email" />
+        {state.error && <p role="alert">{state.error}</p>}
+        {state.invitationUrl && (
+          <label>
+            邀请链接
+            <input readOnly value={state.invitationUrl} aria-label="邀请链接" />
+          </label>
+        )}
+        <PrimaryButton pending={pending}>
+          Invite someone important
+        </PrimaryButton>
+      </form>
       {state.invitationId && (
-        <button
-          className="button button-secondary"
-          formAction={revokeInvitationAction}
-          name="invitationId"
-          value={state.invitationId}
-        >
-          撤销这份邀请
-        </button>
+        <RevokeInvitationForm invitationId={state.invitationId} />
       )}
-      <button disabled={pending}>Invite someone important</button>
+    </>
+  );
+}
+
+function RevokeInvitationForm({ invitationId }: { invitationId: string }) {
+  const [state, action, pending] = useActionState(revokeInvitationAction, {});
+  return (
+    <form action={action} className="calm-form">
+      {state.error && <p role="alert">{state.error}</p>}
+      <SecondaryButton
+        disabled={pending}
+        name="invitationId"
+        value={invitationId}
+      >
+        撤销这份邀请
+      </SecondaryButton>
     </form>
   );
 }
 
 export function LogoutButton() {
   return (
-    <button type="button" onClick={() => signOut({ callbackUrl: "/welcome" })}>
+    <SecondaryButton
+      type="button"
+      onClick={() => signOut({ callbackUrl: "/welcome" })}
+    >
       登出
-    </button>
+    </SecondaryButton>
   );
 }
