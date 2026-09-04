@@ -4,9 +4,9 @@
 
 ## 状态
 
-**当前状态：Phase 2 已完成并通过最终 Review。**
+**当前状态：Phase 2 已完成并通过最终 Review；Phase 3 前置设计已收口，implementation 尚未获批准。**
 
-阶段 0、Phase 1 已完成，Phase 1 已通过最终 Review。Phase 2 已实施，在首次 Final Review 后完成 Repair，并通过 Closure Review。Phase 3 尚未开始，尚未获得实施批准。
+阶段 0、Phase 1 已完成，Phase 1 已通过最终 Review。Phase 2 已实施，在首次 Final Review 后完成 Repair，并通过 Closure Review。Phase 3 前置 UI/UX Review 与 Design Decision Closure 已完成，设计基线记录于 [`PHASE_3_DESIGN.md`](./PHASE_3_DESIGN.md)；Phase 3 尚未开始，尚未获得实施批准。
 
 ## 单一事实来源
 
@@ -172,30 +172,43 @@
 
 ## 阶段 3 — 核心 Home 与 Presence
 
-状态：未开始，未获批准。
+状态：未开始；前置设计已收口，implementation 未获批准。
 
 依赖：阶段 2。
 
+正式设计基线：
+
+- 采用 Direction A — Quiet Home / 安静的家；完整 Design Constitution、视觉规则与 Review blocker 见 `PHASE_3_DESIGN.md`。
+- Presence belongs to today. When today passes, silence returns.
+- 默认 locale 为 `zh-CN`，同时支持 `en-US`；authenticated/private URL 保持语言无关。
+
 计划工作：
 
-- 构建响应式认证后 `AppShell`、Header、主内容区、创建操作和移动端底部导航。
-- 实现 Home、Visit 和 Settings 导航。
-- 实现有限、有类型的 Home 查询和 view model。
-- 展示两名 Resident 及其可选 Presence，不提供在线状态、last-seen、输入状态或紧迫提示。
-- 实现手动编辑 Presence 和平静的未设置状态。
-- 实现 “Welcome Home”、首次进入和安静 Home 状态。
-- 建立可访问的焦点、语义、标签、触控目标和 reduced-motion 基础能力。
-- 为 Presence 更新、成员资格检查、Home 过滤和安静状态添加服务/UI 测试。
+- 构建响应式认证后 `AppShell`、克制的 Header、主内容区，以及 Single Home + secondary Space/account menu。
+- 不增加只有一个有效 destination 的 bottom navigation，不展示尚不可用的 Visit、Settings、Phase 4+ action 或 placeholder page。
+- 实现仅包含 Phase 3 现有概念、有限且有类型的 Home 查询和 view model；不得伪造 Life Point、Response、Shared Moment、Visit 或 Memory 内容。
+- 展示 Space identity、两名 Resident 及其当天可选 Presence，不提供在线状态、last-seen、输入状态、exact age 或紧迫提示。
+- Presence 首版 UI 默认只暴露 `shortText`，使用轻量 inline editing，允许本人更新或清除；不因 `mood` / `context` 字段制造复杂编辑表单。
+- 按查看者客户端/浏览器本地日历日判断 Presence freshness；跨日后不再展示旧 Presence，Home 自然回到 Quiet State，不新增 timezone 数据库字段。
+- 实现 “Welcome Home”、首次共同进入和完整的 Quiet State；用户不操作时 Home 仍然成立。
+- 建立正式的 `zh-CN` / `en-US` i18n architecture，将产品文案、表单、validation/error、Auth/Invitation 错误、Accessibility announcement 与 formatter 纳入统一 locale 层；语言选择通过不改变 URL/Schema 的 app-layer mechanism 持久化。
+- 依据 Quiet Home 扩展 semantic design tokens，保持 warm white / cream、低饱和 accent、light mode first、极少 card/surface 和克制 motion。
+- 建立可访问的 focus、语义、label、announcement、对比度、至少 44px 触控目标和 reduced-motion 基础能力。
+- 为 Presence 更新/清除、成员资格、日界线 freshness、Home Quiet State、locale fallback/切换/持久化和语言无关 Invitation callback 添加服务/UI/E2E 测试。
 
 验证：
 
-- Home 能在大约三秒内传达谁在这里、最近发生了什么，以及如何留下内容。
-- 空白或不活跃的 Home 感觉是有意为之，且绝不使用 “No posts yet”。
-- Home 结果有限、有序，并经过隐私过滤。
+- Home 能在大约三秒内传达这是两位 Resident 的共同空间、谁在这里、当天自愿留下的 Presence，以及如何更新自己的 Presence。
+- 没有 Presence 或双方都没有任何行为时，Home 仍然完整、有意且绝不使用 “No data” 或 “No posts yet”。
+- 旧 Presence 在查看者本地日历日结束后不再作为当前状态展示，也不形成时间线或更新时间压力。
+- `zh-CN` 为稳定默认与 fallback，用户可切换到 `en-US` 且选择可以持久化；现有 URL 与 Invitation callback 安全语义不改变。
+- Home 结果有限、有序、经过服务端成员资格与隐私过滤。
+- Mobile 首屏完成核心情绪表达，keyboard、focus、screen reader、touch target 与 reduced motion 验证通过。
+- 页面不包含 Card Grid、未来空 tab、disabled placeholder、行为指标或其他 `PHASE_3_DESIGN.md` blocker。
 
 退出标准：
 
-- 两名 Resident 均可在移动端和桌面端查看 Home，并更新自己的 Presence。
+- 两名 Resident 均可在移动端和桌面端以 `zh-CN` 或 `en-US` 查看 Quiet Home，并在不产生义务或监控感的前提下更新、清除自己的当天 Presence。
 
 ## 阶段 4 — Life Points 与媒体
 

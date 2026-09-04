@@ -516,3 +516,37 @@
 - 状态：已接受
 - 决策：保持 Next.js 15.5.22、Prisma 6.19.3、NextAuth 4.24.15 和 Argon2 0.45.1 不变；使用 npm override 将 PostCSS 的 `nanoid` 锁定为安全的同 major `3.3.18`，将 `@prisma/config` 的 `deepmerge-ts` 锁定为 `8.0.2`。后者保持 Prisma 使用的 `deepmerge` ESM export，并支持 Node.js 22。必须通过 Prisma generate/validate、clean migration、全部测试、production build 和 production audit 验证。
 - 理由：避免 `npm audit fix --force` 所建议的不安全降级或跨 major Prisma 升级，同时消除 production dependency graph 中已确认的 high severity advisory。
+
+## DEC-044 — Phase 3 采用 Quiet Home 设计方向
+
+- 日期：2026-09-03
+- 状态：已接受
+- 决策：Phase 3 正式采用 Direction A — Quiet Home / 安静的家。Home 是一个共同存在的地方，不是内容容器；Space identity 与两位 Resident 先于内容存在；Silence 是正常、完整、无需解释的状态。吸收少量 editorial / paper-like 排版气质、空间感和柔和 motion，但不再并行推进其他视觉方向。Phase 3 使用 Single Home + secondary Space/account menu，不展示尚不可用的 bottom navigation、Visit、Settings、Phase 4+ action 或 placeholder page。完整 Design Constitution、视觉规则、Accessibility、Privacy-as-UI 和 UI Review blocker 集中记录在 `PHASE_3_DESIGN.md`。
+- 理由：Quiet Home 最直接落实 Master Spec 的 “Build a home, not a feed”、Quiet reassurance 与 Silence is a valid state，同时可让 Phase 3 在没有 Life Point 等后续内容时仍形成完整体验。
+- 考虑过的替代方案：
+  - 同时保留三套并行视觉方向 — 拒绝，因为会在实施前留下相互竞争的结构和判断标准。
+  - Card Grid 或 Dashboard — 拒绝，因为会将 Home 变成内容/状态容器。
+  - 提前展示未来 navigation 与 disabled action — 拒绝，因为会制造虚假承诺，并违反 DEC-025。
+
+## DEC-045 — Presence 只属于查看者的当前本地日历日
+
+- 日期：2026-09-03
+- 状态：已接受
+- 决策：Presence 是 Resident 自愿留在共同空间中的一句“此刻的我”，不是历史、活动追踪或实时在线状态。Phase 3 首版 UI 默认只暴露 `shortText`，允许本人编辑和主动清除，不因现有 `mood` / `context` 字段制造复杂表单。Presence 只在查看者客户端/浏览器本地日历日内作为当前 Presence 展示；跨日后 Home 自然回到 Quiet State，不显示 exact age、“X 小时前”“昨天留下”“先前留下”、last seen 或更新提醒。时间戳继续以 UTC 存储，本决定不增加 timezone 字段、不修改 Schema，也不创建新的核心实体。
+- 理由：Presence 代表 “today's version” of a Resident。跨日后继续将活动短句作为当前事实会产生误导；把旧 Presence 变成历史又会侵入 Shared Moment / Memory 的生命周期，并带来监控压力。
+- 考虑过的替代方案：
+  - 永久展示最后一条 Presence — 拒绝，因为旧活动会被误读为当前状态。
+  - 展示相对更新时间或“昨天留下” — 拒绝，因为会形成 last-seen 式压力和隐性时间线。
+  - 为 User / Resident 新增 timezone 字段 — 当前 Phase 3 不采用，因为浏览器本地时区足以表达查看者的当天，且无需扩大数据模型。
+
+## DEC-046 — Phase 3 建立 zh-CN / en-US i18n 且 URL 保持语言无关
+
+- 日期：2026-09-03
+- 状态：已接受
+- 决策：Our Space 首发 UI 中文优先，默认 locale 为 `zh-CN`，第二 locale 为 `en-US`。Phase 3 Application Shell 必须建立正式、统一的双语 i18n architecture；所有用户可见文案、表单、validation/error、Auth/Invitation 错误、Quiet State、Presence、navigation、Accessibility announcement 和日期/时间/数字 formatter 都进入 locale 层，组件不得散落硬编码产品文案。用户可以切换语言且选择需要持久化；首次选择可以参考浏览器语言，正式 fallback 始终为 `zh-CN`。现有 authenticated/private URL 和 `/invite/[token]` callback 路径保持语言无关，不引入 locale path prefix。Phase 3 不为 locale 修改 Prisma Schema；具体 library 与 app-layer persistence mechanism 留待获批的 implementation design。
+- 理由：双语属于 Phase 3 UI foundation；统一 locale 边界可以保持产品文案、错误与 Accessibility 体验一致。语言无关 URL 可避免扩大 middleware 与 Invitation callback 安全面，并保留 Phase 2 已验证的安全语义。
+- 考虑过的替代方案：
+  - 只支持简体中文 — 拒绝，因为正式产品决定要求同时支持 `en-US`。
+  - 在组件中逐步硬编码两套文案 — 拒绝，因为会导致翻译、错误和 Accessibility 文案漂移。
+  - 使用 `/zh-CN/...`、`/en-US/...` 路由前缀 — 拒绝，因为 private application 不需要 SEO locale URL，且会无必要地改变已验证的 callback 路径。
+  - 立即新增数据库 language preference — 当前不采用；Phase 3 使用 cookie、provider 或等价 app-layer mechanism，不扩大核心数据模型。

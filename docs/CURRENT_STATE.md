@@ -8,7 +8,8 @@
 - 当前状态：**Phase 2 Closure Review 已通过，结论为 `PASS`。**
 - 实际项目根目录：`/Users/yuan/Desktop/our-space`。
 - 下一项是否已获批准：否。
-- **Phase 3 尚未开始，尚未获得实施批准。**
+- Phase 3 前置 UI/UX Review 已完成，Design Direction 已完成收口。
+- **Phase 3 尚未开始，尚未获得 implementation 批准。**
 
 ## Git 连续性
 
@@ -45,7 +46,19 @@
 ## 尚未开始
 
 - Phase 3 及后续功能：Home、Presence、Life Point、Response、Shared Moment、Visit 和 Settings。
+- Phase 3 i18n architecture 尚未实现；现有 Phase 2 UI 仍不代表最终 `zh-CN` / `en-US` 产品文案边界。
 - Seed data 与 demo account 属于后续阶段。
+
+## Phase 3 已收口的设计基线
+
+- 正式采用 Direction A — Quiet Home / 安静的家；完整规则记录于 `docs/PHASE_3_DESIGN.md`。
+- Home 是共同存在的地方，不是 Feed、Dashboard 或内容容器；Silence 是完整状态。
+- Phase 3 使用 Single Home + secondary Space/account menu，不展示未来空 tab、disabled navigation 或 Phase 4+ placeholder。
+- Presence 首版只暴露 `shortText`，使用 inline editing；它可选、可清除，不是在线、位置、活动或关系状态。
+- Presence 只属于查看者的当前浏览器本地日历日；跨日后旧 Presence 不再展示，Home 回到 Quiet State，不新增 timezone 字段。
+- 默认 locale 为 `zh-CN`，同时支持 `en-US`；Phase 3 必须建立统一 i18n architecture，现有 authenticated/private URL 与 Invitation callback 保持语言无关。
+- Design Constitution、视觉、motion、mobile、Accessibility、Privacy-as-UI 和 Review blocker 见 `docs/PHASE_3_DESIGN.md`；长期决策见 DEC-044 至 DEC-046。
+- 本节只记录实施前设计决定，不构成 Phase 3 implementation 批准。
 
 ## Migration 状态
 
@@ -79,4 +92,4 @@
 
 - 不得使用 `DATABASE_URL` 代替独立 `TEST_DATABASE_URL`。
 - 不得记录密码、Invitation raw token、hash、认证 secret 或数据库凭据。
-- Phase 2 已完成并通过最终 Review；本状态不构成 Phase 3 实施批准。
+- Phase 2 已完成并通过最终 Review；Phase 3 前置设计已收口；本状态不构成 Phase 3 implementation 批准。

@@ -4,6 +4,15 @@
 
 ## [未发布]
 
+### Phase 3 Design Decision Closure
+
+- 完成 Phase 3 前置 UI/UX Review 与 Design Direction 收口；Phase 3 implementation 仍未开始、未获批准。
+- 新增 `PHASE_3_DESIGN.md`，集中记录 Quiet Home / 安静的家、24 条 Design Constitution、Home/Presence/Quiet State、视觉、motion、mobile、Accessibility、Privacy-as-UI 与 UI Review blocker。
+- 通过 DEC-044 正式采用 Quiet Home，并将 Phase 3 navigation 锁定为 Single Home + secondary Space/account menu，不展示未来空 tab、disabled navigation 或 Phase 4+ placeholder。
+- 通过 DEC-045 锁定 Presence freshness：Presence 只属于查看者浏览器本地日历日，跨日后 Home 回到 Quiet State，不展示 exact age，不修改 Schema。
+- 通过 DEC-046 锁定 `zh-CN` 默认、`en-US` 支持、完整 i18n architecture 与语言无关 authenticated/private URL；不改变 Invitation callback 路径，不新增 locale 数据库字段。
+- 对齐 `IMPLEMENTATION_PLAN.md`、`CURRENT_STATE.md` 与 `KNOWN_LIMITATIONS.md`；本次仅修改 docs/Markdown，未实施 Home、Presence、i18n 或任何 Phase 3/4+ 代码。
+
 ### Phase 2 Repair
 
 - 修正 Invitation create/accept RateLimiter 接线，并移除 create Space 对 Invitation bucket 的错误消耗。

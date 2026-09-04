@@ -7,7 +7,9 @@
 ## 当前仓库限制
 
 - Phase 2 已完成并通过最终 Review；认证后 `/space` 是明确的 Phase 2 过渡体验，不是 Phase 3 Home。
+- Phase 3 前置 UI/UX Review 与 Design Decision Closure 已完成，但 Phase 3 implementation 尚未开始、尚未获批准。
 - 尚未实现 Home、Presence 编辑、Life Point、Response、Shared Moment、Visit 或 Settings。
+- 尚未实现正式 `zh-CN` / `en-US` i18n architecture；默认语言、语言支持和 URL 边界已由 DEC-046 收口。
 - 尚无 seed data 或 demo account；这两项属于后续阶段。
 - Playwright 已配置 desktop Google Chrome 与 Pixel 7；Phase 2 Repair 的完整真实 E2E 已在独立 PostgreSQL 16 测试数据库上以 6/6 通过。
 - 当前主机没有 Docker CLI，因此无法实际执行 `docker compose config` 或容器启动；`docker-compose.yml` 已通过 YAML 解析验证，clean migration 已在本机 PostgreSQL 16.15 全新数据库中以 2/2 通过。
@@ -55,7 +57,8 @@
 - 已被回应的 Life Point 后续改为 private 或被移除时，其可见性与重访行为。
 - Space 的恢复、永久删除、owner 转移、重新加入和完整数据保留期限仍需在对应用户功能实施前定义；Phase 1 只确定 `ACTIVE`/`ARCHIVED` 与 `ACTIVE`/`LEFT` 生命周期基础。
 - User 账户删除以及数据导出/保留行为。
-- 查看者时区的来源，以及两名 Resident 时区不同或旅行时的行为。
+- Presence freshness 已由 DEC-045 收口为查看者客户端/浏览器本地日历日，且不新增 timezone 数据库字段；Visit 分组中两名 Resident 时区不同或旅行时的更广泛行为仍待 Phase 6 前解决。
+- Phase 3 i18n 的具体 library、locale provider/cookie 等 app-layer persistence mechanism，以及 server/client locale hydration 策略仍待获批的 implementation design 选择；不得因此改变现有 URL 或 Prisma Schema。
 - Visit counter 的并发语义，以及作者自己的重访是否采用相同计数方式。
 - 纯文本及未来 rich content 的内容清理策略。
 - 如果包含 AuditLog，其范围和保留策略。
