@@ -16,7 +16,15 @@
 - 修复 E2E 登录 helper 未等待 Credentials response 的测试同步缺口，并将 Space full alert locator 收窄到业务错误；产品认证、callback 安全和 RateLimiter 行为未放宽。
 - 使用精确 override `deepmerge-ts@8.0.2` 与 `nanoid@3.3.18` 修复 production advisory；`npm audit --omit=dev` 为 0。
 - 在 PostgreSQL 16.15 全新数据库完成 2/2 migrations、10/10 database integration、真实并发上限验证、14 files / 50 tests、desktop Chrome 与 Pixel 7 E2E 6/6、production build 和完整质量矩阵。
-- Phase 2 Repair 完成，等待重新 Final Review；尚未声称 Final Review 通过。
+- Phase 2 Repair 完成；Closure Review 已确认全部原 blocker / major 关闭。
+
+### Phase 2 正式关闭
+
+- Phase 2 — Authentication and Space 已完成并通过最终 Review；最终代码提交为 `0c37e4acfbce8775a22bc5d7bf4feea1433048c5`。
+- 已完成 Credentials authentication、最小 JWT session、protected routes、Space + OWNER Resident 原子创建，以及 Invitation create/preview/revoke/accept lifecycle。
+- Invitation 使用 token hashing，接受流程使用 PostgreSQL `Serializable` transaction；RateLimiter、站内 callback 与 open redirect 防护已验证。
+- lifecycle/authorization tests、真实 PostgreSQL integration、concurrency、desktop Chrome 与 Pixel 7 E2E、production build 均通过；`npm audit --omit=dev` 为 0 vulnerabilities。
+- Closure Review 结论为 `PASS`；Phase 3 尚未开始，尚未获得实施批准。
 
 ### Phase 2
 
@@ -52,7 +60,7 @@
 
 ### 后续
 
-- 重新进行独立 Phase 2 Final Review；Phase 3 尚未获得批准，也未开始。
+- Phase 3 尚未开始，尚未获得实施批准。
 
 ## [0.1.0] — 2026-07-28
 

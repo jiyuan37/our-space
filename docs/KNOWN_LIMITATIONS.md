@@ -6,7 +6,7 @@
 
 ## 当前仓库限制
 
-- 当前完成 Phase 2；认证后 `/space` 是明确的过渡体验，不是 Phase 3 Home。
+- Phase 2 已完成并通过最终 Review；认证后 `/space` 是明确的 Phase 2 过渡体验，不是 Phase 3 Home。
 - 尚未实现 Home、Presence 编辑、Life Point、Response、Shared Moment、Visit 或 Settings。
 - 尚无 seed data 或 demo account；这两项属于后续阶段。
 - Playwright 已配置 desktop Google Chrome 与 Pixel 7；Phase 2 Repair 的完整真实 E2E 已在独立 PostgreSQL 16 测试数据库上以 6/6 通过。

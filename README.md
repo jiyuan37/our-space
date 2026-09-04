@@ -2,7 +2,7 @@
 
 Our Space 是一个属于两个人的私密共同生活空间。它的使命是“即使相隔，也一起生活”，产品目标是增加 Presence，而不是增加 engagement。
 
-当前仓库已完成 Phase 2 实施：Credentials 注册/登录、JWT session、受保护路由、Space/OWNER Resident 原子创建和 Invitation 流程。Home、Presence、Life Point、Response、Shared Moment 和 Visit 尚未实施。
+当前仓库的 Phase 2 已完成并通过最终 Review：Credentials 注册/登录、JWT session、受保护路由、Space/OWNER Resident 原子创建和 Invitation 流程均已完成。Phase 3 尚未开始，尚未获得实施批准；Home、Presence、Life Point、Response、Shared Moment 和 Visit 尚未实施。
 
 ## 产品原则
 
@@ -127,4 +127,4 @@ tests/
 
 ## 当前已知限制
 
-详见 [`docs/KNOWN_LIMITATIONS.md`](./docs/KNOWN_LIMITATIONS.md)。Phase 1 不包含可登录账户或任何产品主流程，因此没有 demo account 或 seed data。
+详见 [`docs/KNOWN_LIMITATIONS.md`](./docs/KNOWN_LIMITATIONS.md)。当前尚无 demo account 或 seed data；这些不属于已完成的 Phase 2。

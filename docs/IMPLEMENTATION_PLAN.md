@@ -4,9 +4,9 @@
 
 ## 状态
 
-**当前状态：Phase 2 Repair 完成，等待重新 Final Review。**
+**当前状态：Phase 2 已完成并通过最终 Review。**
 
-阶段 0、Phase 1 已完成，Phase 1 已通过最终 Review。Phase 2 已实施，并在首次 Final Review 后完成 Repair 及全部验证，等待重新进行独立 Final Review。Phase 3 尚未获得批准，也未开始。
+阶段 0、Phase 1 已完成，Phase 1 已通过最终 Review。Phase 2 已实施，在首次 Final Review 后完成 Repair，并通过 Closure Review。Phase 3 尚未开始，尚未获得实施批准。
 
 ## 单一事实来源
 
@@ -125,34 +125,35 @@
 
 ## 阶段 2 — 身份认证与 Space
 
-状态：**Phase 2 Repair 完成，等待重新 Final Review。**
+状态：**已完成并通过最终 Review。**
 
 依赖：阶段 1。
 
-已决策但尚未实施的安全与架构约束：
+已实施的安全与架构约束：
 
 - Credentials email/password 认证；Auth.js 管理登录、登出、session cookie 和认证边界，使用最小身份字段的 JWT session。
 - email 统一规范化后持久化和查询；MVP 注册后立即可登录，不伪装 email verification。
 - 密码使用服务端 Argon2id，长度为 15–128 个字符，不使用组合字符规则或静默截断。
 - Invitation 原始 token 只出现在复制链接中，数据库只保存 SHA-256 hash；默认 7 天过期，同一 ACTIVE Space 同时只允许一个有效 `PENDING` Invitation。
 - Space/OWNER Resident 创建与 Invitation 接受分别使用事务；接受流程使用 PostgreSQL `Serializable` 和有限冲突重试。
-- Server Actions、Route Handlers、origin/cookie、ACTIVE Resident/OWNER 授权和客户端 view model 必须遵循 DEC-037/DEC-038。
-- Phase 2 必须定义可替换 RateLimiter，并按 DEC-039 的账户与 IP 双维度默认策略执行。
-- 数据库集成测试必须使用独立真实 PostgreSQL，应用正式 migration；Phase 2 退出前必须运行真实浏览器 E2E。
-- 精确 Auth.js/NextAuth 与 Argon2id package 版本必须在实施前依据官方兼容性证据锁定；本轮不安装依赖。
+- Server Actions、Route Handlers、origin/cookie、ACTIVE Resident/OWNER 授权和客户端 view model 已遵循 DEC-037/DEC-038。
+- Phase 2 已定义可替换 RateLimiter，并按 DEC-039 的账户与 IP 双维度默认策略执行。
+- 数据库集成测试已使用独立真实 PostgreSQL 并应用正式 migration；Phase 2 退出前已运行真实浏览器 E2E。
+- Auth.js/NextAuth 与 Argon2id package 已依据兼容性证据锁定精确版本，并通过实际验证。
 
 完成工作：
 
 - [x] 使用安全密码哈希实现凭据注册与登录。
 - [x] 配置 Auth.js session 和受保护的应用路由。
 - [x] 实现 Space 创建，以及事务性的 owner Resident 创建。
-- 在保持 Schema 可扩展的同时，强制 MVP 中每个 User 只能加入一个有效 Space。
+- [x] 在保持 Schema 可扩展的同时，强制 MVP 中每个 User 只能加入一个有效 Space。
 - [x] 实现安全的 Invitation 创建、查询、撤销/过期处理和事务性接受流程。
-- 处理 token 过期、已撤销、已接受、Space 已满、已是 Resident，以及成员资格冲突等情况。
-- 接受邀请前展示邀请者身份和 Space 名称。
-- 添加平静、面向用户的错误映射。
-- 为身份认证和邀请操作添加限流 hook。
-- 添加 Space 创建、Invitation 创建/接受、Space 已满拒绝和成员资格规则的服务测试。
+- [x] 处理 token 过期、已撤销、已接受、Space 已满、已是 Resident，以及成员资格冲突等情况。
+- [x] 接受邀请前展示邀请者身份和 Space 名称。
+- [x] 添加平静、面向用户的错误映射。
+- [x] 为身份认证和邀请操作添加双维度 RateLimiter。
+- [x] 保留安全的站内 Invitation callback，并拒绝外部 callback/open redirect。
+- [x] 添加 Space 创建、Invitation 创建/接受、Space 已满拒绝、成员资格、lifecycle 和 authorization 服务测试。
 
 验证：
 
@@ -165,12 +166,13 @@
 
 退出标准：
 
-- 两个已认证 User 可以安全地成为同一个私密 Space 中的两名 Resident。
-- Repair 验证完成后停止，等待独立 Final Review；不得自行进入 Phase 3。
+- [x] 两个已认证 User 可以安全地成为同一个私密 Space 中的两名 Resident。
+- [x] Repair 后 Closure Review 结论为 `PASS`，Phase 2 已完成并通过最终 Review。
+- [x] Phase 2 收口后停止；不得自行进入 Phase 3。
 
 ## 阶段 3 — 核心 Home 与 Presence
 
-状态：未开始。
+状态：未开始，未获批准。
 
 依赖：阶段 2。
 
