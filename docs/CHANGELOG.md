@@ -4,6 +4,17 @@
 
 ## [未发布]
 
+### Phase 3 Implementation
+
+- 实现 Quiet Home `/home`、响应式 Application Shell、两名 Resident presentation、完整 Quiet State 与 Single Home + secondary Space/account menu。
+- 实现 Presence `shortText` 读取、本人 inline update/upsert、显式 clear、120 Unicode 字符服务端 validation，以及仅由 session/ACTIVE Resident 推导修改对象的 Service/Server Action 边界。
+- 将 freshness 抽为 viewer-local-calendar-day 纯 presentation rule；初始 hydration 不泄露旧文案，跨日不显示 precise age 且不自动删除数据库记录。
+- 建立 typed `zh-CN` / `en-US` locale resources、`zh-CN` fallback、HttpOnly cookie persistence 与 locale-aware formatter；Auth、Invitation、Space、error 和 Accessibility 文案一并迁移，URL 与 Invitation callback 保持语言无关。
+- 扩展 Quiet Home design tokens、desktop 双列/mobile 单列布局、44px 操作目标、visible focus、ARIA live announcement、浏览器返回键关闭 inline editor 与 reduced-motion。
+- Phase 3 未修改 Prisma Schema、未新增 migration、未增加核心实体，也未提前实现 Life Point、Response、Shared Moment、Visit、Memory 或 media workflow。
+- 在 PostgreSQL 16.15 全新数据库应用 2/2 migrations；19 files / 73 Vitest tests（database integration 15/15）、Playwright desktop Chrome + Pixel 7 10/10、production build 与 `npm audit --omit=dev` 0 vulnerabilities 全通过。
+- 实际浏览器视觉检查覆盖中文/英文、Quiet/Presence/edit、desktop/375px mobile；Phase 3 implementation 已完成，等待独立 Final Review。
+
 ### Phase 3 Design Decision Closure
 
 - 完成 Phase 3 前置 UI/UX Review 与 Design Direction 收口；Phase 3 implementation 仍未开始、未获批准。

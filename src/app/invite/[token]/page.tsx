@@ -11,6 +11,8 @@ import { InvitationService } from "@/server/services/invitation-service";
 import { getClientIp } from "@/lib/http/client-ip";
 import { rateLimiter } from "@/server/rate-limit/default-limiter";
 import { enforceInvitationPreviewRateLimit } from "@/server/rate-limit/rate-limiter";
+import { getServerI18n } from "@/lib/i18n/server";
+import { errorMessageKey } from "@/lib/i18n/errors";
 
 export default async function InvitePage({
   params,
@@ -19,6 +21,7 @@ export default async function InvitePage({
 }) {
   const { token } = await params;
   const session = await getServerSession(authOptions);
+  const { t } = await getServerI18n();
   try {
     const ip = getClientIp(await headers());
     await enforceInvitationPreviewRateLimit(rateLimiter, ip);
@@ -27,8 +30,13 @@ export default async function InvitePage({
       <AppShell>
         <section className="foundation-card">
           <p className="eyebrow">{preview.spaceName}</p>
-          <h1>Welcome Home</h1>
-          <p>{preview.inviterDisplayName} 邀请你来到这个 Space。</p>
+          <h1>{t("invitation.title")}</h1>
+          <p>
+            {t("invitation.copy", {
+              name:
+                preview.inviterDisplayName ?? t("invitation.fallbackInviter"),
+            })}
+          </p>
           {preview.acceptable ? (
             session ? (
               <AcceptInvitationForm token={token} />
@@ -37,18 +45,18 @@ export default async function InvitePage({
                 <Link
                   href={`/login?callbackUrl=/invite/${encodeURIComponent(token)}`}
                 >
-                  登录后接受
+                  {t("invitation.login")}
                 </Link>{" "}
                 ·{" "}
                 <Link
                   href={`/register?callbackUrl=/invite/${encodeURIComponent(token)}`}
                 >
-                  注册
+                  {t("invitation.register")}
                 </Link>
               </p>
             )
           ) : (
-            <p role="status">这份邀请现在无法接受。</p>
+            <p role="status">{t("invitation.unavailable")}</p>
           )}
         </section>
       </AppShell>
@@ -57,9 +65,13 @@ export default async function InvitePage({
     return (
       <AppShell>
         <section className="foundation-card">
-          <h1>邀请暂时无法打开</h1>
+          <h1>{t("invitation.openError")}</h1>
           <p role="alert">
-            {error instanceof DomainError ? error.message : "请稍后再试。"}
+            {t(
+              errorMessageKey(
+                error instanceof DomainError ? error.code : "UNEXPECTED_ERROR",
+              ),
+            )}
           </p>
         </section>
       </AppShell>

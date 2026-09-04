@@ -6,7 +6,7 @@
 
 **当前状态：Phase 2 已完成并通过最终 Review；Phase 3 前置设计已收口，implementation 尚未获批准。**
 
-阶段 0、Phase 1 已完成，Phase 1 已通过最终 Review。Phase 2 已实施，在首次 Final Review 后完成 Repair，并通过 Closure Review。Phase 3 前置 UI/UX Review 与 Design Decision Closure 已完成，设计基线记录于 [`PHASE_3_DESIGN.md`](./PHASE_3_DESIGN.md)；Phase 3 尚未开始，尚未获得实施批准。
+阶段 0、Phase 1 已完成，Phase 1 已通过最终 Review。Phase 2 已实施，在首次 Final Review 后完成 Repair，并通过 Closure Review。Phase 3 前置 UI/UX Review、Design Decision Closure 与 implementation 已完成，设计基线记录于 [`PHASE_3_DESIGN.md`](./PHASE_3_DESIGN.md)，实施证据记录于 [`PHASE_3_REVIEW.md`](./PHASE_3_REVIEW.md)；当前等待独立 Phase 3 Final Review。Phase 4 尚未开始，也未获得批准。
 
 ## 单一事实来源
 
@@ -172,7 +172,7 @@
 
 ## 阶段 3 — 核心 Home 与 Presence
 
-状态：未开始；前置设计已收口，implementation 未获批准。
+状态：**implementation 已完成，等待独立 Phase 3 Final Review。**
 
 依赖：阶段 2。
 
@@ -182,33 +182,31 @@
 - Presence belongs to today. When today passes, silence returns.
 - 默认 locale 为 `zh-CN`，同时支持 `en-US`；authenticated/private URL 保持语言无关。
 
-计划工作：
+完成工作：
 
-- 构建响应式认证后 `AppShell`、克制的 Header、主内容区，以及 Single Home + secondary Space/account menu。
-- 不增加只有一个有效 destination 的 bottom navigation，不展示尚不可用的 Visit、Settings、Phase 4+ action 或 placeholder page。
-- 实现仅包含 Phase 3 现有概念、有限且有类型的 Home 查询和 view model；不得伪造 Life Point、Response、Shared Moment、Visit 或 Memory 内容。
-- 展示 Space identity、两名 Resident 及其当天可选 Presence，不提供在线状态、last-seen、输入状态、exact age 或紧迫提示。
-- Presence 首版 UI 默认只暴露 `shortText`，使用轻量 inline editing，允许本人更新或清除；不因 `mood` / `context` 字段制造复杂编辑表单。
-- 按查看者客户端/浏览器本地日历日判断 Presence freshness；跨日后不再展示旧 Presence，Home 自然回到 Quiet State，不新增 timezone 数据库字段。
-- 实现 “Welcome Home”、首次共同进入和完整的 Quiet State；用户不操作时 Home 仍然成立。
-- 建立正式的 `zh-CN` / `en-US` i18n architecture，将产品文案、表单、validation/error、Auth/Invitation 错误、Accessibility announcement 与 formatter 纳入统一 locale 层；语言选择通过不改变 URL/Schema 的 app-layer mechanism 持久化。
-- 依据 Quiet Home 扩展 semantic design tokens，保持 warm white / cream、低饱和 accent、light mode first、极少 card/surface 和克制 motion。
-- 建立可访问的 focus、语义、label、announcement、对比度、至少 44px 触控目标和 reduced-motion 基础能力。
-- 为 Presence 更新/清除、成员资格、日界线 freshness、Home Quiet State、locale fallback/切换/持久化和语言无关 Invitation callback 添加服务/UI/E2E 测试。
+- [x] 构建响应式认证后 `AppShell`、克制 Header、主内容区，以及 Single Home + secondary Space/account menu。
+- [x] 不增加单 destination bottom navigation，不展示 Visit、Settings、Phase 4+ action 或 placeholder page。
+- [x] 实现有限、有序、经 ACTIVE membership 过滤的 typed Home query 与最小 view model。
+- [x] 展示 Space identity、两名 Resident 与当天可选 Presence，不提供 online/last-seen/exact age 或关系压力信息。
+- [x] Presence 首版只暴露 `shortText`，使用 inline editing，允许本人 update/upsert 与 clear；服务端集中执行 trim 与 120 Unicode 字符限制。
+- [x] 使用查看者浏览器本地日历日判断 freshness；跨日后不展示旧 Presence，不删除数据库记录，不新增 timezone 字段。
+- [x] 实现首次进入轻量 “Welcome Home” 与完整 Quiet State。
+- [x] 建立 typed `zh-CN` / `en-US` i18n、HttpOnly locale cookie、统一 error/accessibility/formatter 资源与语言无关 URL。
+- [x] 扩展 Quiet Home semantic design tokens、responsive layout、visible focus、44px 触控目标、live announcement 与 reduced-motion。
+- [x] 添加 Presence Action/Service、freshness、Quiet Home、i18n、真实 PostgreSQL 与 desktop/mobile E2E 测试。
 
 验证：
 
-- Home 能在大约三秒内传达这是两位 Resident 的共同空间、谁在这里、当天自愿留下的 Presence，以及如何更新自己的 Presence。
-- 没有 Presence 或双方都没有任何行为时，Home 仍然完整、有意且绝不使用 “No data” 或 “No posts yet”。
-- 旧 Presence 在查看者本地日历日结束后不再作为当前状态展示，也不形成时间线或更新时间压力。
-- `zh-CN` 为稳定默认与 fallback，用户可切换到 `en-US` 且选择可以持久化；现有 URL 与 Invitation callback 安全语义不改变。
-- Home 结果有限、有序、经过服务端成员资格与隐私过滤。
-- Mobile 首屏完成核心情绪表达，keyboard、focus、screen reader、touch target 与 reduced motion 验证通过。
-- 页面不包含 Card Grid、未来空 tab、disabled placeholder、行为指标或其他 `PHASE_3_DESIGN.md` blocker。
+- [x] 19 个 Vitest files / 73 tests 全通过，其中真实 PostgreSQL integration 15/15。
+- [x] PostgreSQL 16.15 全新数据库成功应用现有 2/2 migrations；Phase 3 无 Schema change、无新 migration。
+- [x] Playwright 10/10：desktop Chrome 5/5、Pixel 7 5/5，覆盖 Quiet Home、Presence、i18n 与 Phase 2 regression。
+- [x] 实际浏览器检查中文/英文、Quiet/Presence/edit、desktop/375px mobile；无横向溢出，控制台无 error/warning。
+- [x] Node 22 `npm ci`、Prisma generate/validate、lint、typecheck、format check、production build、production audit 与 `git diff --check` 通过。
 
 退出标准：
 
-- 两名 Resident 均可在移动端和桌面端以 `zh-CN` 或 `en-US` 查看 Quiet Home，并在不产生义务或监控感的前提下更新、清除自己的当天 Presence。
+- [x] 两名 Resident 均可在移动端和桌面端以 `zh-CN` 或 `en-US` 查看 Quiet Home，并在不产生义务或监控感的前提下更新、清除自己的当天 Presence。
+- [ ] 独立 Phase 3 Final Review；implementation 不自行宣告 Review `PASS`。
 
 ## 阶段 4 — Life Points 与媒体
 

@@ -12,7 +12,12 @@ export class ResidentService {
 
   async requireActive(userId: string, spaceId?: string) {
     const resident = await this.db.resident.findFirst({
-      where: { userId, status: "ACTIVE", ...(spaceId ? { spaceId } : {}) },
+      where: {
+        userId,
+        status: "ACTIVE",
+        space: { status: "ACTIVE" },
+        ...(spaceId ? { spaceId } : {}),
+      },
       select: {
         id: true,
         spaceId: true,

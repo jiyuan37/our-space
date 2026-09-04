@@ -24,7 +24,7 @@ describe("RegisterForm", () => {
       "callbackUrl",
     );
     rerender(<RegisterForm callbackUrl="//evil.example" />);
-    expect(screen.getByDisplayValue("/space")).toHaveAttribute(
+    expect(screen.getByDisplayValue("/home")).toHaveAttribute(
       "name",
       "callbackUrl",
     );

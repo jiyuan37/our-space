@@ -15,13 +15,16 @@ import {
   LOGIN_RATE_LIMIT_ERROR_CODE,
   LOGIN_UNAVAILABLE_ERROR_CODE,
 } from "@/lib/auth/auth-error-codes";
+import { useI18n } from "@/components/i18n/i18n-provider";
+import { errorMessageKey, type UiErrorCode } from "@/lib/i18n/errors";
 
 export function LoginForm({
   callbackUrl = DEFAULT_AUTH_CALLBACK,
 }: {
   callbackUrl?: string;
 }) {
-  const [error, setError] = useState("");
+  const { t } = useI18n();
+  const [errorCode, setErrorCode] = useState<UiErrorCode>();
   const [ready, setReady] = useState(false);
   const safeCallbackUrl = safeCallbackPath(callbackUrl);
   useEffect(() => setReady(true), []);
@@ -39,14 +42,14 @@ export function LoginForm({
         });
         if (result?.ok) window.location.href = safeCallbackUrl;
         else if (result?.error === LOGIN_RATE_LIMIT_ERROR_CODE)
-          setError("尝试有些频繁，请稍后再回来。");
+          setErrorCode("RATE_LIMIT_EXCEEDED");
         else if (result?.error === LOGIN_UNAVAILABLE_ERROR_CODE)
-          setError("暂时无法登录，请稍后再试。");
-        else setError("邮箱或密码不正确，请慢慢再试一次。");
+          setErrorCode("AUTHENTICATION_UNAVAILABLE");
+        else setErrorCode("INVALID_CREDENTIALS");
       }}
     >
       <FormField
-        label="邮箱"
+        label={t("login.email")}
         id="email"
         name="email"
         type="email"
@@ -54,16 +57,18 @@ export function LoginForm({
         autoComplete="email"
       />
       <FormField
-        label="密码"
+        label={t("login.password")}
         id="password"
         name="password"
         type="password"
         required
         autoComplete="current-password"
       />
-      {error && <Notice tone="error">{error}</Notice>}
+      {errorCode && (
+        <Notice tone="error">{t(errorMessageKey(errorCode))}</Notice>
+      )}
       <PrimaryButton pending={!ready}>
-        {ready ? "登录" : "正在准备…"}
+        {ready ? t("login.submit") : t("login.preparing")}
       </PrimaryButton>
     </form>
   );

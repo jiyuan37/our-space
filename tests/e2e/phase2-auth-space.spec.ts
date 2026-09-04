@@ -52,14 +52,14 @@ test("两名 User 通过 callback 加入，第三人和非 OWNER 被拒绝", asy
     await expect(page).toHaveURL(/\/space/, { timeout: 15_000 });
 
     await page.getByLabel("Space 名称").fill("Our E2E Home");
-    await page.getByRole("button", { name: "Create our space" }).click();
+    await page.getByRole("button", { name: "创建我们的空间" }).click();
     await expect(
-      page.getByRole("heading", { name: "You are home" }),
+      page.getByRole("heading", { name: "Our E2E Home" }),
     ).toBeVisible();
+    await page.getByRole("button", { name: "打开 Space 与账户菜单" }).click();
+    await page.getByRole("link", { name: "管理 Space" }).click();
     await page.getByLabel("邀请邮箱（可选）").fill(guestEmail);
-    await page
-      .getByRole("button", { name: "Invite someone important" })
-      .click();
+    await page.getByRole("button", { name: "邀请重要的人" }).click();
     const invitationUrl = await page.getByLabel("邀请链接").inputValue();
     const invitationPath = new URL(invitationUrl).pathname;
 
@@ -83,7 +83,7 @@ test("两名 User 通过 callback 加入，第三人和非 OWNER 被拒绝", asy
     await expect(guestPage.getByText(/Yuan 邀请你/)).toBeVisible();
     await guestPage.getByRole("button", { name: "接受邀请" }).click();
     await expect(
-      guestPage.getByRole("heading", { name: "You are home" }),
+      guestPage.getByRole("heading", { name: "Our E2E Home" }),
     ).toBeVisible();
 
     const owner = await db.user.findUniqueOrThrow({
@@ -106,9 +106,7 @@ test("两名 User 通过 callback 加入，第三人和非 OWNER 被拒绝", asy
 
     await page.reload();
     await page.getByLabel("邀请邮箱（可选）").fill("");
-    await page
-      .getByRole("button", { name: "Invite someone important" })
-      .click();
+    await page.getByRole("button", { name: "邀请重要的人" }).click();
     const fullInvitationUrl = await page.getByLabel("邀请链接").inputValue();
     const fullInvitationPath = new URL(fullInvitationUrl).pathname;
 

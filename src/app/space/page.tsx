@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { AppShell } from "@/components/layout/app-shell";
@@ -9,24 +10,29 @@ import {
 import { requireSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
 import { SpaceService } from "@/server/services/space-service";
+import { getServerI18n } from "@/lib/i18n/server";
 
 export default async function SpacePage() {
   const session = await requireSession().catch(() => redirect("/login"));
   const current = await new SpaceService(prisma).current(session.user.userId);
+  const { t } = await getServerI18n();
   return (
     <AppShell>
       <section className="foundation-card">
         {current ? (
           <>
-            <p className="eyebrow">{current.space.name}</p>
-            <h1>You are home</h1>
-            <p>Phase 2 已让两个人安全地来到这里。Home 会在下一阶段到来。</p>
+            <p className="eyebrow">{t("space.managementEyebrow")}</p>
+            <h1>{t("space.managementTitle")}</h1>
+            <p>{t("space.managementCopy")}</p>
+            <p>
+              <Link href="/home">{t("space.homeLink")}</Link>
+            </p>
             {current.role === "OWNER" && <InvitationForm />}
           </>
         ) : (
           <>
-            <h1>Create our space</h1>
-            <p>先为这个私密的家取一个名字。</p>
+            <h1>{t("space.createTitle")}</h1>
+            <p>{t("space.createCopy")}</p>
             <CreateSpaceForm />
           </>
         )}

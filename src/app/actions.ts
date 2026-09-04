@@ -13,6 +13,7 @@ import { AuthService } from "@/server/services/auth-service";
 import { InvitationService } from "@/server/services/invitation-service";
 import { SpaceService } from "@/server/services/space-service";
 import { getClientIp } from "@/lib/http/client-ip";
+import type { UiErrorCode } from "@/lib/i18n/errors";
 import { rateLimiter } from "@/server/rate-limit/default-limiter";
 import {
   enforceInvitationAcceptRateLimit,
@@ -21,7 +22,7 @@ import {
 } from "@/server/rate-limit/rate-limiter";
 
 export type ActionState = {
-  error?: string;
+  errorCode?: UiErrorCode;
   invitationUrl?: string;
   invitationId?: string;
 };
@@ -32,10 +33,11 @@ const userSchema = z.object({
 });
 
 function calm(error: unknown): ActionState {
-  if (error instanceof DomainError) return { error: error.message };
-  if (error instanceof z.ZodError)
-    return { error: error.issues[0]?.message ?? "请检查填写的内容。" };
-  return { error: "暂时无法完成，请稍后再试。" };
+  if (error instanceof DomainError) {
+    return { errorCode: error.code as UiErrorCode };
+  }
+  if (error instanceof z.ZodError) return { errorCode: "INVALID_INPUT" };
+  return { errorCode: "UNEXPECTED_ERROR" };
 }
 
 export async function registerAction(
@@ -70,11 +72,11 @@ export async function createSpaceAction(
       name: input.name,
       displayName: session.user.name,
     });
-    revalidatePath("/space");
-    return {};
   } catch (error) {
     return calm(error);
   }
+  revalidatePath("/space");
+  redirect("/home?created=1");
 }
 
 export async function createInvitationAction(
@@ -138,5 +140,5 @@ export async function acceptInvitationAction(
   } catch (error) {
     return calm(error);
   }
-  redirect("/space?joined=1");
+  redirect("/home?joined=1");
 }

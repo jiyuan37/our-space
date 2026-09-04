@@ -91,15 +91,13 @@ export class InvitationService {
       });
       return {
         spaceName: invitation.space.name,
-        inviterDisplayName:
-          invitation.space.residents[0]?.displayName ?? "一位重要的人",
+        inviterDisplayName: invitation.space.residents[0]?.displayName ?? null,
         acceptable: false,
       };
     }
     return {
       spaceName: invitation.space.name,
-      inviterDisplayName:
-        invitation.space.residents[0]?.displayName ?? "一位重要的人",
+      inviterDisplayName: invitation.space.residents[0]?.displayName ?? null,
       acceptable:
         invitation.status === "PENDING" && invitation.space.status === "ACTIVE",
     };

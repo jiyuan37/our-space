@@ -99,7 +99,7 @@ describe("Phase 2 Server Action wiring", () => {
     unsafeData.set("callbackUrl", "https://evil.example");
     await registerAction({}, unsafeData);
     expect(mocks.redirect).toHaveBeenLastCalledWith(
-      "/login?registered=1&callbackUrl=%2Fspace",
+      "/login?registered=1&callbackUrl=%2Fhome",
     );
   });
 
@@ -108,6 +108,7 @@ describe("Phase 2 Server Action wiring", () => {
     data.set("name", "Our Home");
     await createSpaceAction({}, data);
     expect(mocks.spaceCreate).toHaveBeenCalledOnce();
+    expect(mocks.redirect).toHaveBeenCalledWith("/home?created=1");
     expect(mocks.invitationCreateLimit).not.toHaveBeenCalled();
     expect(mocks.invitationAcceptLimit).not.toHaveBeenCalled();
   });
@@ -132,6 +133,7 @@ describe("Phase 2 Server Action wiring", () => {
     const data = new FormData();
     data.set("token", "safe_test_token");
     await acceptInvitationAction({}, data);
+    expect(mocks.redirect).toHaveBeenCalledWith("/home?joined=1");
     expect(mocks.invitationAcceptLimit).toHaveBeenCalledOnce();
     expect(
       mocks.invitationAcceptLimit.mock.invocationCallOrder[0],
@@ -147,7 +149,7 @@ describe("Phase 2 Server Action wiring", () => {
     const data = new FormData();
     data.set("token", "safe_test_token");
     await expect(acceptInvitationAction({}, data)).resolves.toEqual({
-      error: "尝试有些频繁，请稍后再回来。",
+      errorCode: "RATE_LIMIT_EXCEEDED",
     });
     expect(mocks.invitationAccept).not.toHaveBeenCalled();
   });
@@ -159,7 +161,7 @@ describe("Phase 2 Server Action wiring", () => {
     const data = new FormData();
     data.set("name", "Our Home");
     await expect(createSpaceAction({}, data)).resolves.toEqual({
-      error: "请先登录，再继续回到我们的空间。",
+      errorCode: "AUTHENTICATION_REQUIRED",
     });
     expect(mocks.spaceCreate).not.toHaveBeenCalled();
   });
@@ -171,7 +173,7 @@ describe("Phase 2 Server Action wiring", () => {
     const data = new FormData();
     data.set("invitationId", "invitation_1");
     await expect(revokeInvitationAction({}, data)).resolves.toEqual({
-      error: "只有这个 Space 的 OWNER 可以这样做。",
+      errorCode: "OWNER_PERMISSION_REQUIRED",
     });
   });
 });

@@ -1,4 +1,4 @@
-export const DEFAULT_AUTH_CALLBACK = "/space";
+export const DEFAULT_AUTH_CALLBACK = "/home";
 
 export function safeCallbackPath(value: string | null | undefined): string {
   if (!value || !value.startsWith("/") || value.startsWith("//")) {

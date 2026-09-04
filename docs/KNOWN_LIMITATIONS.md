@@ -6,12 +6,12 @@
 
 ## 当前仓库限制
 
-- Phase 2 已完成并通过最终 Review；认证后 `/space` 是明确的 Phase 2 过渡体验，不是 Phase 3 Home。
-- Phase 3 前置 UI/UX Review 与 Design Decision Closure 已完成，但 Phase 3 implementation 尚未开始、尚未获批准。
-- 尚未实现 Home、Presence 编辑、Life Point、Response、Shared Moment、Visit 或 Settings。
-- 尚未实现正式 `zh-CN` / `en-US` i18n architecture；默认语言、语言支持和 URL 边界已由 DEC-046 收口。
+- Phase 3 implementation 已完成，等待独立 Final Review；Phase 4 尚未开始，也未获得批准。
+- `/home` 已承载 Quiet Home 与 Presence；`/space` 继续作为次级 Invitation/account management 边界。
+- 尚未实现 Life Point、Response、Shared Moment、Visit、Memory 或 Phase 4 media workflow。
+- locale preference 使用浏览器 HttpOnly cookie 持久化，不跨浏览器或设备同步；Phase 3 不为此增加数据库字段。
 - 尚无 seed data 或 demo account；这两项属于后续阶段。
-- Playwright 已配置 desktop Google Chrome 与 Pixel 7；Phase 2 Repair 的完整真实 E2E 已在独立 PostgreSQL 16 测试数据库上以 6/6 通过。
+- Playwright 已配置 desktop Google Chrome 与 Pixel 7；Phase 3 完整真实 E2E 在独立 PostgreSQL 16.15 测试数据库上以 10/10 通过。Safari 与 Firefox 尚未纳入当前自动化矩阵。
 - 当前主机没有 Docker CLI，因此无法实际执行 `docker compose config` 或容器启动；`docker-compose.yml` 已通过 YAML 解析验证，clean migration 已在本机 PostgreSQL 16.15 全新数据库中以 2/2 通过。
 - 本地 `MemoryRateLimiter` 只适合单进程开发与测试；多实例 production 必须替换为共享存储 adapter。
 - Password reset、email verification 与 production email delivery 不属于 Phase 2，尚未实现。
@@ -58,15 +58,13 @@
 - Space 的恢复、永久删除、owner 转移、重新加入和完整数据保留期限仍需在对应用户功能实施前定义；Phase 1 只确定 `ACTIVE`/`ARCHIVED` 与 `ACTIVE`/`LEFT` 生命周期基础。
 - User 账户删除以及数据导出/保留行为。
 - Presence freshness 已由 DEC-045 收口为查看者客户端/浏览器本地日历日，且不新增 timezone 数据库字段；Visit 分组中两名 Resident 时区不同或旅行时的更广泛行为仍待 Phase 6 前解决。
-- Phase 3 i18n 的具体 library、locale provider/cookie 等 app-layer persistence mechanism，以及 server/client locale hydration 策略仍待获批的 implementation design 选择；不得因此改变现有 URL 或 Prisma Schema。
 - Visit counter 的并发语义，以及作者自己的重访是否采用相同计数方式。
 - 纯文本及未来 rich content 的内容清理策略。
 - 如果包含 AuditLog，其范围和保留策略。
-- Home 结果数量限制，以及时间戳相同时的确定性排序。
-- 支持的浏览器/设备矩阵和具体可访问性审查工具。
+- Safari、Firefox 与更广设备矩阵的正式兼容性验证。
 - 部署与 CI/CD 平台；MVP 只强制要求可在本地运行。
 
-## Phase 2 已实施的决策
+## Phase 2 与 Phase 3 已实施的决策
 
 以下原开放问题已由 DEC-032 至 DEC-041 收口并在 Phase 2 实施：
 
@@ -79,8 +77,10 @@
 - Server Actions/Route Handlers 职责、ACTIVE Resident/OWNER 服务端授权、客户端 view model 最小化、CSRF/origin 和认证 cookie 策略已确定。
 - RateLimiter 接口、账户/IP 维度和 typed domain error 已实施；生产共享存储 adapter 仍是明确限制。
 - 独立 `TEST_DATABASE_URL`、真实 PostgreSQL integration、并发测试和真实浏览器 E2E 已在 PostgreSQL 16.15 完成 Repair 验证。
+- Quiet Home、viewer-local-day Presence freshness 与语言无关 `zh-CN` / `en-US` i18n 已按 DEC-044 至 DEC-047 实施。
+- Home query 最多读取两名 ACTIVE Resident，并以 `joinedAt`、`id` 确定性排序；Presence 旧记录保留在数据库但不作为跨日 current state 展示。
 
-本节不授权开始 Phase 3。
+本节不构成 Phase 3 Final Review 结论，也不授权开始 Phase 4。
 
 ## 需要关注的预期技术债务
 

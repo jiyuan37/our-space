@@ -550,3 +550,14 @@
   - 在组件中逐步硬编码两套文案 — 拒绝，因为会导致翻译、错误和 Accessibility 文案漂移。
   - 使用 `/zh-CN/...`、`/en-US/...` 路由前缀 — 拒绝，因为 private application 不需要 SEO locale URL，且会无必要地改变已验证的 callback 路径。
   - 立即新增数据库 language preference — 当前不采用；Phase 3 使用 cookie、provider 或等价 app-layer mechanism，不扩大核心数据模型。
+
+## DEC-047 — Phase 3 使用 typed locale resources 与 HttpOnly cookie 持久化
+
+- 日期：2026-09-03
+- 状态：已接受并实施
+- 决策：Phase 3 不新增 i18n dependency，使用仓库内 typed flat message resources 统一提供 `zh-CN` 与 `en-US` 文案；TypeScript 要求两套 locale 具有相同 key 集，未知 locale 和缺失错误 code 稳定回退到 `zh-CN` / `UNEXPECTED_ERROR`。Server Component 与 Client Component 共享同一 translator 和 `Intl` 日期/数字 formatter。用户明确选择写入一年有效、`HttpOnly`、`SameSite=Lax`、production `Secure` 的 `our-space-locale` cookie，并通过 root provider hydration；不读取 JavaScript storage、不增加 locale URL prefix、不修改 Prisma Schema。
+- 理由：当前仅有两种 locale，轻量 typed resources 已能在编译与测试时发现 key 漂移，同时避免引入强制 locale routing 或不必要的依赖。HttpOnly app-layer cookie 可让 Server Component 首次响应直接使用正确 locale，并把 preference 与认证/业务数据分离。
+- 考虑过的替代方案：
+  - 新增通用 i18n library — 当前不采用，因为两种 flat locale 不需要额外运行时，且需避免路由与 hydration 复杂度。
+  - `localStorage` persistence — 拒绝，因为 Server Component 首次响应无法读取，会造成 locale hydration 闪烁。
+  - 数据库 preference — 拒绝，因为 Phase 3 不要求跨设备同步语言，且不应为 supporting preference 扩大 Schema。

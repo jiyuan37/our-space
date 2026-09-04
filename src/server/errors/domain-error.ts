@@ -17,6 +17,7 @@ export type DomainErrorCode =
   | "ACTIVE_RESIDENT_CONFLICT"
   | "RATE_LIMIT_EXCEEDED"
   | "TRANSACTION_CONFLICT"
+  | "PRESENCE_TEXT_INVALID"
   | "CANNOT_RESPOND_TO_OWN_LIFE_POINT"
   | "LIFE_POINT_NOT_VISIBLE"
   | "UPLOAD_VALIDATION_FAILED";
@@ -35,91 +36,99 @@ export class EmailAlreadyRegisteredError extends DomainError {
   readonly code = "EMAIL_ALREADY_REGISTERED";
   readonly statusCode = 409;
   constructor() {
-    super("这个邮箱已经注册过了。");
+    super("Email is already registered.");
   }
 }
 export class InvalidCredentialsError extends DomainError {
   readonly code = "INVALID_CREDENTIALS";
   readonly statusCode = 401;
   constructor() {
-    super("邮箱或密码不正确，请慢慢再试一次。");
+    super("Credentials are invalid.");
   }
 }
 export class PasswordPolicyError extends DomainError {
   readonly code = "PASSWORD_POLICY";
   readonly statusCode = 422;
   constructor() {
-    super("密码需要在 15 到 128 个字符之间。");
+    super("Password does not satisfy the configured policy.");
   }
 }
 export class AuthenticationRequiredError extends DomainError {
   readonly code = "AUTHENTICATION_REQUIRED";
   readonly statusCode = 401;
   constructor() {
-    super("请先登录，再继续回到我们的空间。");
+    super("Authentication is required.");
   }
 }
 export class ActiveSpaceAlreadyExistsError extends DomainError {
   readonly code = "ACTIVE_SPACE_ALREADY_EXISTS";
   readonly statusCode = 409;
   constructor() {
-    super("你已经住在一个 Space 里了。");
+    super("User already has an active Space.");
   }
 }
 export class SpaceInactiveError extends DomainError {
   readonly code = "SPACE_INACTIVE";
   readonly statusCode = 409;
   constructor() {
-    super("这个 Space 现在无法加入。");
+    super("Space is not active.");
   }
 }
 export class OwnerPermissionRequiredError extends DomainError {
   readonly code = "OWNER_PERMISSION_REQUIRED";
   readonly statusCode = 403;
   constructor() {
-    super("只有这个 Space 的 OWNER 可以这样做。");
+    super("Owner permission is required.");
   }
 }
 export class InvitationNotFoundError extends DomainError {
   readonly code = "INVITATION_NOT_FOUND";
   readonly statusCode = 404;
   constructor() {
-    super("找不到这份邀请。");
+    super("Invitation was not found.");
   }
 }
 export class InvitationRevokedError extends DomainError {
   readonly code = "INVITATION_REVOKED";
   readonly statusCode = 410;
   constructor() {
-    super("这份邀请已经撤销。");
+    super("Invitation has been revoked.");
   }
 }
 export class InvitationEmailMismatchError extends DomainError {
   readonly code = "INVITATION_EMAIL_MISMATCH";
   readonly statusCode = 403;
   constructor() {
-    super("请使用收到邀请的邮箱登录。");
+    super("Authenticated email does not match the invitation.");
   }
 }
 export class ActiveResidentConflictError extends DomainError {
   readonly code = "ACTIVE_RESIDENT_CONFLICT";
   readonly statusCode = 409;
   constructor() {
-    super("你已经住在另一个 Space 里了。");
+    super("User has a conflicting active residency.");
   }
 }
 export class RateLimitExceededError extends DomainError {
   readonly code = "RATE_LIMIT_EXCEEDED";
   readonly statusCode = 429;
   constructor() {
-    super("尝试有些频繁，请稍后再回来。");
+    super("Rate limit exceeded.");
   }
 }
 export class TransactionConflictError extends DomainError {
   readonly code = "TRANSACTION_CONFLICT";
   readonly statusCode = 409;
   constructor() {
-    super("刚刚有人同时进行了操作，请再试一次。");
+    super("Transaction conflict.");
+  }
+}
+
+export class PresenceTextInvalidError extends DomainError {
+  readonly code = "PRESENCE_TEXT_INVALID";
+  readonly statusCode = 422;
+  constructor() {
+    super("Presence text must contain at most 120 Unicode characters.");
   }
 }
 
@@ -128,7 +137,7 @@ export class SpaceNotFoundError extends DomainError {
   readonly statusCode = 404;
 
   constructor() {
-    super("找不到这个 Space。");
+    super("Space was not found.");
   }
 }
 
@@ -137,7 +146,7 @@ export class NotSpaceResidentError extends DomainError {
   readonly statusCode = 403;
 
   constructor() {
-    super("你无法访问这个 Space。");
+    super("Active Space residency is required.");
   }
 }
 
@@ -146,7 +155,7 @@ export class SpaceFullError extends DomainError {
   readonly statusCode = 409;
 
   constructor() {
-    super("这个 Space 已经住满了。");
+    super("Space has reached its active Resident capacity.");
   }
 }
 
@@ -155,7 +164,7 @@ export class InvitationExpiredError extends DomainError {
   readonly statusCode = 410;
 
   constructor() {
-    super("这份邀请已经过期。");
+    super("Invitation has expired.");
   }
 }
 
@@ -164,7 +173,7 @@ export class InvitationAlreadyUsedError extends DomainError {
   readonly statusCode = 409;
 
   constructor() {
-    super("这份邀请已经使用过了。");
+    super("Invitation has already been used.");
   }
 }
 
@@ -173,7 +182,7 @@ export class CannotRespondToOwnLifePointError extends DomainError {
   readonly statusCode = 422;
 
   constructor() {
-    super("不能回应自己留下的 Life Point。");
+    super("A Resident cannot respond to their own Life Point.");
   }
 }
 
@@ -182,7 +191,7 @@ export class LifePointNotVisibleError extends DomainError {
   readonly statusCode = 404;
 
   constructor() {
-    super("无法查看这个 Life Point。");
+    super("Life Point is not visible to this Resident.");
   }
 }
 
@@ -190,7 +199,7 @@ export class UploadValidationError extends DomainError {
   readonly code = "UPLOAD_VALIDATION_FAILED";
   readonly statusCode = 422;
 
-  constructor(message = "这个文件暂时无法上传。", options?: ErrorOptions) {
+  constructor(message = "Upload validation failed.", options?: ErrorOptions) {
     super(message, options);
   }
 }

@@ -6,21 +6,23 @@ import { AppShell } from "@/components/layout/app-shell";
 import { LoginForm } from "@/components/auth/login-form";
 import { authOptions } from "@/lib/auth/auth-options";
 import { safeCallbackPath } from "@/lib/auth/callback-url";
+import { getServerI18n } from "@/lib/i18n/server";
 
 export default async function LoginPage({
   searchParams,
 }: {
   searchParams: Promise<{ callbackUrl?: string }>;
 }) {
-  if (await getServerSession(authOptions)) redirect("/space");
+  if (await getServerSession(authOptions)) redirect("/home");
   const callbackUrl = safeCallbackPath((await searchParams).callbackUrl);
+  const { t } = await getServerI18n();
   return (
     <AppShell>
       <section className="foundation-card">
-        <h1>欢迎回来</h1>
+        <h1>{t("login.title")}</h1>
         <LoginForm callbackUrl={callbackUrl} />
         <Link href={`/register?callbackUrl=${encodeURIComponent(callbackUrl)}`}>
-          创建账户
+          {t("login.createAccount")}
         </Link>
       </section>
     </AppShell>

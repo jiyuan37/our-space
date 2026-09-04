@@ -42,7 +42,7 @@ describe("LoginForm", () => {
     await userEvent.click(screen.getByRole("button", { name: "登录" }));
     expect(signIn).toHaveBeenCalledWith(
       "credentials",
-      expect.objectContaining({ callbackUrl: "/space" }),
+      expect.objectContaining({ callbackUrl: "/home" }),
     );
     expect(screen.getByRole("alert")).toHaveTextContent("尝试有些频繁");
   });

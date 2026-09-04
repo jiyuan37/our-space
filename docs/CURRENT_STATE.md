@@ -4,12 +4,12 @@
 
 ## 当前 Phase
 
-- 当前 Phase：Phase 2 — 已完成并通过最终 Review。
-- 当前状态：**Phase 2 Closure Review 已通过，结论为 `PASS`。**
+- 当前 Phase：Phase 3 — Core Home / Presence。
+- 当前状态：**Phase 3 implementation 已完成，等待独立 Phase 3 Final Review。**
 - 实际项目根目录：`/Users/yuan/Desktop/our-space`。
 - 下一项是否已获批准：否。
-- Phase 3 前置 UI/UX Review 已完成，Design Direction 已完成收口。
-- **Phase 3 尚未开始，尚未获得 implementation 批准。**
+- Phase 2 已完成并通过最终 Review；Phase 3 前置 UI/UX Review、Design Decision Closure 与 implementation 已完成。
+- **Phase 4 尚未开始，也未获得批准。**
 
 ## Git 连续性
 
@@ -19,7 +19,8 @@
 - Phase 1 最后验证代码提交：`1d277064a27ab29105e890bcf0f2373ac3b42196`。
 - Phase 2 实施基线：`f2e8f518db8516a33abfac32ce7aa73d354347b5`。
 - Phase 2 最终通过提交：`0c37e4acfbce8775a22bc5d7bf4feea1433048c5`。
-- Phase 2 Closure Review 开始时已成功执行 `git fetch origin`；`main...origin/main` 为 `0 0`，工作树干净。
+- Phase 3 实施基线：`7f3f2708434de7eac193b826096ac9e4dfefcffb`。
+- Phase 3 开始时已成功执行 `git fetch origin`；`main...origin/main` 为 `0 0`，工作树干净。
 
 ## Phase 2 已实现能力
 
@@ -43,10 +44,18 @@
 - 修复 E2E 登录 helper 未等待 Credentials response 的同步缺口，并收窄 Space full alert locator；未改变认证、callback 或限流产品逻辑。
 - Production dependency override 锁定 `deepmerge-ts@8.0.2` 与 `nanoid@3.3.18`；`npm audit --omit=dev` 当前为 0。
 
+## Phase 3 已实现能力
+
+- `/home` protected route、有限有序 `HomeViewModel`、Space identity 与两位 ACTIVE Resident presentation。
+- Quiet Home / 安静的家、Single Home + secondary Space/account menu，以及保留可访问的 Phase 2 Space/Invitation 管理能力。
+- Presence `shortText` 读取、本人 inline update/upsert、显式 clear、120 Unicode 字符服务端 validation 与 typed Action state。
+- freshness 以查看者浏览器本地日历日为 presentation boundary；初始 hydration 不渲染 Presence 文本，跨日自然回到 Quiet State，数据库旧记录不被自动删除。
+- typed `zh-CN` / `en-US` locale resources、`zh-CN` fallback、HttpOnly cookie persistence、locale-independent URL，以及 Auth、Invitation、Space、error、Accessibility 与 formatter 的统一本地化。
+- warm cream、克制 surface、semantic design tokens、responsive 双人布局、44px 操作目标、visible focus、live announcement 与 reduced-motion。
+
 ## 尚未开始
 
-- Phase 3 及后续功能：Home、Presence、Life Point、Response、Shared Moment、Visit 和 Settings。
-- Phase 3 i18n architecture 尚未实现；现有 Phase 2 UI 仍不代表最终 `zh-CN` / `en-US` 产品文案边界。
+- Phase 4 及后续功能：Life Point、Response、Shared Moment、Visit、Memory 与 media workflow。
 - Seed data 与 demo account 属于后续阶段。
 
 ## Phase 3 已收口的设计基线
@@ -58,7 +67,7 @@
 - Presence 只属于查看者的当前浏览器本地日历日；跨日后旧 Presence 不再展示，Home 回到 Quiet State，不新增 timezone 字段。
 - 默认 locale 为 `zh-CN`，同时支持 `en-US`；Phase 3 必须建立统一 i18n architecture，现有 authenticated/private URL 与 Invitation callback 保持语言无关。
 - Design Constitution、视觉、motion、mobile、Accessibility、Privacy-as-UI 和 Review blocker 见 `docs/PHASE_3_DESIGN.md`；长期决策见 DEC-044 至 DEC-046。
-- 本节只记录实施前设计决定，不构成 Phase 3 implementation 批准。
+- 实际 implementation evidence 见 `docs/PHASE_3_REVIEW.md`；该文件不构成独立 Final Review 结论。
 
 ## Migration 状态
 
@@ -66,7 +75,7 @@
 - Foundation migration：`20260728060000_foundation`。
 - Phase 2 migration：`20260728170000_phase_2_invitations`。
 - Foundation migration SHA-256：`69a9a905bc0d713a9fb57bf68a7aaaf436899c83472a207313708874df0df20f`。
-- Repair 未修改 Prisma Schema 或任何 migration。
+- Phase 3 未修改 Prisma Schema 或任何 migration；全新测试数据库已成功应用现有 2/2 migrations。
 
 ## 当前验证状态
 
@@ -78,13 +87,13 @@
 | `npm run prisma:validate`                   | 通过                                        |
 | `npm run lint`                              | 通过                                        |
 | `npm run typecheck`                         | 通过                                        |
-| `npm test`                                  | 通过；14 files / 50 tests，无 required skip |
-| Phase 2 database integration                | 通过；10/10                                 |
+| `npm test`                                  | 通过；19 files / 73 tests，无 required skip |
+| PostgreSQL database integration             | 通过；15/15                                 |
 | `npm audit --omit=dev`                      | 通过；0 vulnerabilities                     |
 | Argon2id smoke                              | 通过；2/2                                   |
 | PostgreSQL integration / clean migration    | PostgreSQL 16.15；2/2 migrations            |
 | concurrency                                 | 最大 ACTIVE Resident = 2；违规 Space = 0    |
-| 真实 E2E                                    | 通过；desktop Chrome + Pixel 7，6/6         |
+| 真实 E2E                                    | 通过；desktop Chrome + Pixel 7，10/10       |
 | `npm run build`                             | 通过                                        |
 | `npm run format:check` / `git diff --check` | 通过                                        |
 
@@ -92,4 +101,4 @@
 
 - 不得使用 `DATABASE_URL` 代替独立 `TEST_DATABASE_URL`。
 - 不得记录密码、Invitation raw token、hash、认证 secret 或数据库凭据。
-- Phase 2 已完成并通过最终 Review；Phase 3 前置设计已收口；本状态不构成 Phase 3 implementation 批准。
+- Phase 3 implementation 已完成，等待独立 Final Review；Phase 4 尚未开始，也未获得批准。

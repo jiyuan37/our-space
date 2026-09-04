@@ -4,18 +4,20 @@ import { redirect } from "next/navigation";
 
 import { AppShell } from "@/components/layout/app-shell";
 import { authOptions } from "@/lib/auth/auth-options";
+import { getServerI18n } from "@/lib/i18n/server";
 
 export default async function WelcomePage() {
-  if (await getServerSession(authOptions)) redirect("/space");
+  if (await getServerSession(authOptions)) redirect("/home");
+  const { t } = await getServerI18n();
   return (
     <AppShell>
       <section className="foundation-card">
-        <p className="eyebrow">Our Space</p>
-        <h1>Welcome Home</h1>
-        <p className="foundation-copy">一个属于两个人的安静空间。</p>
+        <p className="eyebrow">{t("welcome.eyebrow")}</p>
+        <h1>{t("welcome.title")}</h1>
+        <p className="foundation-copy">{t("welcome.copy")}</p>
         <div className="link-row">
-          <Link href="/register">创建账户</Link>
-          <Link href="/login">登录</Link>
+          <Link href="/register">{t("welcome.register")}</Link>
+          <Link href="/login">{t("welcome.login")}</Link>
         </div>
       </section>
     </AppShell>

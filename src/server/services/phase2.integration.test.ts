@@ -3,6 +3,8 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { AuthService } from "@/server/services/auth-service";
 import { InvitationService } from "@/server/services/invitation-service";
+import { HomeService } from "@/server/services/home-service";
+import { PresenceService } from "@/server/services/presence-service";
 import { SpaceService } from "@/server/services/space-service";
 import {
   ActiveResidentConflictError,
@@ -13,6 +15,7 @@ import {
   InvitationEmailMismatchError,
   InvitationExpiredError,
   InvitationRevokedError,
+  NotSpaceResidentError,
   OwnerPermissionRequiredError,
   SpaceFullError,
   SpaceInactiveError,
@@ -38,14 +41,31 @@ async function createOwner(prefix: string) {
   return { owner, created };
 }
 
+async function createPair(prefix: string) {
+  const ownerHome = await createOwner(prefix);
+  const guest = await register(`${prefix}-guest@example.com`, "Guest");
+  const invitation = await new InvitationService(db).create({
+    userId: ownerHome.owner.id,
+    email: guest.email,
+  });
+  const guestResident = await new InvitationService(db).accept({
+    userId: guest.id,
+    token: invitation.token,
+    email: guest.email,
+    displayName: guest.name,
+  });
+  return { ...ownerHome, guest, guestResident };
+}
+
 async function resetDatabase() {
+  await db.presence.deleteMany();
   await db.invitation.deleteMany();
   await db.resident.deleteMany();
   await db.space.deleteMany();
   await db.user.deleteMany();
 }
 
-suite.sequential("Phase 2 PostgreSQL integration", () => {
+suite.sequential("Phase 2/3 PostgreSQL integration", () => {
   beforeAll(() => {
     db = new PrismaClient({ datasources: { db: { url: databaseUrl! } } });
   });
@@ -370,5 +390,116 @@ suite.sequential("Phase 2 PostgreSQL integration", () => {
         where: { spaceId: created.space.id, status: "ACTIVE" },
       }),
     ).toBeLessThanOrEqual(2);
+  });
+
+  it("Home query 只返回当前 ACTIVE Space 的有限安全模型", async () => {
+    const pair = await createPair("home-query");
+    await new PresenceService(db).updateOwn(
+      pair.guest.id,
+      "  今天走了很长的路  ",
+    );
+
+    const home = await new HomeService(db).get(pair.owner.id);
+    expect(home).toEqual({
+      space: { id: pair.created.space.id, name: "home-query Home" },
+      residents: [
+        expect.objectContaining({
+          id: pair.created.resident.id,
+          displayName: "Owner",
+          avatarUrl: null,
+          isViewer: true,
+          presence: null,
+        }),
+        expect.objectContaining({
+          id: pair.guestResident.id,
+          displayName: "Guest",
+          avatarUrl: null,
+          isViewer: false,
+          presence: expect.objectContaining({
+            shortText: "今天走了很长的路",
+            updatedAt: expect.any(String),
+          }),
+        }),
+      ],
+    });
+    expect(Object.keys(home.space).sort()).toEqual(["id", "name"]);
+    expect(home.residents).toHaveLength(2);
+    expect(home.residents.every((resident) => !("userId" in resident))).toBe(
+      true,
+    );
+  });
+
+  it("Presence upsert 永远由 session user 解析自己的 Resident", async () => {
+    const pair = await createPair("presence-own");
+    const presence = new PresenceService(db);
+    await presence.updateOwn(pair.owner.id, "第一句");
+    await presence.updateOwn(pair.owner.id, "第二句");
+    await presence.updateOwn(pair.guest.id, "另一位的此刻");
+
+    expect(await db.presence.count()).toBe(2);
+    await expect(
+      db.presence.findUniqueOrThrow({
+        where: { residentId: pair.created.resident.id },
+        select: { shortText: true },
+      }),
+    ).resolves.toEqual({ shortText: "第二句" });
+    await expect(
+      db.presence.findUniqueOrThrow({
+        where: { residentId: pair.guestResident.id },
+        select: { shortText: true },
+      }),
+    ).resolves.toEqual({ shortText: "另一位的此刻" });
+  });
+
+  it("Presence 可主动清除，纯空白也按清除处理", async () => {
+    const pair = await createPair("presence-clear");
+    const presence = new PresenceService(db);
+    await presence.updateOwn(pair.owner.id, "稍后回来");
+    await presence.clearOwn(pair.owner.id);
+    expect(await db.presence.count()).toBe(0);
+
+    await presence.updateOwn(pair.owner.id, "重新出现");
+    await presence.updateOwn(pair.owner.id, "  \n ");
+    expect(await db.presence.count()).toBe(0);
+  });
+
+  it("过期语义不会自动删除数据库 Presence", async () => {
+    const pair = await createPair("presence-retained");
+    await new PresenceService(db).updateOwn(pair.owner.id, "旧的一天");
+    const oldTime = new Date("2025-01-01T12:00:00.000Z");
+    await db.presence.update({
+      where: { residentId: pair.created.resident.id },
+      data: { updatedAt: oldTime },
+    });
+
+    const home = await new HomeService(db).get(pair.owner.id);
+    expect(home.residents[0]?.presence?.updatedAt).toBe(oldTime.toISOString());
+    expect(await db.presence.count()).toBe(1);
+  });
+
+  it("非 Resident 与 ARCHIVED Space 均不能读取 Home 或更新 Presence", async () => {
+    const pair = await createPair("presence-authz");
+    const outsider = await register("presence-outsider@example.com", "Outside");
+    await expect(new HomeService(db).get(outsider.id)).rejects.toBeInstanceOf(
+      NotSpaceResidentError,
+    );
+    await expect(
+      new PresenceService(db).updateOwn(outsider.id, "不应写入"),
+    ).rejects.toBeInstanceOf(NotSpaceResidentError);
+
+    await db.space.update({
+      where: { id: pair.created.space.id },
+      data: {
+        status: "ARCHIVED",
+        archivedAt: new Date(),
+        archivedByUserId: pair.owner.id,
+      },
+    });
+    await expect(new HomeService(db).get(pair.owner.id)).rejects.toBeInstanceOf(
+      NotSpaceResidentError,
+    );
+    await expect(
+      new PresenceService(db).updateOwn(pair.owner.id, "不应写入"),
+    ).rejects.toBeInstanceOf(NotSpaceResidentError);
   });
 });
