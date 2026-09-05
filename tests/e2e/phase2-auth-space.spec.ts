@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { OwnerPermissionRequiredError } from "@/server/errors/domain-error";
 import { InvitationService } from "@/server/services/invitation-service";
@@ -33,6 +33,13 @@ function database() {
   return new PrismaClient({ datasources: { db: { url } } });
 }
 
+async function expectTouchTarget(locator: Locator) {
+  const box = await locator.boundingBox();
+  expect(box).not.toBeNull();
+  expect(box?.width ?? 0).toBeGreaterThanOrEqual(44);
+  expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
+}
+
 test("两名 User 通过 callback 加入，第三人和非 OWNER 被拒绝", async ({
   page,
   browser,
@@ -56,6 +63,24 @@ test("两名 User 通过 callback 加入，第三人和非 OWNER 被拒绝", asy
     await expect(
       page.getByRole("heading", { name: "Our E2E Home" }),
     ).toBeVisible();
+    await expect(
+      page.getByText("欢迎回家。这里已经属于你们两个人。", { exact: true }),
+    ).toBeVisible();
+    await expect(page).toHaveURL(/\/home$/);
+    await page.locator('button[name="locale"][value="en-US"]').click();
+    await expect(page.locator("html")).toHaveAttribute("lang", "en-US");
+    await expect(
+      page.getByText("Welcome Home. This place now belongs to both of you.", {
+        exact: true,
+      }),
+    ).toHaveCount(0);
+    await expect(page).toHaveURL(/\/home$/);
+    await page.locator('button[name="locale"][value="zh-CN"]').click();
+    await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
+    await page.reload();
+    await expect(
+      page.getByText("欢迎回家。这里已经属于你们两个人。", { exact: true }),
+    ).toHaveCount(0);
     await page.getByRole("button", { name: "打开 Space 与账户菜单" }).click();
     await page.getByRole("link", { name: "管理 Space" }).click();
     await page.getByLabel("邀请邮箱（可选）").fill(guestEmail);
@@ -69,6 +94,10 @@ test("两名 User 通过 callback 加入，第三人和非 OWNER 被拒绝", asy
     const guestPage = await guestContext.newPage();
     await guestPage.goto(invitationUrl);
     await expect(guestPage.getByText("Our E2E Home")).toBeVisible();
+    await expectTouchTarget(
+      guestPage.getByRole("link", { name: "登录后接受" }),
+    );
+    await expectTouchTarget(guestPage.getByRole("link", { name: "注册" }));
     await guestPage.getByRole("link", { name: "注册" }).click();
     await expect(guestPage).toHaveURL(/\/register\?callbackUrl=/);
     await register(guestPage, "Lin", guestEmail);
@@ -85,6 +114,18 @@ test("两名 User 通过 callback 加入，第三人和非 OWNER 被拒绝", asy
     await expect(
       guestPage.getByRole("heading", { name: "Our E2E Home" }),
     ).toBeVisible();
+    await expect(
+      guestPage.getByText("欢迎回家。这里已经属于你们两个人。", {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(guestPage).toHaveURL(/\/home$/);
+    await guestPage.reload();
+    await expect(
+      guestPage.getByText("欢迎回家。这里已经属于你们两个人。", {
+        exact: true,
+      }),
+    ).toHaveCount(0);
 
     const owner = await db.user.findUniqueOrThrow({
       where: { email: ownerEmail },

@@ -1,17 +1,17 @@
 # Our Space — 已知限制
 
-最后更新：2026-09-03
+最后更新：2026-09-04
 
 本文档记录有意设置的 MVP 边界、尚未解决的实现细节、技术债务和未来改进。本文档不授权实施 Master Spec 范围外的功能。
 
 ## 当前仓库限制
 
-- Phase 3 implementation 已完成，等待独立 Final Review；Phase 4 尚未开始，也未获得批准。
+- Phase 3 implementation 已完成并通过 Final Review；Phase 4 尚未开始，也未获得批准。
 - `/home` 已承载 Quiet Home 与 Presence；`/space` 继续作为次级 Invitation/account management 边界。
 - 尚未实现 Life Point、Response、Shared Moment、Visit、Memory 或 Phase 4 media workflow。
 - locale preference 使用浏览器 HttpOnly cookie 持久化，不跨浏览器或设备同步；Phase 3 不为此增加数据库字段。
 - 尚无 seed data 或 demo account；这两项属于后续阶段。
-- Playwright 已配置 desktop Google Chrome 与 Pixel 7；Phase 3 完整真实 E2E 在独立 PostgreSQL 16.15 测试数据库上以 10/10 通过。Safari 与 Firefox 尚未纳入当前自动化矩阵。
+- Playwright 已配置 desktop Google Chrome 与 Pixel 7；Phase 3 Final Polish 后完整真实 E2E 在独立 PostgreSQL 16.15 测试数据库上以 12/12 通过。Safari 与 Firefox 尚未纳入当前自动化矩阵。
 - 当前主机没有 Docker CLI，因此无法实际执行 `docker compose config` 或容器启动；`docker-compose.yml` 已通过 YAML 解析验证，clean migration 已在本机 PostgreSQL 16.15 全新数据库中以 2/2 通过。
 - 本地 `MemoryRateLimiter` 只适合单进程开发与测试；多实例 production 必须替换为共享存储 adapter。
 - Password reset、email verification 与 production email delivery 不属于 Phase 2，尚未实现。
@@ -80,7 +80,7 @@
 - Quiet Home、viewer-local-day Presence freshness 与语言无关 `zh-CN` / `en-US` i18n 已按 DEC-044 至 DEC-047 实施。
 - Home query 最多读取两名 ACTIVE Resident，并以 `joinedAt`、`id` 确定性排序；Presence 旧记录保留在数据库但不作为跨日 current state 展示。
 
-本节不构成 Phase 3 Final Review 结论，也不授权开始 Phase 4。
+Phase 3 Independent Final Review 结论与 Final Polish closure 记录于 `PHASE_3_REVIEW.md`；本节不授权开始 Phase 4。
 
 ## 需要关注的预期技术债务
 

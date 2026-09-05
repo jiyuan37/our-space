@@ -22,7 +22,10 @@ export default async function RegisterPage({
         <h1>{t("register.title")}</h1>
         <p>{t("register.copy")}</p>
         <RegisterForm callbackUrl={callbackUrl} />
-        <Link href={`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`}>
+        <Link
+          className="inline-secondary-link"
+          href={`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`}
+        >
           {t("register.haveAccount")}
         </Link>
       </section>

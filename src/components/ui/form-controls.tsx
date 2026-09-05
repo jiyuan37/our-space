@@ -82,9 +82,15 @@ export function SecondaryButton({
 export function Notice({
   children,
   tone = "quiet",
-}: Readonly<{ children: ReactNode; tone?: "quiet" | "error" }>) {
+  id,
+}: Readonly<{
+  children: ReactNode;
+  tone?: "quiet" | "error";
+  id?: string;
+}>) {
   return (
     <p
+      id={id}
       className={`notice notice-${tone}`}
       role={tone === "error" ? "alert" : "status"}
     >

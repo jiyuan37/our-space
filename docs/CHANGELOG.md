@@ -4,6 +4,16 @@
 
 ## [未发布]
 
+### Phase 3 Final Polish Patch
+
+- Independent Final Review 结论保持为 `PASS WITH NON-BLOCKING FINDINGS`；6 项非阻塞 MINOR 已全部关闭，无需再次 Review。
+- 将 `--text-muted` 调整为满足 WCAG AA 的安静色值，并统一 login、register 与 Invitation inline secondary link 的 44×44px 最小触控目标。
+- 为 Presence validation error 增加稳定 `id`，让 textarea 只引用实际存在的 hint/error；保留 `role="alert"`。
+- Presence live announcement 改为保存 `saved` / `cleared` 语义状态，并在渲染时使用当前 locale 翻译。
+- `created=1` / `joined=1` welcome 只在成功后的首次进入显示，并用客户端 history replacement 将最终 URL 清理为 `/home`；reload 与 locale switch 不重复。
+- 19 files / 76 Vitest tests（database integration 15/15）、Playwright desktop Chrome + Pixel 7 12/12、production build 与 `npm audit --omit=dev` 0 vulnerabilities 全通过。
+- Phase 3 implementation 已完成并通过 Final Review；Phase 4 尚未开始，也未获得批准。
+
 ### Phase 3 Implementation
 
 - 实现 Quiet Home `/home`、响应式 Application Shell、两名 Resident presentation、完整 Quiet State 与 Single Home + secondary Space/account menu。
@@ -12,12 +22,12 @@
 - 建立 typed `zh-CN` / `en-US` locale resources、`zh-CN` fallback、HttpOnly cookie persistence 与 locale-aware formatter；Auth、Invitation、Space、error 和 Accessibility 文案一并迁移，URL 与 Invitation callback 保持语言无关。
 - 扩展 Quiet Home design tokens、desktop 双列/mobile 单列布局、44px 操作目标、visible focus、ARIA live announcement、浏览器返回键关闭 inline editor 与 reduced-motion。
 - Phase 3 未修改 Prisma Schema、未新增 migration、未增加核心实体，也未提前实现 Life Point、Response、Shared Moment、Visit、Memory 或 media workflow。
-- 在 PostgreSQL 16.15 全新数据库应用 2/2 migrations；19 files / 73 Vitest tests（database integration 15/15）、Playwright desktop Chrome + Pixel 7 10/10、production build 与 `npm audit --omit=dev` 0 vulnerabilities 全通过。
-- 实际浏览器视觉检查覆盖中文/英文、Quiet/Presence/edit、desktop/375px mobile；Phase 3 implementation 已完成，等待独立 Final Review。
+- 在 PostgreSQL 16.15 全新数据库应用 2/2 migrations；Final Polish 后 19 files / 76 Vitest tests（database integration 15/15）、Playwright desktop Chrome + Pixel 7 12/12、production build 与 `npm audit --omit=dev` 0 vulnerabilities 全通过。
+- 实际浏览器视觉检查覆盖中文/英文、Quiet/Presence/edit、desktop/375px mobile；Phase 3 implementation 已完成并通过 Final Review。
 
 ### Phase 3 Design Decision Closure
 
-- 完成 Phase 3 前置 UI/UX Review 与 Design Direction 收口；Phase 3 implementation 仍未开始、未获批准。
+- 完成 Phase 3 前置 UI/UX Review 与 Design Direction 收口；该变更发生时 Phase 3 implementation 尚未开始、未获批准。
 - 新增 `PHASE_3_DESIGN.md`，集中记录 Quiet Home / 安静的家、24 条 Design Constitution、Home/Presence/Quiet State、视觉、motion、mobile、Accessibility、Privacy-as-UI 与 UI Review blocker。
 - 通过 DEC-044 正式采用 Quiet Home，并将 Phase 3 navigation 锁定为 Single Home + secondary Space/account menu，不展示未来空 tab、disabled navigation 或 Phase 4+ placeholder。
 - 通过 DEC-045 锁定 Presence freshness：Presence 只属于查看者浏览器本地日历日，跨日后 Home 回到 Quiet State，不展示 exact age，不修改 Schema。
@@ -44,7 +54,7 @@
 - 已完成 Credentials authentication、最小 JWT session、protected routes、Space + OWNER Resident 原子创建，以及 Invitation create/preview/revoke/accept lifecycle。
 - Invitation 使用 token hashing，接受流程使用 PostgreSQL `Serializable` transaction；RateLimiter、站内 callback 与 open redirect 防护已验证。
 - lifecycle/authorization tests、真实 PostgreSQL integration、concurrency、desktop Chrome 与 Pixel 7 E2E、production build 均通过；`npm audit --omit=dev` 为 0 vulnerabilities。
-- Closure Review 结论为 `PASS`；Phase 3 尚未开始，尚未获得实施批准。
+- Closure Review 结论为 `PASS`；该 Closure 发生时 Phase 3 尚未开始、尚未获得实施批准。
 
 ### Phase 2
 
@@ -80,7 +90,7 @@
 
 ### 后续
 
-- Phase 3 尚未开始，尚未获得实施批准。
+- Phase 4 尚未开始，也未获得批准。
 
 ## [0.1.0] — 2026-07-28
 

@@ -28,6 +28,8 @@ import { PRESENCE_MAX_LENGTH } from "@/lib/validation/presence";
 import type { HomeViewModel } from "@/server/services/home-service";
 
 const initialActionState: PresenceActionState = {};
+const presenceHintId = "presence-hint";
+const presenceErrorId = "presence-error";
 
 function initials(name: string): string {
   return Array.from(name.trim()).slice(0, 2).join("").toUpperCase() || "OS";
@@ -62,6 +64,9 @@ function PresenceEditor({
     updatePresenceAction,
     initialActionState,
   );
+  const describedBy = [presenceHintId, state.errorCode ? presenceErrorId : ""]
+    .filter(Boolean)
+    .join(" ");
 
   useEffect(() => {
     if (state.status) onComplete(state.status);
@@ -76,13 +81,15 @@ function PresenceEditor({
         name="shortText"
         defaultValue={initialText}
         rows={3}
-        aria-describedby="presence-hint"
+        aria-describedby={describedBy}
       />
-      <p id="presence-hint" className="field-hint">
+      <p id={presenceHintId} className="field-hint">
         {t("presence.hint", { max: PRESENCE_MAX_LENGTH })}
       </p>
       {state.errorCode && (
-        <Notice tone="error">{t(errorMessageKey(state.errorCode))}</Notice>
+        <Notice id={presenceErrorId} tone="error">
+          {t(errorMessageKey(state.errorCode))}
+        </Notice>
       )}
       <div className="presence-editor-actions">
         <PrimaryButton pending={pending}>
@@ -110,12 +117,25 @@ export function HomeView({
   home,
   showWelcome = false,
 }: Readonly<{ home: HomeViewModel; showWelcome?: boolean }>) {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const now = useViewerNow();
   const [editing, setEditing] = useState(false);
-  const [announcement, setAnnouncement] = useState("");
+  const [welcomeVisible, setWelcomeVisible] = useState(showWelcome);
+  const [announcement, setAnnouncement] = useState<NonNullable<
+    PresenceActionState["status"]
+  > | null>(null);
   const hasEditorHistoryEntry = useRef(false);
   const editorHistoryToken = useRef("presence-editor");
+  const welcomeLocale = useRef(locale);
+  useEffect(() => {
+    if (!showWelcome) return;
+    window.history.replaceState(window.history.state, "", "/home");
+  }, [locale, showWelcome]);
+  useEffect(() => {
+    if (!showWelcome || locale !== welcomeLocale.current) {
+      setWelcomeVisible(false);
+    }
+  }, [locale, showWelcome]);
   useEffect(() => {
     if (!editing) return;
     window.history.pushState(
@@ -170,7 +190,7 @@ export function HomeView({
         <p className="home-private-note">{t("home.private")}</p>
       </header>
 
-      {showWelcome && (
+      {welcomeVisible && (
         <p className="home-welcome" role="status">
           {t("home.welcome")}
         </p>
@@ -196,7 +216,7 @@ export function HomeView({
                       className="presence-edit"
                       type="button"
                       onClick={() => {
-                        setAnnouncement("");
+                        setAnnouncement(null);
                         setEditing(true);
                       }}
                     >
@@ -207,11 +227,7 @@ export function HomeView({
                     <PresenceEditor
                       initialText={text}
                       onComplete={(status) => {
-                        setAnnouncement(
-                          status === "saved"
-                            ? t("presence.saved")
-                            : t("presence.cleared"),
-                        );
+                        setAnnouncement(status);
                         closeEditor();
                       }}
                       onCancel={closeEditor}
@@ -233,7 +249,9 @@ export function HomeView({
         ) : null}
       </div>
       <p className="sr-only" aria-live="polite">
-        {announcement}
+        {announcement
+          ? t(announcement === "saved" ? "presence.saved" : "presence.cleared")
+          : ""}
       </p>
     </article>
   );

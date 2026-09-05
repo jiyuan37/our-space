@@ -43,12 +43,14 @@ export default async function InvitePage({
             ) : (
               <p>
                 <Link
+                  className="inline-secondary-link"
                   href={`/login?callbackUrl=/invite/${encodeURIComponent(token)}`}
                 >
                   {t("invitation.login")}
                 </Link>{" "}
                 ·{" "}
                 <Link
+                  className="inline-secondary-link"
                   href={`/register?callbackUrl=/invite/${encodeURIComponent(token)}`}
                 >
                   {t("invitation.register")}

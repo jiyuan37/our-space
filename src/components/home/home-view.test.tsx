@@ -6,6 +6,7 @@ const actionMock = vi.hoisted(() => vi.fn());
 vi.mock("@/app/presence-actions", () => ({ updatePresenceAction: actionMock }));
 
 import { HomeView } from "@/components/home/home-view";
+import { I18nProvider } from "@/components/i18n/i18n-provider";
 import type { HomeViewModel } from "@/server/services/home-service";
 
 function homeWithPresence(updatedAt: string): HomeViewModel {
@@ -34,6 +35,7 @@ describe("HomeView", () => {
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
+    window.history.replaceState({}, "", "/");
   });
 
   it("展示 Space 与两位真实 Resident，并只给查看者编辑入口", async () => {
@@ -76,12 +78,99 @@ describe("HomeView", () => {
     await userEvent.click(
       await screen.findByRole("button", { name: "更新我的此刻" }),
     );
+    const textarea = screen.getByLabelText("此刻的我");
+    expect(textarea).toHaveAttribute("aria-describedby", "presence-hint");
     await userEvent.click(screen.getByRole("button", { name: "保存" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "请把 Presence 保持在 120 个字符以内。",
+    const error = await screen.findByRole("alert");
+    expect(error).toHaveAttribute("id", "presence-error");
+    expect(error).toHaveTextContent("请把 Presence 保持在 120 个字符以内。");
+    expect(textarea).toHaveAttribute(
+      "aria-describedby",
+      "presence-hint presence-error",
     );
-    expect(screen.getByLabelText("此刻的我")).toBeVisible();
+    expect(textarea).toBeVisible();
   });
+
+  it("以语义状态保存 announcement，并在 locale 切换后重新翻译保存与清除结果", async () => {
+    actionMock
+      .mockResolvedValueOnce({ status: "saved" })
+      .mockResolvedValueOnce({ status: "cleared" });
+    const home = homeWithPresence(new Date().toISOString());
+    const view = render(
+      <I18nProvider locale="zh-CN">
+        <HomeView home={home} />
+      </I18nProvider>,
+    );
+
+    await userEvent.click(
+      await screen.findByRole("button", { name: "更新我的此刻" }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "保存" }));
+    expect(await screen.findByText("Presence 已保存。")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByLabelText("此刻的我")).not.toBeInTheDocument(),
+    );
+
+    view.rerender(
+      <I18nProvider locale="en-US">
+        <HomeView home={home} />
+      </I18nProvider>,
+    );
+    expect(screen.getByText("Presence saved.")).toBeInTheDocument();
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Update my Presence" }),
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Let this be quiet for a while" }),
+    );
+    expect(
+      await screen.findByText("Presence cleared. The space is quiet again."),
+    ).toBeInTheDocument();
+
+    view.rerender(
+      <I18nProvider locale="zh-CN">
+        <HomeView home={home} />
+      </I18nProvider>,
+    );
+    expect(
+      screen.getByText("Presence 已清除，空间回到安静。"),
+    ).toBeInTheDocument();
+  });
+
+  it.each(["created", "joined"])(
+    "%s 首次进入时展示 welcome，并把 URL 一次性清理为 /home",
+    async (query) => {
+      window.history.replaceState({}, "", `/home?${query}=1`);
+      const home = homeWithPresence(new Date().toISOString());
+      const view = render(
+        <I18nProvider locale="zh-CN">
+          <HomeView home={home} showWelcome />
+        </I18nProvider>,
+      );
+
+      expect(
+        screen.getByText("欢迎回家。这里已经属于你们两个人。"),
+      ).toBeVisible();
+      await waitFor(() => expect(window.location.pathname).toBe("/home"));
+      expect(window.location.search).toBe("");
+
+      window.history.replaceState({}, "", `/home?${query}=1`);
+      view.rerender(
+        <I18nProvider locale="en-US">
+          <HomeView home={home} showWelcome />
+        </I18nProvider>,
+      );
+      await waitFor(() => expect(window.location.search).toBe(""));
+      await waitFor(() =>
+        expect(
+          screen.queryByText(
+            "Welcome Home. This place now belongs to both of you.",
+          ),
+        ).not.toBeInTheDocument(),
+      );
+    },
+  );
 
   it("保存等待期间禁用操作并给出克制的 pending 文案", async () => {
     let finish!: (value: { errorCode: "UNEXPECTED_ERROR" }) => void;

@@ -1,12 +1,23 @@
-# Our Space — Phase 3 Implementation Evidence
+# Our Space — Phase 3 Final Review 与 Implementation Evidence
 
-最后更新：2026-09-03
+最后更新：2026-09-04
 
 ## 状态
 
-**Phase 3 implementation 已完成，等待独立 Phase 3 Final Review。**
+**Phase 3 implementation 已完成并通过 Final Review。**
 
-本文档只记录 implementation scope 与可复验证据，不自行给出 Final Review `PASS`，也不授权开始 Phase 4。
+Independent Final Review: `PASS WITH NON-BLOCKING FINDINGS`。
+
+Final Polish Patch 已关闭该 Review 的全部 6 项非阻塞 MINOR；无需再次 Review。本文档不授权开始 Phase 4。
+
+## Final Polish Closure
+
+- **CLOSED — muted text contrast：**`--text-muted` 调整为 `#766c62`；对 `--surface-page` 的 contrast ratio 为 `4.64:1`，对 `--surface-raised` 为 `5.05:1`，field hints、Resident heading、Quiet supporting copy 与 inactive locale 均达到 WCAG AA。
+- **CLOSED — inline secondary link touch target：**login、register 与 Invitation links 统一使用 `inline-secondary-link`，最小命中区为 44×44px，同时保留次级视觉语义。
+- **CLOSED — Presence validation description：**error 使用稳定 `presence-error`，textarea 在无错误时为 `aria-describedby="presence-hint"`，有错误时为 `aria-describedby="presence-hint presence-error"`；`role="alert"` 保留。
+- **CLOSED — semantic Presence announcement：**客户端只保存 `saved` / `cleared` / `null`，渲染时使用当前 translator；save 后 locale switch 与 clear 均由组件测试和浏览器实测覆盖。
+- **CLOSED — one-time welcome：**`created=1` / `joined=1` 首次进入显示 welcome 后通过 `history.replaceState` 清理为 `/home`；reload、locale switch 不重复，且不新增 browser history entry。
+- **CLOSED — implementation plan status：**`IMPLEMENTATION_PLAN.md` 已修正为 Phase 3 完成并通过 Final Review，Phase 4 未开始且未获批准。
 
 ## 已实现范围
 
@@ -41,17 +52,17 @@
 | Node / npm                 | Node `v22.22.2`；npm `10.9.7`               |
 | `npm ci`                   | 通过；487 packages                          |
 | Prisma generate / validate | Prisma Client `6.19.3`；Schema valid        |
-| Vitest                     | 19 files / 73 tests，通过；无 required skip |
+| Vitest                     | 19 files / 76 tests，通过；无 required skip |
 | PostgreSQL integration     | 15/15                                       |
-| Playwright list / run      | 3 files、2 projects、10/10                  |
-| Desktop Chrome             | 5/5                                         |
-| Pixel 7 / mobile Chrome    | 5/5                                         |
+| Playwright list / run      | 3 files、2 projects、12/12                  |
+| Desktop Chrome             | 6/6                                         |
+| Pixel 7 / mobile Chrome    | 6/6                                         |
 | lint / typecheck / format  | 全部通过                                    |
 | production build           | 通过；`/home` 为 server-rendered route      |
 | `npm audit --omit=dev`     | 0 vulnerabilities                           |
 | `git diff --check`         | 通过                                        |
 
-E2E 覆盖 Quiet Home、两名 Resident、Presence edit/view/Partner non-editability/clear、`zh-CN` default、`en-US` switch/reload persistence、locale-independent URL，以及 Phase 2 Invitation callback、protected route、third Resident rejection 与 non-OWNER regression。
+E2E 覆盖 Quiet Home、两名 Resident、Presence edit/view/Partner non-editability/clear、`zh-CN` default、`en-US` switch/reload persistence、locale-independent URL、create/join welcome 一次性语义、四个 inline secondary link 的 44px target，以及 Phase 2 Invitation callback、protected route、third Resident rejection 与 non-OWNER regression。
 
 ## 视觉验证
 
@@ -62,8 +73,9 @@ E2E 覆盖 Quiet Home、两名 Resident、Presence edit/view/Partner non-editabi
 - 中文 mobile Presence saved state。
 - 英文 desktop Presence 与 inline editor。
 - secondary Space/account menu。
+- muted text contrast、Presence error description chain、语义 announcement 重译，以及 welcome reload/locale 不重复。
 
-检查结果：Home 以留白、排版、分隔线与单一编辑 surface 表达共同空间，不是 Feed、Dashboard 或 account Card Grid；两位 Resident 身份权重平等，Partner 自然优先；Quiet State 视觉完整。375px 无横向溢出，关键可见操作达到 44px，英文布局未破坏，浏览器控制台无 error/warning。
+检查结果：Home 以留白、排版、分隔线与单一编辑 surface 表达共同空间，不是 Feed、Dashboard 或 account Card Grid；两位 Resident 身份权重平等，Partner 自然优先；Quiet State 视觉完整。375px 无横向溢出，关键可见操作达到 44px，英文布局未破坏，未发现产品运行时 console error。
 
 ## 当前边界
 
@@ -74,6 +86,6 @@ E2E 覆盖 Quiet Home、两名 Resident、Presence edit/view/Partner non-editabi
 
 ## Phase Boundary
 
-Phase 3 implementation 已完成，等待独立 Final Review。
+Phase 3 implementation 已完成并通过 Final Review；Independent Final Review 保持 `PASS WITH NON-BLOCKING FINDINGS`，6 项 MINOR 已全部关闭，无需再次 Review。
 
 Phase 4 尚未开始，也未获得批准。

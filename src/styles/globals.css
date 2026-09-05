@@ -33,7 +33,7 @@
   --surface-soft: #eee7dc;
   --text-primary: #2e2924;
   --text-secondary: #6e655c;
-  --text-muted: #887e74;
+  --text-muted: #766c62;
   --border-subtle: #ded5c9;
   --accent: #7a6652;
   --accent-strong: #5d4b3b;
@@ -81,6 +81,17 @@ body {
 
 a {
   color: inherit;
+}
+
+.inline-secondary-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  color: var(--accent-strong);
+  text-decoration-color: var(--border-subtle);
+  text-underline-offset: 0.25rem;
 }
 
 .skip-link {

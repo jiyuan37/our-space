@@ -21,7 +21,10 @@ export default async function LoginPage({
       <section className="foundation-card">
         <h1>{t("login.title")}</h1>
         <LoginForm callbackUrl={callbackUrl} />
-        <Link href={`/register?callbackUrl=${encodeURIComponent(callbackUrl)}`}>
+        <Link
+          className="inline-secondary-link"
+          href={`/register?callbackUrl=${encodeURIComponent(callbackUrl)}`}
+        >
           {t("login.createAccount")}
         </Link>
       </section>

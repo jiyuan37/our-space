@@ -1,12 +1,12 @@
 # Our Space — 实施计划
 
-最后更新：2026-09-03
+最后更新：2026-09-04
 
 ## 状态
 
-**当前状态：Phase 2 已完成并通过最终 Review；Phase 3 前置设计已收口，implementation 尚未获批准。**
+**当前状态：Phase 3 implementation 已完成并通过 Final Review。**
 
-阶段 0、Phase 1 已完成，Phase 1 已通过最终 Review。Phase 2 已实施，在首次 Final Review 后完成 Repair，并通过 Closure Review。Phase 3 前置 UI/UX Review、Design Decision Closure 与 implementation 已完成，设计基线记录于 [`PHASE_3_DESIGN.md`](./PHASE_3_DESIGN.md)，实施证据记录于 [`PHASE_3_REVIEW.md`](./PHASE_3_REVIEW.md)；当前等待独立 Phase 3 Final Review。Phase 4 尚未开始，也未获得批准。
+阶段 0、Phase 1 已完成，Phase 1 已通过最终 Review。Phase 2 已实施，在首次 Final Review 后完成 Repair，并通过 Closure Review。Phase 3 前置 UI/UX Review、Design Decision Closure、implementation、Independent Final Review 与 Final Polish Patch 已完成，设计基线记录于 [`PHASE_3_DESIGN.md`](./PHASE_3_DESIGN.md)，实施与 Review 证据记录于 [`PHASE_3_REVIEW.md`](./PHASE_3_REVIEW.md)。Phase 4 尚未开始，也未获得批准。
 
 ## 单一事实来源
 
@@ -172,7 +172,7 @@
 
 ## 阶段 3 — 核心 Home 与 Presence
 
-状态：**implementation 已完成，等待独立 Phase 3 Final Review。**
+状态：**implementation 已完成并通过 Final Review。**
 
 依赖：阶段 2。
 
@@ -197,20 +197,20 @@
 
 验证：
 
-- [x] 19 个 Vitest files / 73 tests 全通过，其中真实 PostgreSQL integration 15/15。
+- [x] 19 个 Vitest files / 76 tests 全通过，其中真实 PostgreSQL integration 15/15。
 - [x] PostgreSQL 16.15 全新数据库成功应用现有 2/2 migrations；Phase 3 无 Schema change、无新 migration。
-- [x] Playwright 10/10：desktop Chrome 5/5、Pixel 7 5/5，覆盖 Quiet Home、Presence、i18n 与 Phase 2 regression。
+- [x] Playwright 12/12：desktop Chrome 6/6、Pixel 7 6/6，覆盖 Quiet Home、Presence、i18n、一次性 welcome query、44px secondary link 与 Phase 2 regression。
 - [x] 实际浏览器检查中文/英文、Quiet/Presence/edit、desktop/375px mobile；无横向溢出，控制台无 error/warning。
 - [x] Node 22 `npm ci`、Prisma generate/validate、lint、typecheck、format check、production build、production audit 与 `git diff --check` 通过。
 
 退出标准：
 
 - [x] 两名 Resident 均可在移动端和桌面端以 `zh-CN` 或 `en-US` 查看 Quiet Home，并在不产生义务或监控感的前提下更新、清除自己的当天 Presence。
-- [ ] 独立 Phase 3 Final Review；implementation 不自行宣告 Review `PASS`。
+- [x] Independent Final Review：`PASS WITH NON-BLOCKING FINDINGS`；6 项 MINOR 已由 Final Polish Patch 全部关闭，无需再次 Review。
 
 ## 阶段 4 — Life Points 与媒体
 
-状态：未开始。
+状态：未开始，也未获得批准。
 
 依赖：阶段 3。
 
