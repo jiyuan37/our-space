@@ -4,6 +4,17 @@
 
 ## [未发布]
 
+### 卡通身份、状态动画与地图产品要求文档同步
+
+- 将 `AVATAR-01` 持久卡通身份、`ANIMATION-01` 同角色状态动画与 `MAP-01` 地图/marker/status point 登记为已确认必做的产品目标；详细设计与实施均未获批准。
+- 修订 Master Spec 的 MVP scope、Resident/avatar、首次进入、Home/navigation、AI/privacy、motion、实施顺序与 Definition of Done 条款，并明确这些是 2026-09-04 新增要求，不追溯改写 Phase 1–3 历史验收。
+- 新增 `docs/AVATAR_AND_MAP_SPEC.md`，集中记录三项交付的用户流程、结果、依赖、未决条件、隐私授权与建议验收证据。
+- 追加 DEC-048 至 DEC-051，确认持续身份、状态动画、地图核心地位及外部 AI 处理不自动获授权。
+- 为后续计划新增三条可追踪交付轨道与依赖顺序提议；具体 Phase 归属不是已批准排期，原 Phase 4–7 必需功能保持不变。
+- 更新 `AGENTS.md`、`CURRENT_STATE.md` 与 `KNOWN_LIMITATIONS.md`，防止后续会话把字段/静态头像当作身份系统完成、把 Presence 当作地图完成，或混淆需求确认、设计收口、实施批准与验证完成。
+- 本次只修改需求、指引与计划文档，未修改应用、测试、Schema、migration、依赖或生成资源，也未重跑上一轮 Phase 3 应用测试矩阵。
+- Phase 3 已完成并通过 Final Review；历史结论仍为 `PASS WITH NON-BLOCKING FINDINGS`。Phase 4、AVATAR-01、ANIMATION-01 与 MAP-01 implementation 均未开始、未获批准。
+
 ### Phase 3 Final Polish Patch
 
 - Independent Final Review 结论保持为 `PASS WITH NON-BLOCKING FINDINGS`；6 项非阻塞 MINOR 已全部关闭，无需再次 Review。

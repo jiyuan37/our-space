@@ -4,7 +4,7 @@
 
 ## 当前 Phase
 
-- 当前 Phase：Phase 3 — Core Home / Presence。
+- 当前 Phase：Phase 3 — Core Home / Presence 已完成；当前没有获批实施中的 Phase。
 - 当前状态：**Phase 3 implementation 已完成并通过 Final Review。**
 - 实际项目根目录：`/Users/yuan/Desktop/our-space`。
 - 下一项是否已获批准：否。
@@ -21,7 +21,8 @@
 - Phase 2 最终通过提交：`0c37e4acfbce8775a22bc5d7bf4feea1433048c5`。
 - Phase 3 实施基线：`7f3f2708434de7eac193b826096ac9e4dfefcffb`。
 - Phase 3 implementation 提交：`8d45341fc9ab47e4493b86bb240e8773ec8c3dce`。
-- Phase 3 Final Polish 开始时已成功执行 `git fetch origin`；`main...origin/main` 为 `0 0`，工作树干净。
+- 最新代码验证基线：`ab18b49c0e27ff1903604d1263bc45d956b8ff34`（`fix: polish phase 3 accessibility and state`）。
+- 卡通身份/动画/地图文档同步开始时已成功执行 `git fetch origin`；HEAD 为上述代码验证基线，`main...origin/main` 为 `0 0`，工作树干净。
 
 ## Phase 2 已实现能力
 
@@ -55,9 +56,20 @@
 - warm cream、克制 surface、semantic design tokens、responsive 双人布局、44px 操作目标、visible focus、live announcement 与 reduced-motion。
 - Final Polish 已关闭 Independent Final Review 的 6 项非阻塞 MINOR：muted text AA contrast、inline secondary link touch target、Presence error description、语义 announcement、一次性 welcome query 与计划状态漂移。
 
+## 已确认但尚未实施的产品要求
+
+- `AVATAR-01`：Resident 必须能通过自拍/上传、AI 卡通候选生成、选择/调整或重试、明确确认建立持久卡通身份；入口需在注册后或首次进入时显著可见。
+- `ANIMATION-01`：用户主动留下状态后，必须由同一个已确认角色表达动作或表情；不能以静态头像或身份漂移的重复生成人物代替。
+- `MAP-01`：地图与 marker/status point 是核心空间表达，不能被降级为可无限延期的边缘附加页。
+- 三项产品目标均已确认；详细设计、安全条件与 Phase 排期待收口，尚未获得实施授权。
+- 地图不自动等于真实地理位置或持续定位；Presence 与 LifePoint 保持概念区分，LifePoint 继续不强制 location。
+- Avatar 目标不自动授权外部 AI 处理；自拍、原图、Presence 或 Space 内容不得在未获专项批准前发送给外部 provider。
+- 详细状态、依赖、未决问题和验收目标见 `docs/AVATAR_AND_MAP_SPEC.md`；六个核心实体和已完成 Phase 1–3 的验收保持不变。
+
 ## 尚未开始
 
 - Phase 4 及后续功能：Life Point、Response、Shared Moment、Visit、Memory 与 media workflow。
+- AVATAR-01、ANIMATION-01 与 MAP-01 implementation。
 - Seed data 与 demo account 属于后续阶段。
 
 ## Phase 3 已收口的设计基线
@@ -80,6 +92,8 @@
 - Phase 3 未修改 Prisma Schema 或任何 migration；全新测试数据库已成功应用现有 2/2 migrations。
 
 ## 当前验证状态
+
+以下结果来自上一轮在 `ab18b49c0e27ff1903604d1263bc45d956b8ff34` 完成的 Phase 3 Final Polish 验证。本次纯文档同步未重新运行应用测试矩阵，不得把这些结果表述为本轮新执行证据。
 
 | 检查                                        | 当前结果                                    |
 | ------------------------------------------- | ------------------------------------------- |

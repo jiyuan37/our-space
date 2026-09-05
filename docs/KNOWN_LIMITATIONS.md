@@ -9,6 +9,7 @@
 - Phase 3 implementation 已完成并通过 Final Review；Phase 4 尚未开始，也未获得批准。
 - `/home` 已承载 Quiet Home 与 Presence；`/space` 继续作为次级 Invitation/account management 边界。
 - 尚未实现 Life Point、Response、Shared Moment、Visit、Memory 或 Phase 4 media workflow。
+- 尚未实现 AVATAR-01 持久卡通身份、ANIMATION-01 同角色状态动画或 MAP-01 地图与 marker/status point；三者是已确认必做产品目标，不是 optional enhancement。
 - locale preference 使用浏览器 HttpOnly cookie 持久化，不跨浏览器或设备同步；Phase 3 不为此增加数据库字段。
 - 尚无 seed data 或 demo account；这两项属于后续阶段。
 - Playwright 已配置 desktop Google Chrome 与 Pixel 7；Phase 3 Final Polish 后完整真实 E2E 在独立 PostgreSQL 16.15 测试数据库上以 12/12 通过。Safari 与 Firefox 尚未纳入当前自动化矩阵。
@@ -28,7 +29,7 @@
 - push notification。
 - 原生移动应用。
 - 订阅、广告或行为定向。
-- 高级 AI 生成、AI 陪伴、关系推断，或将 Space 数据发送给外部 AI provider。
+- AVATAR-01 明确范围之外的高级 AI 生成、AI 陪伴、关系推断，或将 Space 数据发送给外部 AI provider。AVATAR-01 的产品目标不构成外部处理授权。
 - 复杂 memory 算法或单独的 Memory 实体。
 - 高级关系时间标签；Visit 只使用简单日期分组。
 - 除可扩展 design token 结构以外的 dark mode。
@@ -47,12 +48,28 @@
 - light mode 是首个支持的主题。
 - Presence 是可选且手动更新的，不是实时状态。
 
+## 已确认必做但尚未实施的能力
+
+以下项目不得作为技术债、optional backlog 或“未来增强”无限期延期；它们的目标已确认，但设计与实施授权尚未完成：
+
+- `AVATAR-01`：自拍/上传 → 卡通候选 → 选择/调整或重新生成 → 明确确认 → 持续使用同一 Resident 角色。
+- `ANIMATION-01`：基于同一已确认角色表达用户主动留下的当前状态，并提供 reduced-motion / 静态等价。
+- `MAP-01`：地图与语义明确的 marker/status point 成为核心空间表达。
+
+详细边界和当前授权状态见 `AVATAR_AND_MAP_SPEC.md`。现有 `avatarUrl`、静态头像、Presence 文本或 LifePoint 数据模型都不能单独证明上述能力已完成。
+
 ## 尚未解决的技术细节
 
 以下缺口必须在受影响阶段开始前于 `DECISIONS.md` 中解决：
 
 - 本地 Docker Compose 运行仍需在具备 Docker CLI 的主机上做一次 smoke test。
 - 上传 MIME allowlist、字节/尺寸限制、内容检查、metadata 策略、转换和孤立文件清理。
+- AVATAR-01 是否阻断 Home、是否必须使用真人照片，以及拒绝上传、生成失败、不满意、稍后处理和撤回时的继续路径。
+- Avatar 原图、候选、最终资源和派生 metadata 的数据模型、访问权限、保存期限、删除传播与 Resident/Space lifecycle 行为。
+- Avatar AI 是否需要外部 provider；如需要，provider、处理地域、同意、训练/保留/subprocessor、删除与日志最小化必须先获专项批准。
+- ANIMATION-01 的状态词汇、动作库、映射方式、是否逐次确认、动画格式/技术、性能预算和失败 fallback。
+- MAP-01 的地理/抽象/混合语义、Home/navigation 关系、marker 分类和生命周期，以及 Resident/Presence/LifePoint/SharedMoment 的呈现规则。
+- 如 MAP-01 使用地理数据，其来源、精度、显式同意、权限拒绝/撤回、保留、删除和 provider/fallback；地图不得默认采用后台持续定位。
 - 另一名 Resident 回应后，Life Point 的编辑规则。
 - 已被回应的 Life Point 后续改为 private 或被移除时，其可见性与重访行为。
 - Space 的恢复、永久删除、owner 转移、重新加入和完整数据保留期限仍需在对应用户功能实施前定义；Phase 1 只确定 `ACTIVE`/`ARCHIVED` 与 `ACTIVE`/`LEFT` 生命周期基础。

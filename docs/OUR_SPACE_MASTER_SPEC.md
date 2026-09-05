@@ -89,6 +89,11 @@ Implement only the following MVP capabilities:
 12. Basic settings and privacy controls
 13. Responsive mobile-first interface
 14. Seed/demo mode for local testing
+15. Create and confirm a persistent cartoon visual identity for each Resident
+16. Express a Resident's voluntarily shared current state through the same confirmed character
+17. Provide a map with clearly defined markers / status points as a core spatial expression
+
+Items 15–17 were added by the 2026-09-04 product-requirement revision. They were not part of the original implementation baseline. Their product goals are confirmed and required, while detailed design, safety conditions, Phase placement, and implementation approval remain pending. See Section 28 and [`AVATAR_AND_MAP_SPEC.md`](./AVATAR_AND_MAP_SPEC.md).
 
 Do not implement:
 
@@ -102,7 +107,7 @@ Do not implement:
 * family expansion
 * children or pet accounts
 * push notifications
-* advanced AI generation
+* advanced AI generation outside the narrowly scoped Resident cartoon-identity requirement in Section 28
 * relationship scores
 * recommendation feeds
 * advertisements
@@ -214,6 +219,9 @@ Rules:
 * Each Resident belongs to one Space.
 * Each Space has at most two active Residents in the MVP.
 * Resident-facing language should use “Resident” or a natural equivalent, not “member” where possible.
+* A Resident's confirmed cartoon identity is a persistent visual expression of that Resident, not a different generated person for each state update.
+* The presence of `avatarUrl` or a single static image does not by itself complete the cartoon-identity or state-animation requirements.
+* Detailed identity, asset, consent, lifecycle, and animation requirements are defined by Section 28 and [`AVATAR_AND_MAP_SPEC.md`](./AVATAR_AND_MAP_SPEC.md); their implementation is not yet approved.
 
 ---
 
@@ -420,8 +428,10 @@ Make it easy to replace the local adapter with S3-compatible storage later.
 6. User receives an invitation link.
 7. User may copy and share the link.
 8. User enters Home.
-9. Home should not display a depressing empty state.
-10. Home should gently invite the user to leave today's first trace.
+9. After registration or first entry, the product prominently invites the user to create a cartoon identity; this must not be hidden only in low-frequency Settings.
+10. Whether identity creation blocks Home, requires a real photo, or offers a non-photo fallback remains undecided and must not be inferred.
+11. Home should not display a depressing empty state.
+12. Home should gently invite the user to leave today's first trace.
 
 Suggested copy:
 
@@ -522,6 +532,8 @@ Home
 Visit
 Settings
 ```
+
+The map requirement added in Section 28 is a core spatial expression, but its relationship to Home and navigation is not yet decided. Do not silently relegate it to an indefinite optional page, and do not add a `Map` destination before the information architecture is explicitly approved.
 
 Primary create action:
 
@@ -691,6 +703,9 @@ Implement subtle motion for:
 * opening a moment
 * completing a Response
 * transitioning to Visit
+* expressing a voluntarily shared current state through the Resident's same confirmed cartoon identity, once that feature is designed and approved
+
+State animation must not imply online status, live location, background monitoring, or inferred emotion. An expired or cleared Presence must not continue to present an old animation as current. Preserve a meaningful static presentation under `prefers-reduced-motion`; see Section 28.
 
 Avoid:
 
@@ -764,6 +779,9 @@ Requirements:
 * Use secure password hashing.
 * Add rate limiting abstractions to authentication and invitation endpoints.
 * Do not send Space content to external AI providers in the MVP.
+* The Section 28 avatar flow does not authorize external processing by itself. Before any selfie or photo is transmitted, the exact input, provider, informed consent, retention, deletion, access, failure, and withdrawal behavior must be separately approved.
+* Even if a future avatar-specific exception is approved, Presence, LifePoint, Response, SharedMoment, Space content, and relationship data must not be included as implicit AI inputs.
+* A map requirement does not authorize continuous location collection or background tracking.
 
 Never use relationship data for advertising or behavioral manipulation.
 
@@ -1146,7 +1164,9 @@ Work in the following order.
 * seed data
 * documentation
 
-Do not start advanced AI, push notifications, native applications, or family features.
+The 2026-09-04 revision also establishes three required delivery tracks: `AVATAR-01`, `ANIMATION-01`, and `MAP-01`. Their product outcomes are mandatory, not optional post-MVP decoration, but their exact placement within or alongside Phases 4–7 is a proposal that requires separate approval. Dependency guidance is recorded in [`AVATAR_AND_MAP_SPEC.md`](./AVATAR_AND_MAP_SPEC.md) and `IMPLEMENTATION_PLAN.md`: identity precedes state animation; map semantics and privacy must be settled before map implementation; and integration with LifePoint / SharedMoment / Visit must follow the actual availability of those domain capabilities.
+
+Do not start AI implementation, map integration, push notifications, native applications, or family features without explicit Phase approval. The confirmed avatar requirement narrows the former blanket AI exclusion only at the product-goal level; no provider or external-data exception is currently approved.
 
 ---
 
@@ -1215,6 +1235,9 @@ The MVP is complete only when:
 * tests pass
 * setup is documented
 * the project runs locally from a clean checkout
+* each Resident can complete the approved create/select/adjust-or-regenerate/confirm flow for a persistent cartoon identity, and the confirmed identity remains consistent across later use
+* the same confirmed character can express approved, user-initiated current states with reduced-motion/static equivalence and without monitoring or identity drift
+* the map and its approved marker/status-point semantics are delivered as a discoverable core spatial expression without forcing LifePoint location or implying continuous tracking
 
 ---
 
@@ -1253,4 +1276,37 @@ Follow these instructions while implementing:
 * unresolved limitations
 * recommended next engineering step
 
-Begin by inspecting the repository and producing the implementation checklist. Then proceed with implementation without asking broad product questions.
+---
+
+# 28. 卡通身份、状态动画与地图要求修订（2026-09-04）
+
+本节是对原 Master Spec 的正式产品要求修订。原始规格只包含可选 `avatarUrl`、通用 motion、文字 Home 和“不得强制 LifePoint location”等基础，并未完整要求下列能力；不得声称这些功能一直存在于已完成的 Phase 1–3 验收基线中。
+
+## 已确认的产品目标
+
+1. **AVATAR-01 — 持久的卡通视觉身份：**Our Space 必须让 Resident 经历“自拍或上传照片 → AI 生成候选 → 选择、调整或重新生成 → 明确确认满意形象 → 后续持续使用同一角色”的完整目标流程。注册后或首次进入 Space 时必须显著引导，不能仅藏在低频 Settings。
+2. **ANIMATION-01 — 同一角色的状态动画：**后续由用户主动留下的当前状态，应通过已确认的同一角色呈现相应动作或表情。只交付静态头像或每次生成身份不一致的新角色都不算完成。
+3. **MAP-01 — 地图与标记／状态点：**地图是核心空间表达，不是可无限延期的边缘附加页面。标记／状态点必须具有明确、可区分、可访问的产品语义。
+
+这些能力不增加第七个核心产品实体。它们必须保持 Quiet Home、双语 i18n、语言无关 URL、私密 Space 边界与 LifePoint → Response → SharedMoment → Visit 闭环。
+
+## 当前仍有效的边界
+
+- Presence 仍是可选、手动、非监控的“此刻”，并遵循 viewer-local-day freshness；过期或清除后，不得继续用旧动画表示当前活动。
+- 状态动画不代表实时定位、online/offline、后台行为监控或情绪推断。
+- 地图不自动等于真实地理地图，也不授权后台持续定位。
+- Presence 与 LifePoint 必须保持概念区分；不得把所有状态点直接等同于 LifePoint。
+- LifePoint 仍不强制 title、tag 或 location。
+- 保留 `prefers-reduced-motion` 和等价静态展示，不引入装扮经济、等级、奖励、签到、streak 或更新压力。
+
+## 尚未收口且不得擅自决定
+
+- 头像创建是否阻断 Home、是否必须使用真人照片，以及拒绝上传/生成失败/不满意/撤回时的继续路径。
+- 2D / 3D、动作库、状态映射、动画技术、map provider、AI provider 或供应商。
+- 地图是地理、抽象共同生活空间或混合表达；地图与 Home/navigation 的关系；各类 marker 的含义与生命周期。
+- 自拍、原图、候选、最终资源和可能的位置数据的保存、访问、期限、删除与 lifecycle 行为。
+- 任何外部处理例外。用户确认 avatar 产品目标不等于授权把自拍、Presence 或 Space 内容发送给外部 provider。
+
+详细需求状态、依赖、隐私条件、建议验收证据和未决问题集中记录于 [`AVATAR_AND_MAP_SPEC.md`](./AVATAR_AND_MAP_SPEC.md)。当前仅批准需求与计划文档同步；AVATAR-01、ANIMATION-01、MAP-01 及 Phase 4 均未获得实施批准。已完成 Phase 1–3 的历史验收继续有效。
+
+对于已经获得明确批准的 implementation Phase，应先检查仓库并生成 implementation checklist，再按批准范围推进；不得把本节的产品目标确认当作 implementation 授权。

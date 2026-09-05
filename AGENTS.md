@@ -7,11 +7,12 @@
 每个新的 Codex 会话在修改任何代码前，必须依次完整读取：
 
 1. `docs/OUR_SPACE_MASTER_SPEC.md`
-2. `docs/CURRENT_STATE.md`
-3. `docs/IMPLEMENTATION_PLAN.md`
-4. `docs/DECISIONS.md`
-5. `docs/KNOWN_LIMITATIONS.md`
-6. `docs/CHANGELOG.md`
+2. `docs/AVATAR_AND_MAP_SPEC.md`
+3. `docs/CURRENT_STATE.md`
+4. `docs/IMPLEMENTATION_PLAN.md`
+5. `docs/DECISIONS.md`
+6. `docs/KNOWN_LIMITATIONS.md`
+7. `docs/CHANGELOG.md`
 
 不得依赖旧聊天记录覆盖仓库中的事实；如聊天内容与仓库证据冲突，先停止并明确报告差异。
 
@@ -39,6 +40,12 @@ git rev-list --left-right --count main...origin/main
 - 未经批准不得进入下一 Phase。
 - 不得增加新的核心产品实体。
 - 不得静默删除、延期、缩减或降级 Master Spec 中的 MVP 功能。
+- 涉及产品范围、后续规划、Resident identity、avatar、状态动画、地图、marker 或 status point 的任务，必须同时核对 `docs/AVATAR_AND_MAP_SPEC.md`。
+- `AVATAR-01`、`ANIMATION-01` 与 `MAP-01` 是已确认必做产品目标；不得静默删除、降级为可选装饰或无限期延期。
+- 数据库已有 `avatarUrl` 或页面显示普通静态头像，不等于卡通身份创建系统或同角色状态动画已经完成。
+- 普通 Presence 文本/列表不等于地图或地图状态点已经完成；Presence 与 LifePoint 的概念不得混淆。
+- 必须区分并明确标注“产品要求已确认”“详细设计已收口”“实施已批准”“验证已完成”；前一状态不得被表述为后一状态。
+- 缺少关键规格时，报告具体缺口并停止受影响的实施判断，不得从旧聊天记忆猜测 provider、2D/3D、地图语义、位置权限、数据保存或删除规则。
 - 不得自行安装系统级软件；如完成任务确实需要系统级软件，必须停止并请求用户批准。
 
 ## 证据与语言
