@@ -249,6 +249,9 @@ export function AvatarWizard({
         </section>
       ) : (
         <form onSubmit={generate} className="avatar-form">
+          {job?.status === "EXPIRED" && (
+            <Notice tone="error">{t("errors.AVATAR_NOT_AVAILABLE")}</Notice>
+          )}
           {job?.status === "FAILED" && (
             <Notice tone="error">{t("errors.AVATAR_GENERATION_FAILED")}</Notice>
           )}

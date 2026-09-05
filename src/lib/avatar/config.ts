@@ -24,7 +24,13 @@ export const AVATAR = {
 } as const;
 export type AvatarJobView = {
   id: string;
-  status: "PENDING" | "READY" | "CONFIRMED" | "CANCELLED" | "FAILED";
+  status:
+    | "PENDING"
+    | "READY"
+    | "CONFIRMED"
+    | "CANCELLED"
+    | "FAILED"
+    | "EXPIRED";
   candidateUrl: string | null;
   expiresAt: string;
 };

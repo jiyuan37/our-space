@@ -1,7 +1,11 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
 import sharp from "sharp";
-import { normalizeSelfie, normalizeCandidate } from "./images";
+import {
+  normalizeSelfie,
+  normalizeCandidate,
+  normalizeGeneratedSource,
+} from "./images";
 import { FixtureAvatarProvider } from "./test-provider";
 import { LocalAvatarStorage } from "./storage";
 describe("头像图片边界", () => {
@@ -81,6 +85,22 @@ describe("头像图片边界", () => {
     expect(
       (await sharp(await normalizeCandidate(keyed)).metadata()).hasAlpha,
     ).toBe(true);
+  });
+  it("保留高分辨率生成源图但去除其元数据，拒绝无效源图", async () => {
+    const image = await new FixtureAvatarProvider().generate();
+    const withMetadata = await sharp(image).withMetadata().png().toBuffer();
+    const result = await normalizeGeneratedSource(withMetadata);
+    const meta = await sharp(result).metadata();
+    expect(meta.width).toBe(1024);
+    expect(meta.height).toBe(1024);
+    expect(meta.format).toBe("png");
+    expect(meta.exif).toBeUndefined();
+    await expect(
+      normalizeGeneratedSource(Buffer.from("invalid")),
+    ).rejects.toMatchObject({ code: "AVATAR_GENERATION_FAILED" });
+    await expect(
+      normalizeGeneratedSource(await sharp(image).resize(256).png().toBuffer()),
+    ).rejects.toThrow();
   });
   it("私密存储拒绝 public 和路径穿越", async () => {
     expect(() => new LocalAvatarStorage("public/uploads")).toThrow();

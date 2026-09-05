@@ -212,12 +212,14 @@ model MediaAsset {
   sizeBytes        Int
   createdAt        DateTime @default(now())
 
-  space            Space             @relation(fields: [spaceId], references: [id], onDelete: Restrict)
-  uploadedBy       User              @relation(fields: [uploadedByUserId], references: [id], onDelete: Restrict)
-  lifePointUsage   LifePoint?        @relation("LifePointMedia")
-  responseUsage    Response?         @relation("ResponseMedia")
-  avatarOwner      Resident?         @relation("ResidentAvatar")
-  avatarGeneration AvatarGeneration?
+  space                     Space             @relation(fields: [spaceId], references: [id], onDelete: Restrict)
+  uploadedBy                User              @relation(fields: [uploadedByUserId], references: [id], onDelete: Restrict)
+  lifePointUsage            LifePoint?        @relation("LifePointMedia")
+  responseUsage             Response?         @relation("ResponseMedia")
+  avatarOwner               Resident?         @relation("ResidentAvatar")
+  avatarGeneration          AvatarGeneration? @relation("AvatarCandidate")
+  avatarConfirmedGeneration AvatarGeneration? @relation("AvatarConfirmed")
+  avatarSourceGeneration    AvatarGeneration? @relation("AvatarSource")
 
   @@index([spaceId, createdAt])
   @@index([uploadedByUserId])
@@ -230,6 +232,7 @@ enum AvatarGenerationStatus {
   CONFIRMED
   CANCELLED
   FAILED
+  EXPIRED
 }
 
 model AvatarGeneration {
@@ -237,6 +240,9 @@ model AvatarGeneration {
   residentId            String
   status                AvatarGenerationStatus @default(PENDING)
   candidateMediaAssetId String?                @unique
+  confirmedMediaAssetId String?                @unique
+  sourceMediaAssetId    String?                @unique
+  styleVersion          String                 @default("pixel-big-head-b6fe15a-v1")
   baseAvatarVersion     Int
   model                 String
   policyVersion         String
@@ -244,7 +250,10 @@ model AvatarGeneration {
   createdAt             DateTime               @default(now())
   expiresAt             DateTime
   resident              Resident               @relation(fields: [residentId], references: [id], onDelete: Cascade)
-  candidateMediaAsset   MediaAsset?            @relation(fields: [candidateMediaAssetId], references: [id], onDelete: SetNull)
+  candidateMediaAsset   MediaAsset?            @relation("AvatarCandidate", fields: [candidateMediaAssetId], references: [id], onDelete: SetNull)
+
+  confirmedMediaAsset MediaAsset? @relation("AvatarConfirmed", fields: [confirmedMediaAssetId], references: [id], onDelete: SetNull)
+  sourceMediaAsset    MediaAsset? @relation("AvatarSource", fields: [sourceMediaAssetId], references: [id], onDelete: SetNull)
 
   @@index([residentId, createdAt])
   @@index([status, expiresAt])

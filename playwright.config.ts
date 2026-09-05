@@ -22,6 +22,7 @@ export default defineConfig({
       AUTH_SECRET: "playwright-only-fake-auth-secret-32-characters",
       TRUST_PROXY: "true",
       AVATAR_E2E_FIXTURE: "true",
+      AVATAR_EXTERNAL_REQUESTS_ENABLED: "false",
       AVATAR_STORAGE_DIR:
         process.env.AVATAR_TEST_STORAGE_DIR ??
         "/tmp/our-space-avatar-e2e-storage",

@@ -4,7 +4,7 @@
 
 ## 状态
 
-**当前工作包：AVATAR-01 正式实现；本地应用流程已实现，2 次真实服务调用已执行，仍缺候选人工质量确认。用户已确认视觉，不再风格冻结或比较方案。**
+**当前工作包：AVATAR-01 正式实现；产品流程已实现到真实视觉验收前一步；本轮零外部调用，等待授权 1 次 FLUX 候选生成及本人验收。用户已确认视觉，不再风格冻结或比较方案。**
 
 Phase 3 implementation 已完成并通过 Final Review。
 
@@ -14,14 +14,15 @@ Phase 3 implementation 已完成并通过 Final Review。
 
 - [x] 完整读取规格/决策并核对实际 Git，保留 Phase 1–3 基础与用户改动。
 - [x] 将本轮范围限定为自拍头像闭环，非阻断 Home 创建/更换入口。
-- [x] 可替换 provider；按用户反馈取消 OpenAI 付费接入，接 Cloudflare SDXL-Lightning img2img 和显式 FLUX.2 klein 4B adapter。
+- [x] 可替换 provider；当前 runtime 仅选 FLUX.2 klein 4B，独立外部请求开关默认关闭。SDXL 400/3030 保留为 provider-specific unresolved issue，不重试。
 - [x] 照片服务端格式/内容/大小验证、EXIF 清除、不落原照；候选私密、到期/取消清理、本人确认与替换版本。
 - [x] Resident/MediaAsset 复用、最小新增 migration、正式 Home 最终头像及成员读取权限。
+- [x] 独立 candidate/final route 与引用；持久保存 256px 显示图和 1024px 生成源图、确认原子切换、旧资源失败保护、双资源取消/过期/lazy cleanup。
 - [x] 数据库防重复/限额，失败和取消保持旧头像；中英文、手机和键盘流程。
 - [x] 受控 provider 自动测试及认证/邀请/Presence 回归；运行证据见 AVATAR_OPERATIONS.md。
 - [x] 用户提供 Cloudflare 关键配置与明确授权；本轮上限为 2 次请求，已经用完。样本 2 未找到，只用已授权样本 1；账户 Free 是配置声明，未核验账单。
 - [x] 有限真实服务调用：SDXL-Lightning 400 / 3030；FLUX.2 klein 200，实际图像规范化通过；共 2 次，无重试。
-- [ ] 人工相似度、画风与候选确认：本次输出在内存校验后释放，未保留人工验收资源。后续须另行授权请求，不能超出本轮上限。
+- [ ] 人工相似度、画风与候选确认：上轮输出已释放；本轮已改为真正持久候选。等待只对 photo-1 的 1 次明确授权，成功后实际预览、确认或拒绝。
 - [ ] 真实用户照片生成、本人确认与重新登录/Partner 读取的真实生成闭环验收。当前不能声明 AVATAR-01 完成。
 
 本轮完成可独立验证的代码后正常提交/push，并停止等待上述具体条件，不自动开始地图、定位、ANIMATION-01 或 Phase 4。

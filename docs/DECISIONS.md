@@ -675,3 +675,15 @@
 - 输入收窄：外发额外原创参考图被自动审核拒绝；遵循更小范围移除实际 provider 的额外图像，仅本人照片、固定头像提示和尺寸。拒绝发生在派发之前，没有额外请求。此项覆盖 DEC-058 中 FLUX 附参考图的实现选择，双语知情说明同步更新。
 - 隐私：原照只读、去 EXIF、最长边不超过 1024px（FLUX 480px），不落应用磁盘；报告仅记录状态/错误码/尺寸/计数，不记录图片、base64、Token 或资源地址。
 - 验收限制：此次 harness 只在内存中校验生成/规范化后释放输出，未保留候选供本人确认。因此没有相似度或画风验收证据，不能将 HTTP 成功宣称为 AVATAR-01 完成。后续必须在另行授权的调用范围内保留私密临时候选并完成人工确认。
+
+## DEC-061 — 私密候选、最终引用与高分辨率生成源图
+
+- 日期：2026-09-05。
+- 状态：用户批准本轮产品流程实现；真实视觉验收仍待 1 次另行授权的生成。
+- 在既有 AvatarGeneration/MediaAsset 支撑模型中区分 candidate、confirmed、expired/deleted。新增 candidate_source migration：confirmedMediaAssetId、sourceMediaAssetId、styleVersion、EXPIRED；旧已确认记录迁移至 final 指针，Resident 指针不变，不伪造旧记录不存在的高分辨率源图。
+- 生成成功先持久保存两份去元数据资源：256px normalized 透明 PNG 与 1024px 模型生成 PNG 源图（不是原自拍）。任务 UUID 是稳定候选身份；候选 route 只允许本人且有效 ACTIVE/READY/未过期。final route 仅同 Space ACTIVE Resident 可读当前已确认头像；source 没有公共或客户端读取入口。
+- 本人明确确认时先检查新资源可读，再在同一数据库事务内切换 Resident/final、增加版本并清空 candidate 指针；确认后旧候选地址失效。旧正式图及源图在事务成功后清理，事务失败保留旧身份。重复确认不覆盖新版本。删除失败仅记录固定错误码，孤儿扫描补偿，不将成功切换报告成失败。
+- 取消、过期清理显示图和源图。保留 24h 到期检查、访问时 lazy cleanup、可单独调用 cleanup service、常驻 Node 60 秒扫描；停机和 I/O 失败不承诺即时物理清除，恢复后补扫。最终 source/model/style/version 保留到替换，为后续处理提供真实资源，不承诺现成拆层或动画。
+- FLUX.2 klein 4B 为当前唯一证实真实链路工作的候选。SDXL 400/3030 为 provider-specific unresolved issue；保留 adapter 和静态测试，正式 runtime 不再选它。不自动换模型或外部重试。
+- 新增默认关闭的 AVATAR_EXTERNAL_REQUESTS_ENABLED，与精确匹配 avatar-cloudflare-v1、Free 配置及用户前端同意共同约束外发。本轮 0 次真实请求；此前 2/2 已用完，下一次仅在另行明确授权后用 photo-1 生成 1 张可实际打开的私密候选。
+- AVATAR-01 产品流程实现不等于真实视觉验收。ANIMATION-01 与 MAP-01 生产接入均尚未实现，继续保持必交付。

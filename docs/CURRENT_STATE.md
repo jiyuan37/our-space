@@ -5,12 +5,24 @@
 ## 当前 Phase
 
 - 当前工作包：AVATAR-01 — 自拍生成、用户确认与持久卡通身份；用户已明确批准正式实现，Phase 1–3 基础保留。
-- 当前状态：**头像正式账户流程及 Cloudflare adapter 已实现；真实 Cloudflare 调用已执行 2 次；相似度/画风及真实候选人工确认尚未完成，AVATAR-01 不标记完成。**
+- 当前状态：**AVATAR-01 产品流程已实现到真实视觉验收前一步；等待用户授权 1 次最终 FLUX candidate generation。不是 fully validated，画风/相似度尚未验收。**
 - Phase 3 implementation 已完成并通过 Final Review；本轮不重做历史验收。
 - 实际项目根目录：`/Users/yuan/Desktop/our-space`。
 - 最新授权仅执行 AVATAR-01；允许相关 Schema、正式 Home、配置、测试与文档改动，并在检查后正常提交/push。地图生产接入、定位和 ANIMATION-01 不在本轮范围。
 - Phase 2 已完成并通过最终 Review；Phase 3 前置 UI/UX Review、Design Decision Closure、implementation、Independent Final Review 与 Final Polish Patch 均已完成。
 - **Phase 4 尚未开始，也未获得批准。**
+
+## AVATAR-01 私密候选闭环（本轮最新状态）
+
+- 实际起点 `7228b8f8ba41cb94d809f013beead5b31e6f478f`，main、干净工作树、origin/main 同步 0/0，远程未变；不使用旧视觉提交重置代码。
+- 本轮真实外部调用 **0 次**。此前 2/2 已用完；FLUX.2 klein 4B 是唯一已有真实成功证据的 provider candidate，不能据此判断画风。SDXL 400 / 3030 保留为 provider-specific unresolved issue，不重试、不阻塞。
+- `/avatar` 上传、本地预览、同意、生成、私密候选、勾选并「就用这个」、正式 Home/Resident 显示、Partner 授权和重新登录持久闭环；受控测试不冒充真实 AI。
+- 候选以任务 UUID 为稳定身份，经独立 candidate route 仅本人读取；确认事务清空 candidate 指针并切换 Resident/final 指针，原候选地址随即失效。最终资源只允许同 Space ACTIVE Resident。
+- 保存 256px 透明显示图及 1024px 模型生成源图，记录 model/policy/style/baseAvatarVersion；原自拍仍不落盘。取消/过期清理两份资源，替换先验证新文件再原子切换，提交后清理旧文件；失败不毁旧身份。
+- 新增 `20260905180000_avatar_candidate_source`，独立 PostgreSQL 测试库 4/4 migrations；不修改已应用 migration，不操作真实账户数据库。
+- `AVATAR_PROVIDER=cloudflare-flux-klein`；真实请求还需 `AVATAR_EXTERNAL_REQUESTS_ENABLED=true`，默认关闭，本轮保持关闭；不修改用户 `.env.local`。处理政策开关不能代替请求授权。部署持久私密卷及排除备份仍需配置，不能冒充已部署。
+- 本轮 23 files / 109 tests（31 项真实 PostgreSQL 集成）、18/18 双端 E2E、build、typecheck/lint、production audit 0、format/diff 检查通过。验证结果、截图与复现见 [AVATAR_OPERATIONS.md](./AVATAR_OPERATIONS.md)。本轮提交信息 `feat: complete private avatar candidate flow`，包含本节的完整 hash 以 Git 定位；正常提交/push 后目标干净 main、0/0，最终实际证据见交付报告。
+- 下一次唯一真实操作：用户另行授权后，仅 photo-1、仅 1 次 FLUX，通过正式产品保存候选并让本人打开预览、确认或拒绝。不得运行只在内存校验后丢弃的旧 smoke harness。停止于此，不进入 MAP-01 / ANIMATION-01。
 
 ## AVATAR-01 上轮实现结果（2026-09-05，配置更新见下节）
 
@@ -24,7 +36,7 @@
 - 本轮验证：23 files / 102 tests、26 项数据库集成、18/18 双端 E2E、production build、lint/typecheck、3/3 migrations、production audit 0、格式/diff 检查通过；production 双端未配置状态零上传，截图及命令见运行说明。ANIMATION-01、MAP-01 生产功能及 Phase 4 均未完成，仍为必交付目标。
 - 本轮提交信息 `feat: add private avatar generation and confirmation`；完整 hash 由 `git log -1 --format='%H %s'` 定位，避免自引用。提交/push 后目标 main、干净工作树、0/0；实际结果在最终交付报告记录，下轮仍须 fetch 核验。
 
-## AVATAR-01 有限真实 smoke（本轮最新状态）
+## AVATAR-01 有限真实 smoke（上一轮历史）
 
 - 起点 `7c96e3f98c4cee4d712f04148caf9ffa2f19f9aa`；main、干净，fetch 后与 origin/main 为 0/0，remote 未变。
 - 用户已补齐 Cloudflare 关键配置并授权本轮最多 2 次；实际 2 次已用完，禁止追加。仅样本 1 存在，样本 2 未找到；原自拍未复制到应用存储。
@@ -44,7 +56,7 @@
 - Phase 2 最终通过提交：`0c37e4acfbce8775a22bc5d7bf4feea1433048c5`。
 - Phase 3 实施基线：`7f3f2708434de7eac193b826096ac9e4dfefcffb`。
 - Phase 3 implementation 提交：`8d45341fc9ab47e4493b86bb240e8773ec8c3dce`。
-- 最新代码验证基线：`ab18b49c0e27ff1903604d1263bc45d956b8ff34`（`fix: polish phase 3 accessibility and state`）。
+- Phase 3 历史代码验证基线：`ab18b49c0e27ff1903604d1263bc45d956b8ff34`（`fix: polish phase 3 accessibility and state`）。
 - 卡通身份/动画/地图文档同步开始时已成功执行 `git fetch origin`；HEAD 为上述代码验证基线，`main...origin/main` 为 `0 0`，工作树干净。
 
 ## Phase 2 已实现能力
@@ -146,7 +158,7 @@
 
 - 起始 HEAD：`241e4594d04d98ff05d6055c11639e92cd39ecc7`（`docs: record avatar and map product requirements`）。从项目根目录成功 fetch 后，main 与 origin/main 为 `0 0`，工作树干净；正式远程与上文一致。
 - 本轮交付提交通过 `git log -1 --format='%H %s'` 定位，提交信息为 `design: specify and prototype pixel map home`；该提交包含本节，避免在自身内容中写入无法固定的自引用 hash。交付同步目标为干净工作树、`main...origin/main = 0 0`；最终实际 commit/push 证据在交付报告中记录，下轮仍须 fetch 并复查。
-- 最近通过应用矩阵验证的代码基线仍为 `ab18b49c0e27ff1903604d1263bc45d956b8ff34`。
+- 该历史原型轮次的应用验证基线为 `ab18b49c0e27ff1903604d1263bc45d956b8ff34`；当前验证以本文顶部 AVATAR-01 结果为准。
 - 原型入口：`prototypes/map-home/index.html`；根目录运行 `node prototypes/map-home/serve.mjs`，浏览器打开 `http://127.0.0.1:4173`。仅本地静态文件，不接入生产 Service。
 - 本轮原型验证：23/23 状态机测试、24 组 Chrome 浏览器检查；375×812 / 1280×850 双语布局和 >=44px 触控通过，文字对比度最低 5.20:1，运行时外部请求/真实定位调用/页面错误均为 0。
 - 双端真实截图、独立断言、对比度及网络验证见 `prototypes/map-home/README.md` 与 `screenshots/verification.json`。

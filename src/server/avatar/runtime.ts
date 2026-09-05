@@ -18,24 +18,19 @@ export function avatarTestMode() {
 export function avatarEnabled() {
   if (avatarTestMode()) return true;
   return (
+    process.env.AVATAR_EXTERNAL_REQUESTS_ENABLED === "true" &&
     process.env.AVATAR_EXTERNAL_PROCESSING_APPROVED === AVATAR.policyVersion &&
     process.env.CLOUDFLARE_WORKERS_PLAN === "free" &&
     Boolean(process.env.CLOUDFLARE_API_TOKEN) &&
     /^[a-f0-9]{32}$/i.test(process.env.CLOUDFLARE_ACCOUNT_ID ?? "") &&
-    ["cloudflare-sdxl-lightning", "cloudflare-flux-klein"].includes(
-      process.env.AVATAR_PROVIDER ?? "",
-    )
+    ["cloudflare-flux-klein"].includes(process.env.AVATAR_PROVIDER ?? "")
   );
 }
 export function avatarService(generating = false) {
   if (generating && !avatarEnabled()) throw new AvatarUnavailableError();
   const provider = avatarTestMode()
     ? new FixtureAvatarProvider()
-    : new CloudflareAvatarProvider(
-        process.env.AVATAR_PROVIDER === "cloudflare-flux-klein"
-          ? "cloudflare-flux-klein"
-          : "cloudflare-sdxl-lightning",
-      );
+    : new CloudflareAvatarProvider("cloudflare-flux-klein");
   return new AvatarService(
     prisma,
     new LocalAvatarStorage(),

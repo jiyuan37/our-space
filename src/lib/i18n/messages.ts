@@ -19,7 +19,7 @@ const zhCN = {
   "avatar.candidateAlt": "待本人确认的像素角色候选",
   "avatar.normalSize": "手机实际大小",
   "avatar.select": "我选择这个形象作为我的角色",
-  "avatar.confirm": "确认并使用",
+  "avatar.confirm": "就用这个",
   "avatar.regenerate": "重新生成",
   "avatar.photo": "选择自己的照片",
   "avatar.photoHint":
@@ -30,7 +30,7 @@ const zhCN = {
   "avatar.privacyInput":
     "只把去除 EXIF、缩小后的本人照片与固定头像提示发给 Cloudflare Workers AI。不发送姓名、位置、Presence、伴侣或生活记录。",
   "avatar.privacyStorage":
-    "原照不保存到服务器磁盘。候选仅你可见，24 小时后失效并清理；取消即删除。确认后私密保存最终图，替换时删除旧图。",
+    "原照不保存到服务器磁盘。候选仅你可见，24 小时后失效并清理；取消即删除。确认后私密保存最终显示图和模型生成的高分辨率源图，替换时一并删除旧图。",
   "avatar.privacyProvider":
     "Cloudflare 声明未经同意不将内容用于训练或改进服务。处理地域与服务侧逐项删除时限不作保证。已发送的请求取消后仍可能在服务侧完成。",
   "avatar.providerPolicy": "查看 Cloudflare 数据说明",
@@ -41,7 +41,7 @@ const zhCN = {
     "使用 Workers Free 额度；额度用完后停止，不自动转付费。每次只生成一张，可由你决定是否重试。",
   "avatar.cancel": "取消，回到 Home",
   "errors.AVATAR_UNAVAILABLE":
-    "头像生成尚未配置好。可以先预览照片，也可以继续使用 Home；照片不会被发送。",
+    "头像生成当前未启用。可以先预览照片，也可以继续使用 Home；照片不会被发送。",
   "errors.AVATAR_INVALID_PHOTO":
     "请选一张清晰的 JPEG、PNG 或 WebP 照片（最多 5 MB，至少 128px，最多 2000 万像素）。",
   "errors.AVATAR_GENERATION_FAILED":
@@ -168,7 +168,7 @@ const enUS: Messages = {
   "avatar.candidateAlt": "Pixel character candidate awaiting your confirmation",
   "avatar.normalSize": "Phone display size",
   "avatar.select": "I choose this as my character",
-  "avatar.confirm": "Confirm and use",
+  "avatar.confirm": "Use this character",
   "avatar.regenerate": "Generate again",
   "avatar.photo": "Choose your photo",
   "avatar.photoHint":
@@ -179,7 +179,7 @@ const enUS: Messages = {
   "avatar.privacyInput":
     "Only your resized photo with EXIF removed and a fixed avatar prompt go to Cloudflare Workers AI. No names, location, Presence, partner or life records.",
   "avatar.privacyStorage":
-    "The original photo is not saved to server disk. Candidates are private to you, expire after 24 hours and are cleaned up; cancelling deletes them. Confirmed images are stored privately, and replacements delete the previous image.",
+    "The original photo is not saved to server disk. Candidates are private to you, expire after 24 hours and are cleaned up; cancelling deletes them. Confirmed display images and high-resolution model-generated source images are stored privately. Replacements delete both previous images.",
   "avatar.privacyProvider":
     "Cloudflare states it does not use your content for training or service improvement without consent. We cannot guarantee processing region or per-item deletion timing at the provider. A dispatched request may still finish after cancellation.",
   "avatar.providerPolicy": "Read Cloudflare’s data policy",
@@ -190,7 +190,7 @@ const enUS: Messages = {
     "Uses Workers Free allocation. Stops when exhausted, with no automatic paid fallback. One candidate per request; you choose whether to try again.",
   "avatar.cancel": "Cancel and return Home",
   "errors.AVATAR_UNAVAILABLE":
-    "Avatar generation is not configured yet. You can preview a photo or continue using Home. Your photo will not be sent.",
+    "Avatar generation is currently disabled. You can preview a photo or continue using Home. Your photo will not be sent.",
   "errors.AVATAR_INVALID_PHOTO":
     "Choose a valid JPEG, PNG or WebP photo (up to 5 MB, at least 128px, at most 20 megapixels).",
   "errors.AVATAR_GENERATION_FAILED":

@@ -4,7 +4,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import sharp from "sharp";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, type Prisma } from "@prisma/client";
 import {
   beforeAll,
   afterAll,
@@ -106,7 +106,18 @@ suite.sequential("头像真实 PostgreSQL 授权与持久性", () => {
   });
   it("未确认候选只属于本人，确认后仅同 Space ACTIVE Resident 读取，重建 Service 仍持久", async () => {
     const job = await generate();
-    const assetId = job.candidateUrl!.split("/").pop()!;
+    const stored = await db.avatarGeneration.findUniqueOrThrow({
+      where: { id: job.id },
+    });
+    const assetId = stored.candidateMediaAssetId!;
+    expect(stored.sourceMediaAssetId).toBeTruthy();
+    expect((await service.latestOwn(own))?.candidateUrl).toBe(job.candidateUrl);
+    await expect(service.readCandidate(partner, job.id)).rejects.toMatchObject({
+      code: "AVATAR_NOT_AVAILABLE",
+    });
+    await expect(service.readAsset(own, assetId)).rejects.toMatchObject({
+      code: "AVATAR_NOT_AVAILABLE",
+    });
     expect(
       (await new HomeService(db).get(partner)).residents.find(
         (r) => r.isViewer === false,
@@ -115,7 +126,7 @@ suite.sequential("头像真实 PostgreSQL 授权与持久性", () => {
     await expect(service.readAsset(partner, assetId)).rejects.toMatchObject({
       code: "AVATAR_NOT_AVAILABLE",
     });
-    await expect(service.readAsset(own, assetId)).resolves.toBeInstanceOf(
+    await expect(service.readCandidate(own, job.id)).resolves.toBeInstanceOf(
       Buffer,
     );
     await expect(service.confirmOwn(partner, job.id)).rejects.toMatchObject({
@@ -126,7 +137,10 @@ suite.sequential("头像真实 PostgreSQL 授权与持久性", () => {
       (await new HomeService(db).get(partner)).residents.find(
         (r) => !r.isViewer,
       )?.avatarUrl,
-    ).toBe(job.candidateUrl);
+    ).toBe(`/api/avatar/assets/${assetId}`);
+    await expect(service.readCandidate(own, job.id)).rejects.toMatchObject({
+      code: "AVATAR_NOT_AVAILABLE",
+    });
     await expect(
       new AvatarService(db, storage).readAsset(partner, assetId),
     ).resolves.toBeInstanceOf(Buffer);
@@ -208,7 +222,9 @@ suite.sequential("头像真实 PostgreSQL 授权与持久性", () => {
       data: { expiresAt: new Date(0) },
     });
     await expect(service.confirmOwn(own, job.id)).rejects.toThrow();
-    await expect(service.readAsset(own, asset.id)).rejects.toThrow();
+    await expect(service.readCandidate(own, job.id)).rejects.toThrow();
+    expect((await service.getOwn(own, job.id)).status).toBe("EXPIRED");
+    expect(await db.mediaAsset.count()).toBe(0);
     await service.cleanup();
     await expect(storage.get(asset.storageKey)).rejects.toThrow();
   });
@@ -252,7 +268,11 @@ suite.sequential("头像真实 PostgreSQL 授权与持久性", () => {
       },
     });
     await expect(
-      service.readAsset(outsider, job.candidateUrl!.split("/").pop()!),
+      service.readAsset(
+        outsider,
+        (await db.avatarGeneration.findUniqueOrThrow({ where: { id: job.id } }))
+          .confirmedMediaAssetId!,
+      ),
     ).rejects.toMatchObject({ code: "AVATAR_NOT_AVAILABLE" });
     await expect(service.getOwn(partner, job.id)).rejects.toMatchObject({
       code: "AVATAR_NOT_AVAILABLE",
@@ -311,5 +331,182 @@ suite.sequential("头像真实 PostgreSQL 授权与持久性", () => {
       (await db.resident.findUniqueOrThrow({ where: { id: ownResident } }))
         .avatarVersion,
     ).toBe(1);
+  });
+  it("生成保存 1024px 源图和 256px 显示图，确认移动引用且取消删除两者", async () => {
+    const job = await generate();
+    const candidate = await db.avatarGeneration.findUniqueOrThrow({
+      where: { id: job.id },
+      include: { candidateMediaAsset: true, sourceMediaAsset: true },
+    });
+    expect(candidate.styleVersion).toBe(AVATAR.styleVersion);
+    expect(
+      (
+        await sharp(
+          await storage.get(candidate.sourceMediaAsset!.storageKey),
+        ).metadata()
+      ).width,
+    ).toBe(1024);
+    expect(
+      (
+        await sharp(
+          await storage.get(candidate.candidateMediaAsset!.storageKey),
+        ).metadata()
+      ).width,
+    ).toBe(256);
+    await expect(
+      service.readAsset(own, candidate.sourceMediaAssetId!),
+    ).rejects.toThrow();
+    await service.confirmOwn(own, job.id);
+    const final = await db.avatarGeneration.findUniqueOrThrow({
+      where: { id: job.id },
+    });
+    expect(final.candidateMediaAssetId).toBeNull();
+    expect(final.confirmedMediaAssetId).toBe(candidate.candidateMediaAssetId);
+    expect(final.sourceMediaAssetId).toBe(candidate.sourceMediaAssetId);
+    const next = await generate();
+    const assets = await db.mediaAsset.findMany({
+      where: {
+        OR: [
+          { avatarGeneration: { is: { id: next.id } } },
+          { avatarSourceGeneration: { is: { id: next.id } } },
+        ],
+      },
+    });
+    expect(assets).toHaveLength(2);
+    await service.cancelOwn(own, next.id);
+    for (const asset of assets)
+      await expect(storage.get(asset.storageKey)).rejects.toThrow();
+    expect(await db.mediaAsset.count()).toBe(2);
+  });
+  it("第二个文件保存失败会删除第一个文件并保持旧身份", async () => {
+    const old = await generate();
+    await service.confirmOwn(own, old.id);
+    const originalPut = storage.put.bind(storage);
+    let partialKey = "";
+    const spy = vi
+      .spyOn(storage, "put")
+      .mockImplementationOnce(async (bytes) => {
+        partialKey = await originalPut(bytes);
+        return partialKey;
+      })
+      .mockRejectedValueOnce(new Error("controlled disk failure"));
+    try {
+      await expect(generate()).rejects.toThrow("controlled disk failure");
+    } finally {
+      spy.mockRestore();
+    }
+    expect(await db.mediaAsset.count()).toBe(2);
+    await expect(storage.get(partialKey)).rejects.toThrow();
+    expect(
+      (await db.resident.findUniqueOrThrow({ where: { id: ownResident } }))
+        .avatarVersion,
+    ).toBe(1);
+  });
+  it("确认事务失败和源图丢失都保留旧资源，成功替换清理旧源图", async () => {
+    const first = await generate();
+    await service.confirmOwn(own, first.id);
+    const oldAssets = await db.mediaAsset.findMany();
+    const next = await generate();
+    const spy = vi
+      .spyOn(db, "$transaction")
+      .mockRejectedValueOnce(new Error("controlled transaction failure"));
+    try {
+      await expect(service.confirmOwn(own, next.id)).rejects.toThrow(
+        "controlled transaction failure",
+      );
+    } finally {
+      spy.mockRestore();
+    }
+    for (const asset of oldAssets)
+      await expect(storage.get(asset.storageKey)).resolves.toBeInstanceOf(
+        Buffer,
+      );
+    const candidate = await db.avatarGeneration.findUniqueOrThrow({
+      where: { id: next.id },
+      include: { sourceMediaAsset: true },
+    });
+    const read = vi.spyOn(storage, "get").mockImplementation(async (key) => {
+      if (key === candidate.sourceMediaAsset!.storageKey)
+        throw new Error("controlled missing source");
+      return LocalAvatarStorage.prototype.get.call(storage, key);
+    });
+    try {
+      await expect(service.confirmOwn(own, next.id)).rejects.toThrow(
+        "controlled missing source",
+      );
+    } finally {
+      read.mockRestore();
+    }
+    expect(
+      (await db.resident.findUniqueOrThrow({ where: { id: ownResident } }))
+        .avatarVersion,
+    ).toBe(1);
+    await service.confirmOwn(own, next.id);
+    for (const asset of oldAssets)
+      await expect(storage.get(asset.storageKey)).rejects.toThrow();
+    expect(await db.mediaAsset.count()).toBe(2);
+  });
+  it("删除旧文件失败不撤销已经提交的新身份，留下可扫描孤儿", async () => {
+    const first = await generate();
+    await service.confirmOwn(own, first.id);
+    const next = await generate();
+    const remove = vi
+      .spyOn(storage, "remove")
+      .mockRejectedValue(new Error("controlled unlink failure"));
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      await expect(service.confirmOwn(own, next.id)).resolves.toEqual({
+        confirmed: true,
+      });
+      expect(log).toHaveBeenCalledWith("AVATAR_FILE_CLEANUP_FAILED");
+    } finally {
+      remove.mockRestore();
+      log.mockRestore();
+    }
+    expect(
+      (await db.resident.findUniqueOrThrow({ where: { id: ownResident } }))
+        .avatarVersion,
+    ).toBe(2);
+    expect(await db.mediaAsset.count()).toBe(2);
+  });
+  it("事务执行完指针切换后回滚，旧身份与两份旧文件仍完整", async () => {
+    const first = await generate();
+    await service.confirmOwn(own, first.id);
+    const before = await db.resident.findUniqueOrThrow({
+      where: { id: ownResident },
+    });
+    const oldAssets = await db.mediaAsset.findMany();
+    const next = await generate();
+    const transaction = db.$transaction.bind(db);
+    const spy = vi
+      .spyOn(db, "$transaction")
+      .mockImplementationOnce(async (work) =>
+        transaction(async (tx) => {
+          await (work as (tx: Prisma.TransactionClient) => Promise<unknown>)(
+            tx,
+          );
+          throw new Error("controlled rollback after pointer change");
+        }),
+      );
+    try {
+      await expect(service.confirmOwn(own, next.id)).rejects.toThrow(
+        "controlled rollback after pointer change",
+      );
+    } finally {
+      spy.mockRestore();
+    }
+    const after = await db.resident.findUniqueOrThrow({
+      where: { id: ownResident },
+    });
+    expect(after.avatarMediaAssetId).toBe(before.avatarMediaAssetId);
+    expect(after.avatarVersion).toBe(before.avatarVersion);
+    expect((await service.getOwn(own, next.id)).status).toBe("READY");
+    for (const asset of oldAssets)
+      await expect(storage.get(asset.storageKey)).resolves.toBeInstanceOf(
+        Buffer,
+      );
+    await expect(
+      service.readAsset(partner, after.avatarMediaAssetId!),
+    ).resolves.toBeInstanceOf(Buffer);
   });
 });

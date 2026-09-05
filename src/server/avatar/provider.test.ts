@@ -10,11 +10,12 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 function configure() {
+  vi.stubEnv("AVATAR_EXTERNAL_REQUESTS_ENABLED", "true");
   vi.stubEnv("AVATAR_EXTERNAL_PROCESSING_APPROVED", AVATAR.policyVersion);
   vi.stubEnv("CLOUDFLARE_WORKERS_PLAN", "free");
   vi.stubEnv("CLOUDFLARE_ACCOUNT_ID", "a".repeat(32));
   vi.stubEnv("CLOUDFLARE_API_TOKEN", "unit-test-not-a-secret");
-  vi.stubEnv("AVATAR_PROVIDER", "cloudflare-sdxl-lightning");
+  vi.stubEnv("AVATAR_PROVIDER", "cloudflare-flux-klein");
 }
 describe("可替换 Cloudflare provider", () => {
   it("未配置/付费计划不派发，production 不能启用 fixture", async () => {
@@ -33,6 +34,21 @@ describe("可替换 Cloudflare provider", () => {
     expect(avatarTestMode()).toBe(false);
     expect(fetcher).not.toHaveBeenCalled();
   });
+  it("政策同意不等于允许真实请求；关闭请求开关绝不发送", async () => {
+    configure();
+    const fetcher = vi.fn();
+    vi.stubGlobal("fetch", fetcher);
+    vi.stubEnv("AVATAR_EXTERNAL_REQUESTS_ENABLED", "false");
+    expect(avatarEnabled()).toBe(false);
+    await expect(
+      new CloudflareAvatarProvider().generate(Buffer.from("photo")),
+    ).rejects.toMatchObject({ code: "AVATAR_UNAVAILABLE" });
+    expect(fetcher).not.toHaveBeenCalled();
+    vi.stubEnv("AVATAR_EXTERNAL_REQUESTS_ENABLED", "true");
+    expect(avatarEnabled()).toBe(true);
+    vi.stubEnv("AVATAR_PROVIDER", "cloudflare-sdxl-lightning");
+    expect(avatarEnabled()).toBe(false);
+  });
   it("SDXL img2img 仅发送白名单图像输入与固定提示，无隐式重试", async () => {
     configure();
     const fetcher = vi.fn().mockResolvedValue(
@@ -41,7 +57,7 @@ describe("可替换 Cloudflare provider", () => {
       }),
     );
     vi.stubGlobal("fetch", fetcher);
-    await new CloudflareAvatarProvider().generate(
+    await new CloudflareAvatarProvider("cloudflare-sdxl-lightning").generate(
       Buffer.from("normalized selfie"),
     );
     expect(fetcher).toHaveBeenCalledTimes(1);
@@ -74,7 +90,9 @@ describe("可替换 Cloudflare provider", () => {
       );
     vi.stubGlobal("fetch", fetcher);
     await expect(
-      new CloudflareAvatarProvider().generate(Buffer.from("x")),
+      new CloudflareAvatarProvider("cloudflare-sdxl-lightning").generate(
+        Buffer.from("x"),
+      ),
     ).rejects.toMatchObject({
       code: "AVATAR_GENERATION_FAILED",
       message: "AVATAR_GENERATION_FAILED",

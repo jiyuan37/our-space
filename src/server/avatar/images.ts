@@ -118,3 +118,25 @@ export async function normalizeCandidate(bytes: Buffer): Promise<Buffer> {
     throw new AvatarGenerationFailedError();
   }
 }
+
+// 保存模型生成的高分辨率源图（不是上传自拍），去除元数据并统一为无损 PNG。
+export async function normalizeGeneratedSource(bytes: Buffer): Promise<Buffer> {
+  try {
+    if (!bytes.length || bytes.length > 12 * 1024 * 1024) throw new Error();
+    const decoder = sharp(bytes, {
+      limitInputPixels: 2_000_000,
+      failOn: "warning",
+    });
+    const meta = await decoder.metadata();
+    if (
+      !["png", "jpeg"].includes(meta.format ?? "") ||
+      meta.width !== AVATAR.generationSize ||
+      meta.height !== AVATAR.generationSize ||
+      (meta.pages ?? 1) !== 1
+    )
+      throw new Error();
+    return await decoder.png().toBuffer();
+  } catch {
+    throw new AvatarGenerationFailedError();
+  }
+}

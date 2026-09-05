@@ -68,6 +68,11 @@ async function screenshot(page: Page, name: string) {
   const root = process.env.AVATAR_EVIDENCE_DIR;
   if (!root) return;
   await mkdir(root, { recursive: true });
+  await page.waitForFunction(() =>
+    Array.from(document.images).every(
+      (image) => image.complete && image.naturalWidth > 0,
+    ),
+  );
   await page.screenshot({
     path: `${root}/${test.info().project.name}-${name}.png`,
     fullPage: true,
@@ -116,7 +121,13 @@ test("头像上传、本人确认、Partner 授权、登出再登录持久与双
     const asset = await page
       .getByAltText("待本人确认的像素角色候选")
       .getAttribute("src");
-    expect(asset).toBeTruthy();
+    expect(asset).toMatch(/^\/api\/avatar\/candidates\//);
+    await page.reload();
+    await expect(page.getByAltText("待本人确认的像素角色候选")).toHaveAttribute(
+      "src",
+      asset!,
+    );
+    expect((await page.request.get(asset!)).status()).toBe(200);
     expect((await request.get(asset!)).status()).toBe(401);
     await login(other, partner.email);
     expect((await other.request.get(asset!)).status()).toBe(404);
@@ -125,30 +136,32 @@ test("头像上传、本人确认、Partner 授权、登出再登录持久与双
       .getByRole("checkbox", { name: "我选择这个形象作为我的角色" })
       .focus();
     await page.keyboard.press("Space");
-    await page.getByRole("button", { name: "确认并使用" }).click();
+    await page.getByRole("button", { name: "就用这个" }).click();
     await expect(page).toHaveURL(/\/home$/);
-    await expect(page.locator(".resident-pixel-avatar")).toHaveAttribute(
-      "src",
-      asset!,
-    );
+    const finalAsset = await page
+      .locator(".resident-pixel-avatar")
+      .getAttribute("src");
+    expect(finalAsset).toMatch(/^\/api\/avatar\/assets\//);
+    expect(finalAsset).not.toBe(asset);
+    expect((await page.request.get(asset!)).status()).toBe(404);
     await screenshot(page, "home-confirmed-fixture");
     await other.reload();
     await expect(other.locator(".resident-pixel-avatar")).toHaveAttribute(
       "src",
-      asset!,
+      finalAsset!,
     );
-    expect((await other.request.get(asset!)).status()).toBe(200);
+    expect((await other.request.get(finalAsset!)).status()).toBe(200);
     expect(
-      (await other.request.get(asset!)).headers()["cache-control"],
+      (await other.request.get(finalAsset!)).headers()["cache-control"],
     ).toContain("no-store");
     await page.getByLabel("打开 Space 与账户菜单").click();
     await page.getByRole("button", { name: "登出" }).click();
     await expect(page).toHaveURL(/\/welcome/);
-    expect((await page.request.get(asset!)).status()).toBe(401);
+    expect((await page.request.get(finalAsset!)).status()).toBe(401);
     await login(page, owner.email);
     await expect(page.locator(".resident-pixel-avatar")).toHaveAttribute(
       "src",
-      asset!,
+      finalAsset!,
     );
     await page.getByRole("link", { name: "更换形象" }).click();
     await page.getByRole("button", { name: "EN English", exact: true }).click();
@@ -159,7 +172,7 @@ test("头像上传、本人确认、Partner 授权、登出再登录持久与双
     await page.getByRole("button", { name: "Cancel and return Home" }).click();
     await expect(page.locator(".resident-pixel-avatar")).toHaveAttribute(
       "src",
-      asset!,
+      finalAsset!,
     );
   } finally {
     await partnerContext.close();

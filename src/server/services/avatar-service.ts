@@ -8,7 +8,11 @@ import {
   RateLimitExceededError,
 } from "@/server/errors/domain-error";
 import { ResidentService } from "@/server/services/resident-service";
-import { normalizeSelfie, normalizeCandidate } from "@/server/avatar/images";
+import {
+  normalizeSelfie,
+  normalizeCandidate,
+  normalizeGeneratedSource,
+} from "@/server/avatar/images";
 import type { AvatarGenerationProvider } from "@/server/avatar/provider";
 import type { AvatarStorage } from "@/server/avatar/storage";
 
@@ -33,20 +37,23 @@ export class AvatarService {
     const status =
       (expired || stalePending) &&
       (job.status === "READY" || job.status === "PENDING")
-        ? "FAILED"
+        ? expired
+          ? "EXPIRED"
+          : "FAILED"
         : job.status;
     return {
       id: job.id,
       status,
       candidateUrl:
         status === "READY" && job.candidateMediaAssetId
-          ? `/api/avatar/assets/${job.candidateMediaAssetId}`
+          ? `/api/avatar/candidates/${job.id}`
           : null,
       expiresAt: job.expiresAt.toISOString(),
     };
   }
   async getOwn(userId: string, id: string) {
     const resident = await new ResidentService(this.db).requireActive(userId);
+    await this.cleanup(new Date(), resident.id);
     const job = await this.db.avatarGeneration.findFirst({
       where: { id: z.string().uuid().parse(id), residentId: resident.id },
     });
@@ -55,6 +62,7 @@ export class AvatarService {
   }
   async latestOwn(userId: string) {
     const resident = await new ResidentService(this.db).requireActive(userId);
+    await this.cleanup(new Date(), resident.id);
     const job = await this.db.avatarGeneration.findFirst({
       where: {
         residentId: resident.id,
@@ -122,6 +130,7 @@ export class AvatarService {
             baseAvatarVersion: identity.avatarVersion,
             model: this.provider!.model,
             policyVersion: AVATAR.policyVersion,
+            styleVersion: AVATAR.styleVersion,
             dispatchedAt: new Date(),
             expiresAt: new Date(Date.now() + AVATAR.candidateTtlMs),
           },
@@ -129,7 +138,7 @@ export class AvatarService {
         return { job, dispatch: true };
       });
       if (!reserved.dispatch) return this.view(reserved.job);
-      let key: string | null = null;
+      const keys: string[] = [];
       let retained = false;
       try {
         // 取消可以早于上传到达，预先写入的取消记录让同一 id 永不派发。
@@ -137,7 +146,9 @@ export class AvatarService {
         if (before.status !== "PENDING") return before;
         const generated = await this.provider.generate(selfie);
         const candidate = await normalizeCandidate(generated);
-        key = await this.storage.put(candidate);
+        const source = await normalizeGeneratedSource(generated);
+        keys.push(await this.storage.put(candidate));
+        keys.push(await this.storage.put(source));
         const result = await this.locked(async (tx) => {
           const resident = await new ResidentService(tx).requireActive(userId);
           const job = await tx.avatarGeneration.findUniqueOrThrow({
@@ -149,14 +160,27 @@ export class AvatarService {
             data: {
               spaceId: resident.spaceId,
               uploadedByUserId: userId,
-              storageKey: key!,
+              storageKey: keys[0],
               mimeType: "image/png",
               sizeBytes: candidate.length,
             },
           });
+          const sourceAsset = await tx.mediaAsset.create({
+            data: {
+              spaceId: resident.spaceId,
+              uploadedByUserId: userId,
+              storageKey: keys[1],
+              mimeType: "image/png",
+              sizeBytes: source.length,
+            },
+          });
           const ready = await tx.avatarGeneration.update({
             where: { id },
-            data: { status: "READY", candidateMediaAssetId: asset.id },
+            data: {
+              status: "READY",
+              candidateMediaAssetId: asset.id,
+              sourceMediaAssetId: sourceAsset.id,
+            },
           });
           return this.view(ready);
         });
@@ -169,15 +193,25 @@ export class AvatarService {
         });
         throw error;
       } finally {
-        if (key && !retained) await this.storage.remove(key);
+        if (!retained) await this.removeFiles(keys);
       }
     } finally {
       selfie.fill(0);
     }
   }
+  // 数据库切换完成后删除失败交给孤儿扫描重试，不能把已成功的确认报告成失败。
+  private async removeFiles(keys: string[]) {
+    for (const key of keys) {
+      try {
+        await this.storage.remove(key);
+      } catch {
+        console.error("AVATAR_FILE_CLEANUP_FAILED");
+      }
+    }
+  }
   async confirmOwn(userId: string, id: string) {
     z.string().uuid().parse(id);
-    const oldKey = await this.locked(async (tx) => {
+    const oldKeys = await this.locked(async (tx) => {
       const resident = await new ResidentService(tx).requireActive(userId);
       const identity = await tx.resident.findUniqueOrThrow({
         where: { id: resident.id },
@@ -185,9 +219,9 @@ export class AvatarService {
       });
       const job = await tx.avatarGeneration.findFirst({
         where: { id, residentId: resident.id },
-        include: { candidateMediaAsset: true },
+        include: { candidateMediaAsset: true, sourceMediaAsset: true },
       });
-      if (job?.status === "CONFIRMED") return null; // 幂等确认不重新覆盖任何版本。
+      if (job?.status === "CONFIRMED") return [];
       if (
         !job ||
         this.view(job).status !== "READY" ||
@@ -195,8 +229,16 @@ export class AvatarService {
         job.baseAvatarVersion !== identity.avatarVersion
       )
         throw new AvatarNotAvailableError();
-      // 丢失文件时拒绝确认，旧身份继续有效。
+      // 新资源全部可读后再切换。旧版迁移来的候选可能没有高分辨率源图。
       await this.storage.get(job.candidateMediaAsset.storageKey);
+      if (job.sourceMediaAsset)
+        await this.storage.get(job.sourceMediaAsset.storageKey);
+      const previous = identity.avatarMediaAssetId
+        ? await tx.avatarGeneration.findUnique({
+            where: { confirmedMediaAssetId: identity.avatarMediaAssetId },
+            include: { sourceMediaAsset: true },
+          })
+        : null;
       await tx.resident.update({
         where: { id: resident.id },
         data: {
@@ -206,28 +248,34 @@ export class AvatarService {
       });
       await tx.avatarGeneration.update({
         where: { id },
-        data: { status: "CONFIRMED" },
+        data: {
+          status: "CONFIRMED",
+          confirmedMediaAssetId: job.candidateMediaAssetId,
+          candidateMediaAssetId: null,
+        },
       });
-      if (identity.avatarMediaAsset)
-        await tx.mediaAsset.delete({
-          where: { id: identity.avatarMediaAsset.id },
-        });
-      return identity.avatarMediaAsset?.storageKey ?? null;
+      const obsolete = [
+        identity.avatarMediaAsset,
+        previous?.sourceMediaAsset,
+      ].filter((x) => x != null);
+      for (const asset of obsolete)
+        await tx.mediaAsset.delete({ where: { id: asset.id } });
+      return obsolete.map((asset) => asset.storageKey);
     });
-    if (oldKey) await this.storage.remove(oldKey);
+    await this.removeFiles(oldKeys);
     return { confirmed: true };
   }
   async cancelOwn(userId: string, id: string) {
     z.string().uuid().parse(id);
-    const oldKey = await this.locked(async (tx) => {
+    const oldKeys = await this.locked(async (tx) => {
       const resident = await new ResidentService(tx).requireActive(userId);
       const job = await tx.avatarGeneration.findUnique({
         where: { id },
-        include: { candidateMediaAsset: true },
+        include: { candidateMediaAsset: true, sourceMediaAsset: true },
       });
       if (job && job.residentId !== resident.id)
         throw new AvatarNotAvailableError();
-      if (job?.status === "CONFIRMED") return null;
+      if (job?.status === "CONFIRMED") return [];
       if (!job) {
         await tx.avatarGeneration.create({
           data: {
@@ -240,20 +288,40 @@ export class AvatarService {
             expiresAt: new Date(),
           },
         });
-        return null;
+        return [];
       }
       await tx.avatarGeneration.update({
         where: { id },
-        data: { status: "CANCELLED", candidateMediaAssetId: null },
+        data: {
+          status: "CANCELLED",
+          candidateMediaAssetId: null,
+          sourceMediaAssetId: null,
+        },
       });
-      if (job.candidateMediaAsset)
-        await tx.mediaAsset.delete({
-          where: { id: job.candidateMediaAsset.id },
-        });
-      return job.candidateMediaAsset?.storageKey ?? null;
+      const obsolete = [job.candidateMediaAsset, job.sourceMediaAsset].filter(
+        (x) => x != null,
+      );
+      for (const asset of obsolete)
+        await tx.mediaAsset.delete({ where: { id: asset.id } });
+      return obsolete.map((asset) => asset.storageKey);
     });
-    if (oldKey) await this.storage.remove(oldKey);
+    await this.removeFiles(oldKeys);
     return { cancelled: true };
+  }
+  async readCandidate(userId: string, id: string) {
+    const resident = await new ResidentService(this.db).requireActive(userId);
+    await this.cleanup(new Date(), resident.id);
+    const job = await this.db.avatarGeneration.findFirst({
+      where: {
+        id,
+        residentId: resident.id,
+        status: "READY",
+        expiresAt: { gt: new Date() },
+      },
+      include: { candidateMediaAsset: true },
+    });
+    if (!job?.candidateMediaAsset) throw new AvatarNotAvailableError();
+    return this.storage.get(job.candidateMediaAsset.storageKey);
   }
   async readAsset(userId: string, id: string) {
     const resident = await new ResidentService(this.db).requireActive(userId);
@@ -261,31 +329,17 @@ export class AvatarService {
       where: {
         id,
         spaceId: resident.spaceId,
-        OR: [
-          {
-            avatarOwner: {
-              is: { status: "ACTIVE", spaceId: resident.spaceId },
-            },
-          },
-          {
-            avatarGeneration: {
-              is: {
-                residentId: resident.id,
-                status: "READY",
-                expiresAt: { gt: new Date() },
-              },
-            },
-          },
-        ],
+        avatarOwner: { is: { status: "ACTIVE", spaceId: resident.spaceId } },
       },
     });
     if (!asset) throw new AvatarNotAvailableError();
     return this.storage.get(asset.storageKey);
   }
-  async cleanup(now = new Date()) {
+  async cleanup(now = new Date(), residentId?: string) {
     const keys = await this.locked(async (tx) => {
       const jobs = await tx.avatarGeneration.findMany({
         where: {
+          residentId,
           OR: [
             { status: { in: ["READY", "PENDING"] }, expiresAt: { lte: now } },
             {
@@ -300,33 +354,41 @@ export class AvatarService {
             },
           ],
         },
-        include: { candidateMediaAsset: true },
+        include: { candidateMediaAsset: true, sourceMediaAsset: true },
         take: 100,
       });
       const removed: string[] = [];
       for (const job of jobs) {
         await tx.avatarGeneration.update({
           where: { id: job.id },
-          data: { status: "FAILED", candidateMediaAssetId: null },
+          data: {
+            status: job.expiresAt <= now ? "EXPIRED" : "FAILED",
+            candidateMediaAssetId: null,
+            sourceMediaAssetId: null,
+          },
         });
-        if (job.candidateMediaAsset) {
-          await tx.mediaAsset.delete({
-            where: { id: job.candidateMediaAsset.id },
-          });
-          removed.push(job.candidateMediaAsset.storageKey);
+        for (const asset of [job.candidateMediaAsset, job.sourceMediaAsset]) {
+          if (!asset) continue;
+          await tx.mediaAsset.delete({ where: { id: asset.id } });
+          removed.push(asset.storageKey);
         }
       }
       await tx.avatarGeneration.deleteMany({
         where: {
+          residentId,
           createdAt: { lt: new Date(now.getTime() - 7 * 24 * 60 * 60_000) },
           OR: [
-            { status: { in: ["FAILED", "CANCELLED"] } },
-            { status: "CONFIRMED", candidateMediaAssetId: null },
+            { status: { in: ["FAILED", "CANCELLED", "EXPIRED"] } },
+            {
+              status: "CONFIRMED",
+              confirmedMediaAssetId: null,
+              sourceMediaAssetId: null,
+            },
           ],
         },
       });
       return removed;
     });
-    for (const key of keys) await this.storage.remove(key);
+    await this.removeFiles(keys);
   }
 }

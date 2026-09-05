@@ -16,9 +16,7 @@ export type CloudflareAvatarModel =
 export const AVATAR_PROMPT = `One original warm cute pixel-art portrait of the person in the input photo. Preserve their visible hairstyle, hair colour, skin tone and eyewear. Frontal oversized head, rounded stepped cheeks and chin, head 80-85 percent of the character, no neck, tiny shoulders. Clear gentle eyes and small smile, readable at 60 pixels. Hand-drawn 64x64 logical pixel scale, flat pixel clusters, one-pixel light contour, restrained warm beige and terracotta palette. Centre the complete head with 6 percent margin on all sides. Solid pure magenta #FF00FF background for removal, absolutely no magenta on character. No prop, no book, no drink, no badge, no text, no scenery. Not realistic, not full body, not a circle crop, no commercial game assets.`;
 export class CloudflareAvatarProvider implements AvatarGenerationProvider {
   readonly model: string;
-  constructor(
-    readonly kind: CloudflareAvatarModel = "cloudflare-sdxl-lightning",
-  ) {
+  constructor(readonly kind: CloudflareAvatarModel = "cloudflare-flux-klein") {
     this.model =
       kind === "cloudflare-flux-klein" ? AVATAR.fluxModel : AVATAR.sdxlModel;
   }
@@ -26,6 +24,7 @@ export class CloudflareAvatarProvider implements AvatarGenerationProvider {
     const account = process.env.CLOUDFLARE_ACCOUNT_ID;
     const key = process.env.CLOUDFLARE_API_TOKEN;
     if (
+      process.env.AVATAR_EXTERNAL_REQUESTS_ENABLED !== "true" ||
       process.env.AVATAR_EXTERNAL_PROCESSING_APPROVED !==
         AVATAR.policyVersion ||
       process.env.CLOUDFLARE_WORKERS_PLAN !== "free" ||

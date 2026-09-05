@@ -4,6 +4,14 @@
 
 ## [未发布]
 
+### AVATAR-01 私密候选闭环与生成源图（2026-09-05）
+
+- 独立 candidate/final route、稳定候选 identity；刷新恢复私密候选，本人「就用这个」后才切换正式 Resident 头像，Partner 只能读取最终版本。
+- 增量 candidate_source migration，保留 256px normalized 图和 1024px 模型生成源图、风格/模型/身份版本；原自拍不持久化。确认原子切换，失败保护旧资源，取消/到期/替换清理双图并增加 lazy cleanup。
+- 当前 runtime 仅 FLUX.2 klein 4B；SDXL 400/3030 保留未决记录。默认关闭真实请求开关，保留政策、限额、防重复和 no retry；本轮真实外部调用 0 次。
+- 扩展 PostgreSQL 生命周期/权限/故障测试及双端候选刷新、最终 URL 区分、Partner/重新登录断言；详细数字、截图和配置见 AVATAR_OPERATIONS.md。
+- 产品流程实现到真实视觉验收前一步。仍待用户授权 1 次 photo-1 FLUX 持久候选并本人查看确认，不声明画风已通过；不启动地图、定位或状态动画。
+
 ### AVATAR-01 两次真实 smoke 与外发范围收窄（2026-09-05）
 
 - 按用户明确授权完成 2 次真实请求：SDXL-Lightning 返回 400 / 3030；FLUX.2 klein 4B 返回 200，1024px 输出经实际处理代码规范化为 256px 透明 PNG。无第三次调用，无原照落盘。
