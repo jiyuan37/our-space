@@ -1,0 +1,43 @@
+{
+  "checks": 24,
+  "viewports": ["375×812", "1280×850"],
+  "locales": ["zh-CN", "en-US"],
+  "externalRequests": 0,
+  "geolocationCalls": 0,
+  "pageErrors": [],
+  "contrasts": [
+    {
+      "fg": "#3e3831",
+      "bg": "#fff4df",
+      "ratio": 10.61
+    },
+    {
+      "fg": "#665a4d",
+      "bg": "#fff4df",
+      "ratio": 6.14
+    },
+    {
+      "fg": "#fff4df",
+      "bg": "#536b46",
+      "ratio": 5.41
+    },
+    {
+      "fg": "#5c5447",
+      "bg": "#e8dcc4",
+      "ratio": 5.5
+    },
+    {
+      "fg": "#315064",
+      "bg": "#aecfe0",
+      "ratio": 5.2
+    }
+  ],
+  "requests": [
+    "http://127.0.0.1:4173/",
+    "http://127.0.0.1:4173/style.css",
+    "http://127.0.0.1:4173/app.mjs",
+    "http://127.0.0.1:4173/movement.mjs",
+    "http://127.0.0.1:4173/characters.mjs",
+    "http://127.0.0.1:4173/geography.json"
+  ]
+}

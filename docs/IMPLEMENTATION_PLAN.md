@@ -4,7 +4,9 @@
 
 ## 状态
 
-**当前状态：Phase 3 implementation 已完成并通过 Final Review。**
+**当前状态：具体规格与隔离原型已完成，等待用户确认视觉和实现方案。**
+
+Phase 3 implementation 已完成并通过 Final Review。
 
 阶段 0、Phase 1 已完成，Phase 1 已通过最终 Review。Phase 2 已实施，在首次 Final Review 后完成 Repair，并通过 Closure Review。Phase 3 前置 UI/UX Review、Design Decision Closure、implementation、Independent Final Review 与 Final Polish Patch 已完成，设计基线记录于 [`PHASE_3_DESIGN.md`](./PHASE_3_DESIGN.md)，实施与 Review 证据记录于 [`PHASE_3_REVIEW.md`](./PHASE_3_REVIEW.md)。Phase 4 尚未开始，也未获得批准。
 
@@ -334,49 +336,35 @@
 
 ## 已确认必做的新产品交付轨道
 
-以下三条轨道来自 2026-09-04 Master Spec 修订。产品目标已经确认，但详细设计、具体 Phase 归属与实施均未获批准。它们不得覆盖原 Phase 4–7 的 LifePoint、Response、SharedMoment、Visit、质量、Settings 或 seed 交付。
+`AVATAR-01`、`ANIMATION-01`、`MAP-01` 均必交付。本轮确认真实地理地图、Home 主体、像素与柔和线条 Q 版、可信位置变化才回放。详细规格及子要求见 [AVATAR_AND_MAP_SPEC.md](./AVATAR_AND_MAP_SPEC.md)。本轮仅批准隔离原型、文档与研究，生产实现未获批准。
 
-### 建议依赖顺序（提议，不是批准排期）
+### 本轮 checklist
 
-1. 先收口三条轨道的产品语义、隐私、安全、Accessibility 与验收计划。
-2. `AVATAR-01` 可复用未来获批的 media/storage 安全基础，但必须单独取得实施批准；不能把 Phase 4 图片上传授权自动扩大为自拍 AI 处理授权。
-3. `ANIMATION-01` 依赖稳定、经用户确认的 `AVATAR-01` 身份，以及已批准的状态词汇与映射。
-4. `MAP-01` 的语义和信息架构设计应尽早开展；与 LifePoint、SharedMoment、Visit 的集成只能在对应 Phase 能力实际存在后实施，但不得因此无限期延期。
-5. 每条轨道分别完成 implementation review 与验收；共享 provider 或资产管线不能自动扩大相邻 Phase 范围。
+- [x] 完整阅读必读文档并核对 Git 基线。
+- [x] 官方参考拆解及 Web/后台定位能力研究。
+- [x] 真实公开 OSM 街区、原创示例角色、双语独立 HTML/CSS/JavaScript 原型。
+- [x] 明确角色持续身份、Presence/位置分离、移动状态机、端点/采样区别、一次回放及无数据语义。
+- [x] 独立状态机和浏览器断言、375×812 / 1280px 截图及文字对比度/触控验证；证据见原型 README。
+- [x] 保留六实体与原 Phase 4–7 闭环；本轮完成后停止，不自动进入生产开发。
 
-任何“与 Phase 4 并行”“置于 Phase 5/6 之间”或“Phase 7 前完成”的说法目前都只能是后续排期提议，必须由用户明确批准。
+### 后续依赖顺序建议
 
-### AVATAR-01 — 持久卡通视觉身份
+1. P0：用户确认本轮原型视觉与实现方案。
+2. P1：持久角色创建与资源基础；先批准非阻断/替代路径、AI 与自拍 lifecycle，再做候选、调整、重试、确认及资源版本。静态头像不能顶替完整流程。
+3. P2：生产真实地图渲染与角色定位；需要 provider/成本/隐私选择、稳定角色资源。生产 Home 切换单独批准。
+4. P3：本人授权位置更新、样本质量、共享 epoch、访问/删除；完整后台体验需原生能力与原 MVP native 排除项的明确修订。Web 前台有限能力与后台目标分开验收。
+5. P4：真实已记录变化回放；依赖 P1/P2/P3，不伪造路线；包括去重、缺口、长距、往返、撤销和 reduced-motion。
+6. P5：原 Phase 4–6 LifePoint、Response（含图片）、幂等 SharedMoment、Visit 与地图结合；领域闭环和无地点 LifePoint 不能被视觉工作挤掉。
+7. P6：原 Phase 7 Settings、privacy、seed、响应式与完整质量验收，覆盖三条必做轨道。
 
-- 需求标识：`AVATAR-01`。
-- 用户期望流程：自拍或上传照片 → AI 生成卡通候选 → 选择、调整或重新生成 → 明确确认满意形象 → 持续使用同一角色。
-- 交付结果：Resident 拥有稳定、本人确认且可持续复用的卡通身份；创建入口在注册后或首次进入时显著可见。`avatarUrl` 或单张静态头像不等于完成。
-- 依赖：上传/media 安全、consent、生成处理边界、私密授权、资产 lifecycle、双语与 Accessibility。
-- 尚未决定：是否阻断 Home、真人照片是否必需、拒绝/失败/不满意/撤回路径、2D/3D、provider、数据模型和保存期限。
-- 建议验收证据：完整生成/选择/调整/重试/确认流程；身份跨 session 保持；访问控制、失败与删除路径；mobile/desktop/keyboard/screen reader 验证。
-- 当前状态与授权：**产品目标已确认；设计待收口；未实施；未获得实施授权。**
+P 编号仅为建议工作包，不能等同于已批准 Phase。共享 media 基础不代表扩大自拍/AI 授权。每轮只执行一个获批 Phase，三条新轨道不得无限期延期；细化 Phase 编排由用户确认后记录。
 
-### ANIMATION-01 — 同一角色的状态动画
+### 尚待用户决定的实施门槛
 
-- 需求标识：`ANIMATION-01`。
-- 用户期望流程：已确认角色 → 用户主动留下当前 Presence/状态 → 同一角色表达动作或表情 → Presence 清除/过期后停止当前表达。
-- 交付结果：在身份一致的前提下交付动态状态表达，并提供 reduced-motion / 静态等价；不把静态头像、实时定位、在线状态或推断情绪当作完成。
-- 依赖：`AVATAR-01`、状态词汇与映射收口、viewer-local-day freshness、资产性能与 Accessibility。
-- 尚未决定：动作库、映射方式、是否逐次确认、动画技术/格式/provider，以及切换与失败过渡。
-- 建议验收证据：多状态身份一致；clear/跨日 lifecycle 正确；无后台推断；reduced-motion、静态 fallback、性能与双端验证。
-- 当前状态与授权：**产品目标已确认；设计待收口；未实施；未获得实施授权。**
-
-### MAP-01 — 地图与标记／状态点
-
-- 需求标识：`MAP-01`。
-- 用户期望流程：进入共同空间 → 发现核心地图 → 理解标记/状态点的归属与含义 → 进入获批的相关 Home/Presence/LifePoint/SharedMoment 流程。
-- 交付结果：地图成为清晰可发现的核心空间表达；marker 语义、权限与 lifecycle 清楚；不强制 LifePoint location，也不把 Presence 列表当作地图完成。
-- 依赖：地理/抽象/混合模型选择、Home/navigation IA、六实体映射、位置隐私、marker lifecycle、provider/fallback 与 Accessibility。
-- 尚未决定：地图类型、入口、marker 分类、地理数据是否存在及其精度/权限、provider、缓存/离线和失败行为。
-- 建议验收证据：mobile/desktop 可发现且可理解；非视觉替代；跨实体不混淆；Space/visibility 授权；位置拒绝/撤回/删除与 provider failure 验证。
-- 当前状态与授权：**产品目标已确认；设计待收口；未实施；未获得实施授权。**
-
-详细规格、隐私条件和完整验收目标见 [`AVATAR_AND_MAP_SPEC.md`](./AVATAR_AND_MAP_SPEC.md)。
+- 头像是否阻断进入与照片替代：建议显著邀请、可稍后做、允许原创预设起步；最终完整生成目标保留。
+- AI provider/自拍处理：建议最小单用途输入和确认后尽快清理原图/未选候选，具体处理与删除条款需核实批准。
+- 地图 provider：比较可自定义开放矢量方案与商业 SDK，明确维护/许可/成本及请求披露后选择。
+- 定位精度/频率/保存与原生后台范围：建议最小必要精度、可暂停和短期窗口，具体数值经真机实验再批准；不得把 Web 页面一直打开视为完整目标。
 
 ## 必需的端到端验收流程
 

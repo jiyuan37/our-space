@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <title>Our Space · 像素地图交互原型</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="icon" href="data:," />
+  </head>
+  <body>
+    <main id="home">
+      <div
+        id="map"
+        tabindex="0"
+        role="region"
+        aria-label="地图，可用方向键移动"
+      >
+        <svg id="geography" aria-hidden="true"><g id="world"></g></svg
+        ><svg id="route" aria-hidden="true"></svg>
+        <div id="anchors"></div>
+        <div id="remoteNote" hidden></div>
+      </div>
+      <header>
+        <div>
+          <span class="wordmark">OUR SPACE</span>
+          <h1 data-i18n="space">慢慢的家</h1>
+        </div>
+        <div class="header-tools">
+          <button id="locale">EN</button
+          ><button
+            id="account"
+            class="avatar-button"
+            aria-label="示例账户"
+          ></button>
+        </div>
+      </header>
+      <div class="prototype-label" data-i18n="prototype">
+        交互原型 / 模拟位置变化
+      </div>
+      <section class="intro">
+        <span class="eyebrow" data-i18n="place">伦敦 · 南岸</span>
+        <h2 data-i18n="hello">各自在今天，<br />也在一起。</h2>
+        <p data-i18n="intro">一个可以安静待着的地方。</p>
+      </section>
+      <nav class="residents" aria-label="Resident">
+        <button id="focusLin">
+          <span class="mini" id="miniLin"></span
+          ><span data-i18n="lin">小林 · 示例</span></button
+        ><button id="focusYu">
+          <span class="mini" id="miniYu"></span
+          ><span data-i18n="yu">小雨 · 示例</span>
+        </button>
+      </nav>
+      <div class="map-controls">
+        <button id="zoomIn" aria-label="放大">＋</button
+        ><button id="zoomOut" aria-label="缩小">−</button
+        ><button id="center" aria-label="回到关注区域">⌖</button>
+      </div>
+      <div class="place-caption" id="placeCaption" data-i18n="mapCaption">
+        泰晤士河畔 · 公开街区
+      </div>
+      <div class="bottom">
+        <section class="replay-note" aria-live="polite">
+          <div>
+            <strong id="statusTitle"></strong>
+            <p id="statusCopy"></p>
+          </div>
+          <button id="skip" hidden data-i18n="skip">跳过</button>
+        </section>
+        <div class="actions">
+          <button id="create" class="primary">
+            <span aria-hidden="true">＋</span>
+            <span data-i18n="create">留一点今天</span></button
+          ><button id="unplaced" data-i18n="unplaced">没有地点的时刻</button>
+        </div>
+        <a
+          class="attribution"
+          href="https://www.openstreetmap.org/copyright"
+          target="_blank"
+          rel="noreferrer"
+          >© OpenStreetMap contributors · ODbL</a
+        >
+      </div>
+      <button id="debugToggle" data-i18n="debug">原型实验台</button>
+      <aside id="debug" hidden>
+        <div class="panel-heading">
+          <h2 data-i18n="debug">原型实验台</h2>
+          <button id="debugClose" data-i18n="close">关闭</button>
+        </div>
+        <p data-i18n="debugNote">仅切换合成样本，不采集你的位置。</p>
+        <label for="scenario" data-i18n="scenario">演示场景</label
+        ><select id="scenario"></select>
+        <div class="debug-actions">
+          <button id="reopen" data-i18n="reopen">再打开地图</button
+          ><button id="reset" data-i18n="reset">重置演示游标</button>
+        </div>
+        <label class="check"
+          ><input id="motion" type="checkbox" /><span data-i18n="motion"
+            >关闭移动回放</span
+          ></label
+        ><label for="pose" data-i18n="pose">自愿状态（与位置独立）</label
+        ><select id="pose"></select
+        ><output id="machine"></output>
+        <p data-i18n="parameters">
+          阈值为原型参数，尚未实测校准。步态不代表交通方式。
+        </p>
+        <button id="identity" data-i18n="identity">
+          查看示例形象与创建流程
+        </button>
+      </aside>
+      <dialog id="detail" aria-labelledby="detailTitle">
+        <div class="panel-heading">
+          <span class="eyebrow" data-i18n="sample">示例内容</span
+          ><button id="closeDetail" data-i18n="close">关闭</button>
+        </div>
+        <div id="detailBody"></div>
+      </dialog>
+    </main>
+    <script type="module" src="app.mjs"></script>
+  </body>
+</html>

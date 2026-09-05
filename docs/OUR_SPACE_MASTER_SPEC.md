@@ -533,7 +533,7 @@ Visit
 Settings
 ```
 
-The map requirement added in Section 28 is a core spatial expression, but its relationship to Home and navigation is not yet decided. Do not silently relegate it to an indefinite optional page, and do not add a `Map` destination before the information architecture is explicitly approved.
+2026-09-04 进一步确认：真实世界像素地图是未来 Home 的全屏主体，不新增次级 Map destination。本轮只批准具体规格与隔离原型；生产导航与 `/home` 切换仍需实施批准。见第 29 节。
 
 Primary create action:
 
@@ -593,7 +593,7 @@ The user should understand within approximately three seconds:
 * what has happened recently
 * how to leave a small trace
 
-Suggested structure:
+以下是已验收 Phase 3 的历史文字布局；后续由第 29 节地图主体演进取代其视觉结构，保留 Quiet Home 哲学与业务基础：
 
 ```text
 Home Header
@@ -653,7 +653,7 @@ Avoid:
 * dense dashboards
 * gamified cards
 * excessive icons
-* overly playful illustrations
+* 争夺注意力的插画；第 29 节温暖像素 Q 版角色是已明确要求
 * corporate SaaS appearance
 
 Use:
@@ -705,7 +705,7 @@ Implement subtle motion for:
 * transitioning to Visit
 * expressing a voluntarily shared current state through the Resident's same confirmed cartoon identity, once that feature is designed and approved
 
-State animation must not imply online status, live location, background monitoring, or inferred emotion. An expired or cleared Presence must not continue to present an old animation as current. Preserve a meaningful static presentation under `prefers-reduced-motion`; see Section 28.
+Presence 状态动画不暗示在线、定位、后台监控或推断情绪。第 29 节另行明确基于本人授权且已记录的可信位置变化回放；状态动画与位置回放不能混为一体。 An expired or cleared Presence must not continue to present an old animation as current. Preserve a meaningful static presentation under `prefers-reduced-motion`; see Section 28.
 
 Avoid:
 
@@ -942,7 +942,7 @@ Enforce all of the following:
 12. Date grouping must be based on `occurredAt`, with fallback to `createdAt`.
 13. All timestamps must be stored in UTC.
 14. Display dates using the user's local timezone.
-15. Do not expose exact activity tracking.
+15. 不暴露精确活动已读、last-seen 或无感监控；第 29 节允许本人知情、自主控制的共享位置表达，采集及后台能力仍须专项批准。
 
 ---
 
@@ -1294,7 +1294,7 @@ Follow these instructions while implementing:
 
 - Presence 仍是可选、手动、非监控的“此刻”，并遵循 viewer-local-day freshness；过期或清除后，不得继续用旧动画表示当前活动。
 - 状态动画不代表实时定位、online/offline、后台行为监控或情绪推断。
-- 地图不自动等于真实地理地图，也不授权后台持续定位。
+- 地图现已确认对应真实世界地理关系；这不自动授权位置采集或后台持续定位。
 - Presence 与 LifePoint 必须保持概念区分；不得把所有状态点直接等同于 LifePoint。
 - LifePoint 仍不强制 title、tag 或 location。
 - 保留 `prefers-reduced-motion` 和等价静态展示，不引入装扮经济、等级、奖励、签到、streak 或更新压力。
@@ -1302,11 +1302,27 @@ Follow these instructions while implementing:
 ## 尚未收口且不得擅自决定
 
 - 头像创建是否阻断 Home、是否必须使用真人照片，以及拒绝上传/生成失败/不满意/撤回时的继续路径。
-- 2D / 3D、动作库、状态映射、动画技术、map provider、AI provider 或供应商。
-- 地图是地理、抽象共同生活空间或混合表达；地图与 Home/navigation 的关系；各类 marker 的含义与生命周期。
+- 像素与柔和线条的 Q 版方向已确认；生产资源/渲染技术、完整动作库、状态映射、map provider 与 AI provider 仍待定。
+- 地图对应真实地理并作为 Home 主体已确认；marker 分类与时间/权限规则在第 29 节及详细规格中细化，生产 lifecycle 仍需按阶段批准。
 - 自拍、原图、候选、最终资源和可能的位置数据的保存、访问、期限、删除与 lifecycle 行为。
 - 任何外部处理例外。用户确认 avatar 产品目标不等于授权把自拍、Presence 或 Space 内容发送给外部 provider。
 
-详细需求状态、依赖、隐私条件、建议验收证据和未决问题集中记录于 [`AVATAR_AND_MAP_SPEC.md`](./AVATAR_AND_MAP_SPEC.md)。当前仅批准需求与计划文档同步；AVATAR-01、ANIMATION-01、MAP-01 及 Phase 4 均未获得实施批准。已完成 Phase 1–3 的历史验收继续有效。
+详细需求状态、依赖、隐私条件、建议验收证据和未决问题集中记录于 [`AVATAR_AND_MAP_SPEC.md`](./AVATAR_AND_MAP_SPEC.md)。当前进一步批准具体规格、研究与隔离原型；AVATAR-01、ANIMATION-01、MAP-01 的生产实施及完整 Phase 4 均未获得批准。已完成 Phase 1–3 的历史验收继续有效。
 
 对于已经获得明确批准的 implementation Phase，应先检查仓库并生成 implementation checklist，再按批准范围推进；不得把本节的产品目标确认当作 implementation 授权。
+
+# 29. 真实世界像素地图 Home 具体修订（2026-09-04）
+
+本节取代第 8–10、28 节中地图类型/入口未定及仅文字视觉布局作为未来目标的旧表述，不追溯修改 Phase 3 历史验收。详细规则与子要求集中见 [AVATAR_AND_MAP_SPEC.md](./AVATAR_AND_MAP_SPEC.md)。
+
+- `MAP-01`：真实道路、水系、公园与地点关系必须来自地理数据；未来进入 Home 即见全屏地图。手机 375×812 与约 1280px 桌面分别设计。温暖米色、低饱和绿地/蓝水、克制 POI 和像素界面语言；用户进一步确认《星露谷物语》式像素乡野视觉，使用原创纹理/树冠/屋顶且保留真实地理关系，装饰不冒充实测 POI；候选色不是最终品牌色批准。底图必须保留来源/许可归因。
+- `AVATAR-01`：像素感 + 柔和线条的原创 Q 版持久身份，约 2.5–3 头身；首次进入突出引导，自拍/上传 → AI 候选 → 选择/调整/重试 → 本人明确确认。是否阻断、照片替代及 provider/数据 lifecycle 尚待决定。
+- `ANIMATION-01`：同一角色的自愿 Presence 表达与位置变化严格分离。GPS 不更新 `Presence.updatedAt`；clear/跨日停止旧状态动作而保留身份。可信新位置变化才触发一次短回放，无基线不虚构起点，无变化不走动，无数据不宣称未移动。
+- 将采集、可信变化判断、回放分层。位置共享只能由被定位本人开启，不能由 OWNER 或伴侣代开；照片与位置分别授权。暂停/撤销后停止新读取/回放，重新检查缓存访问权限，不能拼接暂停期间路线。
+- 只有端点时标明变化示意，不用导航路径伪造实际轨迹；有样本仅回放有效段，缺口保持缺口。步态不证明交通方式。长距离切换街区镜头；A→B→A 不被吞掉，多段有界且说明选择范围。
+- 完成/跳过后刷新和语言切换不自动重播。游标属于查看者私有 UI 状态，按账户/Space 隔离，不形成对方可见的已读。可关闭、可跳过，reduced-motion 有文本与静态前后位置等价。
+- Resident 地理锚点、Presence 动作和 LifePoint 生活针含义不同；无地点 LifePoint 保持自然入口，不强制选坐标，不因 GPS 自动创建生活记录或 SharedMoment。六核心实体与原 LifePoint → Response → SharedMoment → Visit 闭环完整保留。
+- Web/PWA 无法可靠保证被定位方隐藏/锁屏/关闭页面后的持续采样。完整后台目标需要原生定位工作包及明确范围修订；旧 native applications 排除项尚未被授权修改。不得偷偷降为“双方一直开网页”，也不得直接创建原生工程。
+- 本轮授权仅限相关文档、实现研究、`prototypes/map-home/` 的原创代码/合规公开数据/独立测试/截图，以及验证后的提交和正常 push；不改生产代码、依赖、Schema、migration，不请求自拍或位置，不调用付费服务/外部 AI。
+
+本轮状态：**具体规格与隔离原型已完成，等待用户确认视觉和实现方案。** 这不代表 AI 头像、真实位置共享、后台轨迹、生产地图 Home 或 Phase 4 已完成。

@@ -400,3 +400,7 @@ Phase 3 前置设计已经完成并收口，但 Phase 3 尚未开始。
 - 实现 AppShell、Home、Presence 或 i18n。
 - 修改应用代码、测试、dependencies、Prisma Schema 或 migration。
 - 创建 Life Point、Response、Shared Moment、Visit 或任何 Phase 4+ 功能。
+
+## 后续真实世界像素地图 Home 演进引用（2026-09-04）
+
+本文上面的 Phase 3 设计与当时授权状态保留为历史记录；Phase 3 实际已完成并通过 Final Review，见 CURRENT_STATE.md / PHASE_3_REVIEW.md。后续获批演进以 [AVATAR_AND_MAP_SPEC.md](./AVATAR_AND_MAP_SPEC.md) 及 Master Spec 第 29 节为准：真实地理地图成为 Home 全屏主体，原创像素与柔和线条 Q 版角色替代 initials/文字居中主布局。保留 Quiet Home、两人平等、Silence 完整、自愿当天 Presence、双语、可访问性、无压力与隐私原则。本轮未来内容只出现在明确标注的隔离原型，未替换生产 /home，未修改本阶段 Review 或验收结论。

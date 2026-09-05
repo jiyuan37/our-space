@@ -5,9 +5,10 @@
 ## 当前 Phase
 
 - 当前 Phase：Phase 3 — Core Home / Presence 已完成；当前没有获批实施中的 Phase。
-- 当前状态：**Phase 3 implementation 已完成并通过 Final Review。**
+- 当前状态：**具体规格与隔离原型已完成，等待用户确认视觉和实现方案。**
+- Phase 3 implementation 已完成并通过 Final Review；本轮不重做历史验收。
 - 实际项目根目录：`/Users/yuan/Desktop/our-space`。
-- 下一项是否已获批准：否。
+- 本轮具体规格、可行性研究、隔离原型与提交/push 已获批准；下一项生产实施尚未获批。
 - Phase 2 已完成并通过最终 Review；Phase 3 前置 UI/UX Review、Design Decision Closure、implementation、Independent Final Review 与 Final Polish Patch 均已完成。
 - **Phase 4 尚未开始，也未获得批准。**
 
@@ -61,8 +62,8 @@
 - `AVATAR-01`：Resident 必须能通过自拍/上传、AI 卡通候选生成、选择/调整或重试、明确确认建立持久卡通身份；入口需在注册后或首次进入时显著可见。
 - `ANIMATION-01`：用户主动留下状态后，必须由同一个已确认角色表达动作或表情；不能以静态头像或身份漂移的重复生成人物代替。
 - `MAP-01`：地图与 marker/status point 是核心空间表达，不能被降级为可无限延期的边缘附加页。
-- 三项产品目标均已确认；详细设计、安全条件与 Phase 排期待收口，尚未获得实施授权。
-- 地图不自动等于真实地理位置或持续定位；Presence 与 LifePoint 保持概念区分，LifePoint 继续不强制 location。
+- 三项方向进一步明确，具体规则及隔离原型见 AVATAR_AND_MAP_SPEC.md；provider、同意/lifecycle、后台客户端与生产 Phase 排期仍待批准。
+- 地图已确认对应真实世界并作为未来 Home 主体；这不授权持续定位。Presence 与 LifePoint 保持概念区分，LifePoint 不强制 location。
 - Avatar 目标不自动授权外部 AI 处理；自拍、原图、Presence 或 Space 内容不得在未获专项批准前发送给外部 provider。
 - 详细状态、依赖、未决问题和验收目标见 `docs/AVATAR_AND_MAP_SPEC.md`；六个核心实体和已完成 Phase 1–3 的验收保持不变。
 
@@ -93,7 +94,7 @@
 
 ## 当前验证状态
 
-以下结果来自上一轮在 `ab18b49c0e27ff1903604d1263bc45d956b8ff34` 完成的 Phase 3 Final Polish 验证。本次纯文档同步未重新运行应用测试矩阵，不得把这些结果表述为本轮新执行证据。
+以下结果来自上一轮在 `ab18b49c0e27ff1903604d1263bc45d956b8ff34` 完成的 Phase 3 Final Polish 验证。本次规格与隔离原型未重新运行应用测试矩阵，不得把这些结果表述为本轮新执行证据。
 
 | 检查                                        | 当前结果                                    |
 | ------------------------------------------- | ------------------------------------------- |
@@ -118,3 +119,16 @@
 - 不得使用 `DATABASE_URL` 代替独立 `TEST_DATABASE_URL`。
 - 不得记录密码、Invitation raw token、hash、认证 secret 或数据库凭据。
 - Phase 3 implementation 已完成并通过 Final Review；Phase 4 尚未开始，也未获得批准。
+
+## 本轮真实世界像素地图规格与隔离原型
+
+- 起始 HEAD：`241e4594d04d98ff05d6055c11639e92cd39ecc7`（`docs: record avatar and map product requirements`）。从项目根目录成功 fetch 后，main 与 origin/main 为 `0 0`，工作树干净；正式远程与上文一致。
+- 本轮交付提交通过 `git log -1 --format='%H %s'` 定位，提交信息为 `design: specify and prototype pixel map home`；该提交包含本节，避免在自身内容中写入无法固定的自引用 hash。交付同步目标为干净工作树、`main...origin/main = 0 0`；最终实际 commit/push 证据在交付报告中记录，下轮仍须 fetch 并复查。
+- 最近通过应用矩阵验证的代码基线仍为 `ab18b49c0e27ff1903604d1263bc45d956b8ff34`。
+- 原型入口：`prototypes/map-home/index.html`；根目录运行 `node prototypes/map-home/serve.mjs`，浏览器打开 `http://127.0.0.1:4173`。仅本地静态文件，不接入生产 Service。
+- 本轮原型验证：23/23 状态机测试、24 组 Chrome 浏览器检查；375×812 / 1280×850 双语布局和 >=44px 触控通过，文字对比度最低 5.20:1，运行时外部请求/真实定位调用/页面错误均为 0。
+- 双端真实截图、独立断言、对比度及网络验证见 `prototypes/map-home/README.md` 与 `screenshots/verification.json`。
+- 地理数据：公开伦敦南岸 OSM 街区；人物、Presence、生活内容和位置变化均为明确标注的合成示例。巴黎远距视图标记为未打包底图，不冒充真实地图。
+- 修正 README 的过时 Phase 2 状态描述；Phase 3 Review 未改动，Design 仅附加后续演进引用。
+- 当前 Web/PWA 不保证隐藏/锁屏/关闭后的持续采样；前台有限能力尚未生产实施，完整后台需批准原生范围与采集隐私方案。
+- 具体规格与隔离原型已完成，等待用户确认视觉和实现方案。

@@ -1,0 +1,627 @@
+:root {
+  --panel: #fff4df;
+  --ground: #e8dcc4;
+  --park: #b8d1a4;
+  --water: #aecfe0;
+  --text: #3e3831;
+  --muted: #665a4d;
+  --line: #84725c;
+  --accent: #536b46;
+  --focus: #23586d;
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    "PingFang SC",
+    sans-serif;
+  color: var(--text);
+  background: var(--ground);
+  font-size: 14px;
+  line-height: 1.5;
+  color-scheme: light;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+button,
+select {
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  border-radius: 4px;
+  padding: 9px 14px;
+  cursor: pointer;
+}
+button:hover {
+  background: #e9dec8;
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+#map:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+button[hidden],
+[hidden] {
+  display: none !important;
+}
+button:active {
+  transform: translateY(1px);
+}
+h1,
+h2,
+p {
+  margin: 0;
+}
+h2 {
+  font-size: 23px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+a {
+  color: inherit;
+}
+#home {
+  height: 100dvh;
+  min-height: 620px;
+  position: relative;
+  overflow: hidden;
+}
+#map {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  touch-action: none;
+  cursor: grab;
+  background: var(--ground);
+}
+#map:active {
+  cursor: grabbing;
+}
+#geography,
+#route {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+}
+#anchors {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.anchor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  min-width: 60px;
+  transform: translate(-50%, -100%);
+  cursor: pointer;
+}
+.anchor:hover {
+  background: transparent;
+}
+.anchor svg {
+  width: 44px;
+  height: 70px;
+  overflow: visible;
+  filter: drop-shadow(0 2px 0 #fff4df);
+}
+.anchor .name {
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 7px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+}
+.anchor .foot {
+  width: 17px;
+  height: 5px;
+  background: #665a4d;
+  border-radius: 50%;
+  opacity: 0.3;
+}
+.anchor.moment {
+  width: 44px;
+  height: 56px;
+  min-width: 44px;
+  justify-content: flex-start;
+}
+.moment-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 36px;
+  background: var(--panel);
+  border: 2px solid var(--accent);
+  border-radius: 4px;
+  font-size: 23px;
+}
+.moment-icon:after {
+  content: "";
+  position: absolute;
+  top: 34px;
+  width: 8px;
+  height: 8px;
+  background: var(--panel);
+  border-right: 2px solid var(--accent);
+  border-bottom: 2px solid var(--accent);
+  transform: rotate(45deg);
+}
+header {
+  position: absolute;
+  top: 27px;
+  left: 32px;
+  right: 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+}
+header > * {
+  pointer-events: auto;
+}
+.wordmark {
+  font-size: 11px;
+  letter-spacing: 3px;
+  font-weight: 700;
+}
+h1 {
+  font-size: 22px;
+  letter-spacing: 2px;
+  margin-top: 4px;
+}
+.header-tools {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.avatar-button {
+  width: 48px;
+  height: 48px;
+  overflow: hidden;
+  padding: 2px;
+}
+.avatar-button svg {
+  width: 28px;
+  height: 46px;
+}
+.prototype-label {
+  position: absolute;
+  top: 105px;
+  left: 32px;
+  color: var(--muted);
+  background: var(--panel);
+  font-size: 11px;
+  padding: 4px 9px;
+  border-left: 3px solid var(--accent);
+}
+.intro {
+  position: absolute;
+  top: 170px;
+  left: 32px;
+  pointer-events: none;
+  max-width: 250px;
+}
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--muted);
+}
+.intro h2 {
+  font-size: 32px;
+  margin-top: 16px;
+  letter-spacing: 3px;
+}
+.intro p {
+  font-size: 13px;
+  margin-top: 12px;
+}
+.residents {
+  position: absolute;
+  right: 32px;
+  top: 145px;
+  display: flex;
+  gap: 8px;
+}
+.residents button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+}
+.mini {
+  width: 24px;
+  height: 38px;
+  display: block;
+  overflow: hidden;
+}
+.mini svg {
+  width: 24px;
+  height: 38px;
+}
+.map-controls {
+  position: absolute;
+  right: 32px;
+  top: 225px;
+  display: grid;
+  gap: 6px;
+}
+.map-controls button {
+  font-size: 24px;
+  width: 44px;
+  padding: 0;
+}
+.place-caption {
+  position: absolute;
+  bottom: 180px;
+  left: 32px;
+  font-size: 12px;
+  background: var(--panel);
+  padding: 5px 9px;
+}
+.bottom {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 440px;
+  max-width: calc(100% - 32px);
+  display: grid;
+  gap: 10px;
+}
+.replay-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 13px 16px;
+}
+.replay-note strong {
+  font-size: 14px;
+  font-weight: 600;
+}
+.replay-note p {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.actions button {
+  white-space: nowrap;
+  flex: 1;
+  padding-inline: 8px;
+}
+.primary {
+  background: var(--accent);
+  color: var(--panel);
+  border: 2px solid #3b5133;
+  border-radius: 3px;
+  box-shadow: 3px 3px 0 #c3c6a5;
+}
+.primary:hover {
+  background: #405636;
+}
+.primary span:first-child {
+  font-size: 18px;
+}
+.attribution {
+  font-size: 10px;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 44px;
+  background: var(--panel);
+  padding: 0 8px;
+  justify-self: center;
+}
+#debugToggle {
+  position: absolute;
+  bottom: 24px;
+  left: 32px;
+  font-size: 12px;
+}
+#debug {
+  position: absolute;
+  left: 24px;
+  bottom: 82px;
+  width: 330px;
+  max-width: calc(100% - 32px);
+  max-height: calc(100% - 145px);
+  overflow-y: auto;
+  background: var(--panel);
+  border: 2px solid var(--line);
+  padding: 18px;
+  z-index: 8;
+  box-shadow: 4px 4px 0 #bdb198;
+}
+#debug h2 {
+  font-size: 18px;
+}
+.panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.panel-heading button {
+  font-size: 12px;
+}
+#debug p {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 10px 0;
+}
+select {
+  display: block;
+  width: 100%;
+  margin: 6px 0 12px;
+  padding: 8px;
+  font-size: 14px;
+}
+.debug-actions {
+  display: flex;
+  gap: 6px;
+}
+.debug-actions button {
+  font-size: 12px;
+}
+.check {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  gap: 8px;
+}
+.check input {
+  width: 24px;
+  height: 24px;
+}
+.check:has(input:focus-visible) {
+  outline: 3px solid var(--focus);
+}
+output {
+  display: block;
+  padding: 8px;
+  background: #e9dec8;
+  font:
+    11px ui-monospace,
+    monospace;
+  overflow-wrap: anywhere;
+}
+dialog {
+  position: absolute;
+  inset: auto 24px 185px auto;
+  margin: 0;
+  width: 350px;
+  max-width: calc(100% - 32px);
+  max-height: 65%;
+  overflow-y: auto;
+  color: var(--text);
+  background: var(--panel);
+  border: 2px solid var(--line);
+  border-radius: 4px;
+  padding: 20px;
+  z-index: 10;
+  box-shadow: 4px 4px 0 #bdb198;
+}
+dialog::backdrop {
+  background: transparent;
+}
+dialog p {
+  color: var(--muted);
+  margin: 12px 0;
+}
+dialog h2 {
+  margin: 4px 0;
+}
+dialog textarea {
+  display: block;
+  width: 100%;
+  min-height: 100px;
+  font-size: 16px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  background: #fffaf0;
+  margin: 10px 0;
+}
+dialog .portrait {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  margin: 16px 0;
+}
+dialog .portrait svg {
+  width: 60px;
+  height: 96px;
+}
+.portrait-caption {
+  font-size: 12px;
+}
+#remoteNote {
+  position: absolute;
+  top: 44%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 240px;
+  text-align: center;
+  background: var(--panel);
+  padding: 12px;
+}
+svg text {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  fill: #5c5447;
+  paint-order: stroke;
+  stroke: var(--ground);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+#world .river-label {
+  fill: #315064;
+  stroke: var(--water);
+}
+@media (max-width: 650px) {
+  header {
+    top: 18px;
+    left: 20px;
+    right: 20px;
+  }
+  h1 {
+    font-size: 20px;
+  }
+  .wordmark {
+    font-size: 10px;
+  }
+  .header-tools {
+    gap: 7px;
+  }
+  .prototype-label {
+    top: 90px;
+    left: 20px;
+  }
+  .intro {
+    top: 136px;
+    left: 20px;
+    max-width: 200px;
+  }
+  .intro h2 {
+    font-size: 26px;
+    margin-top: 9px;
+  }
+  .intro p {
+    font-size: 12px;
+    margin-top: 7px;
+  }
+  .residents {
+    top: auto;
+    bottom: 209px;
+    right: auto;
+    left: 16px;
+    gap: 6px;
+  }
+  .residents button {
+    font-size: 12px;
+    padding: 3px 9px;
+  }
+  .map-controls {
+    right: 16px;
+    top: 135px;
+    bottom: auto;
+  }
+  .place-caption {
+    bottom: 267px;
+    left: 16px;
+    font-size: 10px;
+  }
+  .bottom {
+    bottom: 0;
+    gap: 8px;
+  }
+  .replay-note {
+    padding: 10px 12px;
+  }
+  .replay-note p {
+    font-size: 11px;
+  }
+  .actions button {
+    font-size: 12px;
+  }
+  .attribution {
+    font-size: 9px;
+    justify-self: end;
+    min-height: 44px;
+    max-width: 240px;
+  }
+  #debugToggle {
+    left: 16px;
+    bottom: 3px;
+    padding: 5px;
+    font-size: 10px;
+    min-width: 80px;
+    border: 0;
+    background: transparent;
+  }
+  #debug {
+    left: 16px;
+    bottom: 205px;
+    max-height: calc(100% - 335px);
+  }
+  dialog {
+    left: 16px;
+    right: auto;
+    bottom: 201px;
+    max-height: calc(100% - 315px);
+    width: 343px;
+  }
+  .anchor svg {
+    width: 40px;
+    height: 64px;
+  }
+  .anchor .name {
+    font-size: 11px;
+  }
+  .intro {
+    background: #fff4dfdd;
+    padding: 10px 12px;
+    border-radius: 2px;
+  }
+  .place-caption {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+.anchor:active {
+  transform: translate(-50%, -100%);
+}
+
+@media (min-width: 651px) {
+  .intro {
+    background: #fff4dfed;
+    padding: 16px;
+    max-width: 280px;
+  }
+}
+
+html[lang="en-US"] .intro h2 {
+  font-size: 24px;
+  letter-spacing: 0.2px;
+  line-height: 1.35;
+}

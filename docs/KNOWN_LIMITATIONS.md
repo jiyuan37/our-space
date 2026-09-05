@@ -27,7 +27,7 @@
 - 两名以上有效 Resident。
 - 家庭扩展、儿童、remembered resident 或 pet account。
 - push notification。
-- 原生移动应用。
+- 原生移动应用仍未获范围批准；完整后台位置目标需要修订此排除项，不能用 Web/PWA 冒充满足。
 - 订阅、广告或行为定向。
 - AVATAR-01 明确范围之外的高级 AI 生成、AI 陪伴、关系推断，或将 Space 数据发送给外部 AI provider。AVATAR-01 的产品目标不构成外部处理授权。
 - 复杂 memory 算法或单独的 Memory 实体。
@@ -68,8 +68,8 @@
 - Avatar 原图、候选、最终资源和派生 metadata 的数据模型、访问权限、保存期限、删除传播与 Resident/Space lifecycle 行为。
 - Avatar AI 是否需要外部 provider；如需要，provider、处理地域、同意、训练/保留/subprocessor、删除与日志最小化必须先获专项批准。
 - ANIMATION-01 的状态词汇、动作库、映射方式、是否逐次确认、动画格式/技术、性能预算和失败 fallback。
-- MAP-01 的地理/抽象/混合语义、Home/navigation 关系、marker 分类和生命周期，以及 Resident/Presence/LifePoint/SharedMoment 的呈现规则。
-- 如 MAP-01 使用地理数据，其来源、精度、显式同意、权限拒绝/撤回、保留、删除和 provider/fallback；地图不得默认采用后台持续定位。
+- MAP-01 的真实地理与 Home 主体方向已确认，marker/回放语义已具体化；生产 provider、完整 lifecycle/权限实现与集成仍需批准。
+- MAP-01 采用地理数据；生产精度、采集频率、显式同意、保留/删除、provider/fallback 与后台原生方案仍待批准。
 - 另一名 Resident 回应后，Life Point 的编辑规则。
 - 已被回应的 Life Point 后续改为 private 或被移除时，其可见性与重访行为。
 - Space 的恢复、永久删除、owner 转移、重新加入和完整数据保留期限仍需在对应用户功能实施前定义；Phase 1 只确定 `ACTIVE`/`ARCHIVED` 与 `ACTIVE`/`LEFT` 生命周期基础。
@@ -125,3 +125,13 @@ Phase 3 Independent Final Review 结论与 Final Polish closure 记录于 `PHASE
 - 不暴露关系内容的生产环境可观测性和运维审计工具。
 
 这些改进不属于当前 MVP，未经范围决策不得实施。
+
+## 本轮隔离原型的具体限制
+
+- 具体规格与隔离原型已完成，等待用户确认视觉和实现方案。
+- 仅公开伦敦南岸 OSM 小范围数据；河流/公园/道路/建筑保留坐标，简化层级，不是导航或测绘产品。巴黎场景明确无本地底图；无全球地图、搜索、地理编码或离线生产方案。
+- 人物、Presence、生活记录、轨迹均为原创/合成示例；没有 AI、真人输入、地理权限、真实位置上传或生产保存。
+- 8 帧步态与 3 秒回放、距离/精度/freshness 参数是打样值，未经过真实 GPS 校准。示例浏览器游标不是生产 auth/权限缓存实现；权限 epoch 和访问复查是后续安全契约。
+- 当前 Web/PWA 隐藏/锁屏/关闭后的持续采样技术上不可保证；前台共享也尚未实现；完整后台定位需要额外原生范围、隐私和采集授权。三种情况不混写为“以后再说”。
+- 本轮 Chrome 双端验证不覆盖 Safari/Firefox/真机电量、后台或 OS 授权矩阵；未重跑上一轮 76/15/12 应用矩阵。
+- 地图颜色、角色资源技术、provider、AI/自拍 lifecycle、身份是否阻断 Home/照片替代，以及定位精度/频率/保存仍有明确批准门槛；见 AVATAR_AND_MAP_SPEC.md。
