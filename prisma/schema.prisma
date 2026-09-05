@@ -91,23 +91,27 @@ model Space {
 }
 
 model Resident {
-  id          String         @id @default(cuid())
-  spaceId     String
-  userId      String
-  displayName String
-  avatarUrl   String?
-  role        ResidentRole
-  status      ResidentStatus @default(ACTIVE)
-  joinedAt    DateTime       @default(now())
-  leftAt      DateTime?
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  id                 String         @id @default(cuid())
+  spaceId            String
+  userId             String
+  displayName        String
+  avatarUrl          String?
+  avatarMediaAssetId String?        @unique
+  avatarVersion      Int            @default(0)
+  role               ResidentRole
+  status             ResidentStatus @default(ACTIVE)
+  joinedAt           DateTime       @default(now())
+  leftAt             DateTime?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
 
-  space      Space       @relation(fields: [spaceId], references: [id], onDelete: Restrict)
-  user       User        @relation(fields: [userId], references: [id], onDelete: Restrict)
-  presence   Presence?
-  lifePoints LifePoint[]
-  responses  Response[]
+  avatarMediaAsset  MediaAsset?        @relation("ResidentAvatar", fields: [avatarMediaAssetId], references: [id], onDelete: SetNull)
+  avatarGenerations AvatarGeneration[]
+  space             Space              @relation(fields: [spaceId], references: [id], onDelete: Restrict)
+  user              User               @relation(fields: [userId], references: [id], onDelete: Restrict)
+  presence          Presence?
+  lifePoints        LifePoint[]
+  responses         Response[]
 
   @@unique([spaceId, userId])
   @@index([spaceId, status])
@@ -208,11 +212,41 @@ model MediaAsset {
   sizeBytes        Int
   createdAt        DateTime @default(now())
 
-  space          Space      @relation(fields: [spaceId], references: [id], onDelete: Restrict)
-  uploadedBy     User       @relation(fields: [uploadedByUserId], references: [id], onDelete: Restrict)
-  lifePointUsage LifePoint? @relation("LifePointMedia")
-  responseUsage  Response?  @relation("ResponseMedia")
+  space            Space             @relation(fields: [spaceId], references: [id], onDelete: Restrict)
+  uploadedBy       User              @relation(fields: [uploadedByUserId], references: [id], onDelete: Restrict)
+  lifePointUsage   LifePoint?        @relation("LifePointMedia")
+  responseUsage    Response?         @relation("ResponseMedia")
+  avatarOwner      Resident?         @relation("ResidentAvatar")
+  avatarGeneration AvatarGeneration?
 
   @@index([spaceId, createdAt])
   @@index([uploadedByUserId])
+}
+
+// 支撑性生成记录，不是新的产品领域实体；照片从不入库。
+enum AvatarGenerationStatus {
+  PENDING
+  READY
+  CONFIRMED
+  CANCELLED
+  FAILED
+}
+
+model AvatarGeneration {
+  id                    String                 @id @db.Uuid
+  residentId            String
+  status                AvatarGenerationStatus @default(PENDING)
+  candidateMediaAssetId String?                @unique
+  baseAvatarVersion     Int
+  model                 String
+  policyVersion         String
+  dispatchedAt          DateTime?
+  createdAt             DateTime               @default(now())
+  expiresAt             DateTime
+  resident              Resident               @relation(fields: [residentId], references: [id], onDelete: Cascade)
+  candidateMediaAsset   MediaAsset?            @relation(fields: [candidateMediaAssetId], references: [id], onDelete: SetNull)
+
+  @@index([residentId, createdAt])
+  @@index([status, expiresAt])
+  @@index([dispatchedAt])
 }

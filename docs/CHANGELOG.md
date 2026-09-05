@@ -4,6 +4,15 @@
 
 ## [未发布]
 
+### AVATAR-01 正式账户与私密头像流程（2026-09-05）
+
+- 正式 Home 非阻断创建/更换入口，`/avatar` 本地预览、同意、生成状态、私密候选、选择确认、重试和取消；中文/英文与可访问标签。
+- 可替换 AvatarGenerationProvider 与 Cloudflare SDXL-Lightning img2img / 显式 FLUX.2 klein 4B adapter；用户未批准 OpenAI 付费，未接入。服务端共享限额、同请求幂等和取消墓碑，无隐式重复调用。
+- 复用 Resident/MediaAsset，最小新增 avatar_identity migration、确认资源指针与版本、身份持续记录。候选/原照不共享；确认后同 Space ACTIVE Resident 可读，替换/失败/取消保持原有授权边界。
+- Sharp 服务端验证、EXIF 清除、私密文件、透明像素输出规范化、到期清理；生产排除测试 provider，未配置时不显示假生成结果。
+- 新增头像图片/provider/数据库/双端浏览器测试；运行命令、结果、截图与配置见 AVATAR_OPERATIONS.md。既有地图原型仅清理一个未使用的解构参数以满足 lint，视觉未改。
+- 真实外部调用为 0，仍缺 Cloudflare 配置和明确授权样本；AVATAR-01 尚未完成真实生成验收。ANIMATION-01、MAP-01 生产接入与 Phase 4 未实现。
+
 ### 原创大头状态角色重绘（2026-09-05）
 
 - 直接重画两名示例 SVG 的宽圆脸颊/下巴、发型、不同表情及托持单一道具，消除细长脖子并减少肩部；不靠 CSS 放大或背景调整制造变化。

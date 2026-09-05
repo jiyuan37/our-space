@@ -40,7 +40,7 @@ export class HomeService {
               select: {
                 id: true,
                 displayName: true,
-                avatarUrl: true,
+                avatarMediaAssetId: true,
                 presence: {
                   select: { shortText: true, updatedAt: true },
                 },
@@ -57,7 +57,9 @@ export class HomeService {
       residents: viewer.space.residents.map((resident) => ({
         id: resident.id,
         displayName: resident.displayName,
-        avatarUrl: resident.avatarUrl,
+        avatarUrl: resident.avatarMediaAssetId
+          ? `/api/avatar/assets/${resident.avatarMediaAssetId}`
+          : null,
         isViewer: resident.id === viewer.id,
         presence: resident.presence?.shortText?.trim()
           ? {

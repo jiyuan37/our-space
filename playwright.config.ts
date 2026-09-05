@@ -21,6 +21,13 @@ export default defineConfig({
       NEXTAUTH_URL: "http://127.0.0.1:3000",
       AUTH_SECRET: "playwright-only-fake-auth-secret-32-characters",
       TRUST_PROXY: "true",
+      AVATAR_E2E_FIXTURE: "true",
+      AVATAR_STORAGE_DIR:
+        process.env.AVATAR_TEST_STORAGE_DIR ??
+        "/tmp/our-space-avatar-e2e-storage",
+      TEST_DATABASE_URL:
+        process.env.TEST_DATABASE_URL ??
+        "postgresql://our_space:our_space_test@127.0.0.1:5432/our_space_test?schema=public",
       DATABASE_URL:
         process.env.TEST_DATABASE_URL ??
         "postgresql://our_space:our_space_test@127.0.0.1:5432/our_space_test?schema=public",

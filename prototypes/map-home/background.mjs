@@ -114,7 +114,7 @@ export function softenFeature(
   }
   world.append(g);
 }
-export function plantGarden(world, defs, features, { svgEl, path, project }) {
+export function plantGarden(world, defs, features, { svgEl, project }) {
   const garden = features.find((f) => f.id === "way/4373996");
   if (!garden) return;
   const ring = garden.coordinates.map(project);

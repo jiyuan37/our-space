@@ -1,14 +1,29 @@
 # Our Space — 实施计划
 
-最后更新：2026-09-04
+最后更新：2026-09-05
 
 ## 状态
 
-**当前状态：具体规格与隔离原型已完成，等待用户确认视觉和实现方案。**
+**当前工作包：AVATAR-01 正式实现；本地应用流程已实现，真实服务验证等待配置与授权样本。用户已确认视觉，不再风格冻结或比较方案。**
 
 Phase 3 implementation 已完成并通过 Final Review。
 
 阶段 0、Phase 1 已完成，Phase 1 已通过最终 Review。Phase 2 已实施，在首次 Final Review 后完成 Repair，并通过 Closure Review。Phase 3 前置 UI/UX Review、Design Decision Closure、implementation、Independent Final Review 与 Final Polish Patch 已完成，设计基线记录于 [`PHASE_3_DESIGN.md`](./PHASE_3_DESIGN.md)，实施与 Review 证据记录于 [`PHASE_3_REVIEW.md`](./PHASE_3_REVIEW.md)。Phase 4 尚未开始，也未获得批准。
+
+## AVATAR-01 当前实施 checklist
+
+- [x] 完整读取规格/决策并核对实际 Git，保留 Phase 1–3 基础与用户改动。
+- [x] 将本轮范围限定为自拍头像闭环，非阻断 Home 创建/更换入口。
+- [x] 可替换 provider；按用户反馈取消 OpenAI 付费接入，接 Cloudflare SDXL-Lightning img2img 和显式 FLUX.2 klein 4B adapter。
+- [x] 照片服务端格式/内容/大小验证、EXIF 清除、不落原照；候选私密、到期/取消清理、本人确认与替换版本。
+- [x] Resident/MediaAsset 复用、最小新增 migration、正式 Home 最终头像及成员读取权限。
+- [x] 数据库防重复/限额，失败和取消保持旧头像；中英文、手机和键盘流程。
+- [x] 受控 provider 自动测试及认证/邀请/Presence 回归；运行证据见 AVATAR_OPERATIONS.md。
+- [ ] Cloudflare 实际 Free 账户配置和明确授权照片（最多 2 张）。不得用付费账户或扩大自拍外发范围。
+- [ ] 有限真实服务 smoke：先 SDXL-Lightning，只有一致性不足才比较 FLUX.2 klein；记录实际调用数、像本人程度及像素风一致性。不保证任何输出天然适合动画。
+- [ ] 真实用户照片生成、本人确认与重新登录/Partner 读取的真实生成闭环验收。当前不能声明 AVATAR-01 完成。
+
+本轮完成可独立验证的代码后正常提交/push，并停止等待上述具体条件，不自动开始地图、定位、ANIMATION-01 或 Phase 4。
 
 ## 单一事实来源
 
@@ -336,9 +351,9 @@ Phase 3 implementation 已完成并通过 Final Review。
 
 ## 已确认必做的新产品交付轨道
 
-`AVATAR-01`、`ANIMATION-01`、`MAP-01` 均必交付。本轮确认真实地理地图、Home 主体、像素与柔和线条 Q 版、可信位置变化才回放。详细规格及子要求见 [AVATAR_AND_MAP_SPEC.md](./AVATAR_AND_MAP_SPEC.md)。本轮仅批准隔离原型、文档与研究，生产实现未获批准。
+`AVATAR-01`、`ANIMATION-01`、`MAP-01` 均必交付。本轮确认真实地理地图、Home 主体、像素与柔和线条 Q 版、可信位置变化才回放。详细规格及子要求见 [AVATAR_AND_MAP_SPEC.md](./AVATAR_AND_MAP_SPEC.md)。原型时期只批准隔离验证；2026-09-05 用户批准 AVATAR-01 正式实现，最新授权与进度见本文顶部。
 
-### 本轮 checklist
+### 原型轮次历史 checklist
 
 - [x] 完整阅读必读文档并核对 Git 基线。
 - [x] 官方参考拆解及 Web/后台定位能力研究。
@@ -349,8 +364,8 @@ Phase 3 implementation 已完成并通过 Final Review。
 
 ### 后续依赖顺序建议
 
-1. P0：用户确认本轮原型视觉与实现方案。
-2. P1：持久角色创建与资源基础；先批准非阻断/替代路径、AI 与自拍 lifecycle，再做候选、调整、重试、确认及资源版本。静态头像不能顶替完整流程。
+1. P0：已完成；用户确认 `b6fe15a8c11270d3c1568f7f40af08484ce71fd3` 的具体视觉，不再重新比较。
+2. P1：当前 AVATAR-01 已批准非阻断入口、Cloudflare 免费路线与头像专用隐私边界；账户流程和资源已实现，实际配置/授权样本/真实质量验收仍待完成。静态 fixture 不能顶替完整生成流程。
 3. P2：生产真实地图渲染与角色定位；需要 provider/成本/隐私选择、稳定角色资源。生产 Home 切换单独批准。
 4. P3：本人授权位置更新、样本质量、共享 epoch、访问/删除；完整后台体验需原生能力与原 MVP native 排除项的明确修订。Web 前台有限能力与后台目标分开验收。
 5. P4：真实已记录变化回放；依赖 P1/P2/P3，不伪造路线；包括去重、缺口、长距、往返、撤销和 reduced-motion。
@@ -361,8 +376,8 @@ P 编号仅为建议工作包，不能等同于已批准 Phase。共享 media �
 
 ### 尚待用户决定的实施门槛
 
-- 头像是否阻断进入与照片替代：建议显著邀请、可稍后做、允许原创预设起步；最终完整生成目标保留。
-- AI provider/自拍处理：建议最小单用途输入和确认后尽快清理原图/未选候选，具体处理与删除条款需核实批准。
+- 头像：已决定本轮非阻断 Home、没有头像显示诚实默认；不分配示例角色。真实服务验收仍缺配置与授权样本。
+- AI：已批准头像专用 Cloudflare 免费路线；如需付费或扩大外发数据范围，须另行明确批准。数据政策未知项和部署约束见 AVATAR_OPERATIONS.md。
 - 地图 provider：比较可自定义开放矢量方案与商业 SDK，明确维护/许可/成本及请求披露后选择。
 - 定位精度/频率/保存与原生后台范围：建议最小必要精度、可暂停和短期窗口，具体数值经真机实验再批准；不得把 Web 页面一直打开视为完整目标。
 

@@ -1,5 +1,8 @@
 "use client";
 
+import Link from "next/link";
+import { ResidentAvatar } from "@/components/avatar/resident-avatar";
+
 import {
   useActionState,
   useCallback,
@@ -30,10 +33,6 @@ import type { HomeViewModel } from "@/server/services/home-service";
 const initialActionState: PresenceActionState = {};
 const presenceHintId = "presence-hint";
 const presenceErrorId = "presence-error";
-
-function initials(name: string): string {
-  return Array.from(name.trim()).slice(0, 2).join("").toUpperCase() || "OS";
-}
 
 function useViewerNow(): Date | null {
   const [now, setNow] = useState<Date | null>(null);
@@ -196,6 +195,14 @@ export function HomeView({
         </p>
       )}
 
+      {home.residents.some((r) => r.isViewer && !r.avatarUrl) && (
+        <div className="avatar-invitation">
+          <p>{t("avatar.homeInvite")}</p>
+          <Link className="button" href="/avatar">
+            {t("avatar.create")}
+          </Link>
+        </div>
+      )}
       <section className="residents" aria-labelledby="residents-title">
         <h2 id="residents-title">{t("home.residentsHeading")}</h2>
         <ul className="resident-list">
@@ -203,11 +210,21 @@ export function HomeView({
             const text = currentText(resident);
             return (
               <li className="resident" key={resident.id}>
-                <div className="resident-avatar" aria-hidden="true">
-                  {initials(resident.displayName)}
-                </div>
+                <ResidentAvatar
+                  key={resident.avatarUrl}
+                  url={resident.avatarUrl}
+                  name={resident.displayName}
+                />
                 <div className="resident-presence">
                   <h3>{resident.displayName}</h3>
+                  {resident.isViewer && resident.avatarUrl && (
+                    <Link
+                      className="presence-edit avatar-change"
+                      href="/avatar"
+                    >
+                      {t("avatar.replace")}
+                    </Link>
+                  )}
                   <div className="presence-line" aria-live="polite">
                     {now && text ? <p>{text}</p> : null}
                   </div>

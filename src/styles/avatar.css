@@ -1,0 +1,222 @@
+.avatar-invitation {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 0 0;
+}
+.avatar-invitation p {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+.avatar-invitation a {
+  text-decoration: none;
+  font-size: 14px;
+}
+.resident:has(.resident-pixel-avatar) {
+  grid-template-columns: 76px minmax(0, 1fr);
+}
+.resident-pixel-avatar {
+  display: block;
+  width: 76px;
+  height: 76px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+.avatar-change {
+  display: inline-flex;
+  align-items: center;
+}
+.avatar-studio {
+  width: min(100%, 660px);
+  padding: 24px 0 40px;
+}
+.avatar-studio header {
+  margin-bottom: 28px;
+}
+.avatar-studio .eyebrow {
+  margin-bottom: 12px;
+}
+.avatar-studio h1 {
+  max-width: none;
+  font-family: inherit;
+  font-size: clamp(26px, 5vw, 38px);
+  line-height: 1.3;
+  letter-spacing: 0;
+}
+.avatar-studio h2 {
+  font-size: 21px;
+  font-weight: 500;
+}
+.avatar-studio header p:last-child {
+  max-width: 36rem;
+  color: var(--text-secondary);
+  font-size: 15px;
+}
+.avatar-current {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 20px 0;
+  padding: 12px 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+}
+.avatar-current p {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.avatar-form {
+  display: grid;
+  gap: 14px;
+  margin-top: 24px;
+}
+.avatar-photo-label {
+  font-weight: 500;
+}
+.avatar-form input[type="file"] {
+  width: 100%;
+  padding: 14px;
+  border: 1px dashed #a3977f;
+  background: #fff4df;
+}
+.avatar-form input::file-selector-button {
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid #b3a383;
+  border-radius: 8px;
+  background: #fffaf0;
+  color: #514534;
+  margin-right: 12px;
+}
+.avatar-form .field-hint {
+  margin: 0;
+  font-size: 12px;
+}
+.avatar-local-preview {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px;
+  border-radius: 12px;
+  background: #eee7dc;
+}
+.avatar-local-preview img {
+  width: auto;
+  max-width: 100%;
+  height: 200px;
+  object-fit: contain;
+}
+.avatar-local-preview figcaption {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.avatar-policy {
+  padding: 14px 18px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+}
+.avatar-policy summary {
+  min-height: 44px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.avatar-policy p {
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.avatar-policy a {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  font-size: 12px;
+}
+.avatar-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 0;
+  font-size: 13px;
+  line-height: 1.6;
+  cursor: pointer;
+}
+.avatar-consent input {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  min-height: 22px;
+  margin: 2px 0;
+  accent-color: #536b46;
+}
+.avatar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+.avatar-stage {
+  text-align: center;
+  margin-top: 24px;
+  padding: 24px;
+  border: 1px solid #d6c6ac;
+  border-radius: 18px;
+  background: #fff4df;
+}
+.avatar-stage p {
+  color: #665a4d;
+  font-size: 14px;
+}
+.avatar-candidate-preview {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin: 20px 0;
+}
+.avatar-candidate-preview img {
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+.avatar-candidate {
+  width: 192px;
+  height: 192px;
+  background: repeating-conic-gradient(#eee6d6 0% 25%, #fff8e8 0% 50%) 0 0 /
+    16px 16px;
+  border-radius: 12px;
+}
+.avatar-normal {
+  margin: auto;
+}
+.avatar-progress {
+  display: inline-block;
+  font-size: 42px;
+  color: #536b46;
+  letter-spacing: 8px;
+}
+.avatar-exit {
+  margin-top: 24px;
+}
+@media (max-width: 600px) {
+  .resident:has(.resident-pixel-avatar) {
+    grid-template-columns: 60px minmax(0, 1fr);
+  }
+  .resident-pixel-avatar {
+    width: 60px;
+    height: 60px;
+  }
+  .avatar-stage {
+    padding: 20px 14px;
+  }
+  .avatar-studio {
+    padding-top: 0;
+  }
+  .avatar-invitation a {
+    width: 100%;
+    text-align: center;
+  }
+}

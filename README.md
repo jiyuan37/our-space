@@ -2,7 +2,11 @@
 
 Our Space 是一个属于两个人的私密共同生活空间。它的使命是“即使相隔，也一起生活”，产品目标是增加 Presence，而不是增加 engagement。
 
-当前 Phase 3 已完成并通过 Final Review，包含 Quiet Home、Presence 和中英文 i18n；Phase 4 尚未开始、未获实施批准。地图任务的具体规格与隔离原型已完成，等待用户确认视觉和实现方案。应用验收基线与证据见 [CURRENT_STATE.md](./docs/CURRENT_STATE.md)。
+当前 Phase 3 已完成并通过 Final Review，包含 Quiet Home、Presence 和中英文 i18n；Phase 4 尚未开始、未获实施批准。用户已批准像素视觉及 AVATAR-01 正式开发。头像账户流程与 Cloudflare adapter 已接入，真实照片生成验证仍等待账户配置及授权样本，不能宣称 AVATAR-01 完成。应用验收基线与证据见 [CURRENT_STATE.md](./docs/CURRENT_STATE.md)。
+
+## 像素头像
+
+登录并进入自己的 Space 后，在 `/home` 点击「创建我的像素形象」；已有头像时点击「更换形象」。没有配置外部服务时仍可使用 Home 和本地照片预览，不发送照片、不生成假候选。配置、私密存储、清理与受控测试说明见 [头像运行说明](./docs/AVATAR_OPERATIONS.md)。本轮不生产接入地图、定位或状态动画。
 
 ## 产品原则
 

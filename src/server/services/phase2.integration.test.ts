@@ -58,6 +58,8 @@ async function createPair(prefix: string) {
 }
 
 async function resetDatabase() {
+  await db.avatarGeneration.deleteMany();
+  await db.mediaAsset.deleteMany();
   await db.presence.deleteMany();
   await db.invitation.deleteMany();
   await db.resident.deleteMany();

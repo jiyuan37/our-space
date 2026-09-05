@@ -1,6 +1,6 @@
 # Our Space — 已知限制
 
-最后更新：2026-09-04
+最后更新：2026-09-05
 
 本文档记录有意设置的 MVP 边界、尚未解决的实现细节、技术债务和未来改进。本文档不授权实施 Master Spec 范围外的功能。
 
@@ -9,13 +9,23 @@
 - Phase 3 implementation 已完成并通过 Final Review；Phase 4 尚未开始，也未获得批准。
 - `/home` 已承载 Quiet Home 与 Presence；`/space` 继续作为次级 Invitation/account management 边界。
 - 尚未实现 Life Point、Response、Shared Moment、Visit、Memory 或 Phase 4 media workflow。
-- 尚未实现 AVATAR-01 持久卡通身份、ANIMATION-01 同角色状态动画或 MAP-01 地图与 marker/status point；三者是已确认必做产品目标，不是 optional enhancement。
+- AVATAR-01 账户、私密生成/确认、持久身份及正式 Home 集成已写入；真实 Cloudflare 调用及相似度/画风未验证，闭环仍未完成。ANIMATION-01 和 MAP-01 生产未实现；三者保持必交付。
 - locale preference 使用浏览器 HttpOnly cookie 持久化，不跨浏览器或设备同步；Phase 3 不为此增加数据库字段。
 - 尚无 seed data 或 demo account；这两项属于后续阶段。
-- Playwright 已配置 desktop Google Chrome 与 Pixel 7；Phase 3 Final Polish 后完整真实 E2E 在独立 PostgreSQL 16.15 测试数据库上以 12/12 通过。Safari 与 Firefox 尚未纳入当前自动化矩阵。
+- Playwright 已配置 desktop Google Chrome 与 Pixel 7；本轮在独立 PostgreSQL 16.15 测试数据库 18/18 通过，头像为受控 provider，另覆盖 375px 视口。Safari 与 Firefox 尚未纳入当前自动化矩阵。
 - 当前主机没有 Docker CLI，因此无法实际执行 `docker compose config` 或容器启动；`docker-compose.yml` 已通过 YAML 解析验证，clean migration 已在本机 PostgreSQL 16.15 全新数据库中以 2/2 通过。
 - 本地 `MemoryRateLimiter` 只适合单进程开发与测试；多实例 production 必须替换为共享存储 adapter。
 - Password reset、email verification 与 production email delivery 不属于 Phase 2，尚未实现。
+
+## AVATAR-01 当前具体缺口
+
+- 当前无 Cloudflare 账户配置及明确授权照片，真实服务调用为 0。SDXL 照片身份保持、FLUX 请求兼容性及模型生成质量尚未用真实响应验证；不能声称与批准画风一致或像本人已通过。
+- `CLOUDFLARE_WORKERS_PLAN=free` 是部署者声明，不是账单 API 核验；必须实际确认 Free 账户。Workers Free 日额度共享给账户其他应用，不能保证所有请求可用；不自动付费/换模型。
+- 透明背景采用受控色背景、边缘连通去色、64px 最近邻再放大及输出验证；不合格输出拒绝，不保证所有 AI 图片天然有效或可动画化。当前资源是基础身份，无动作层/骨骼。
+- 私密本地存储需要持久卷、排除备份，并保证清理常驻运行；无共享文件卷的多实例部署不受支持。过期立即拒绝访问，物理删除在运行中定时处理；停机、I/O 失败存在补扫延迟，具体见 DEC-059。
+- 真实用户数据库/部署尚未配置；新 migration 只在隔离测试数据库应用。未做 Safari/Firefox 或真实 Cloudflare production smoke。
+- Cloudflare 声明未经同意不训练，但具体逐项保留、删除时限及处理地域未确认；本应用取消不撤回服务已收到的请求。不能承诺外部零保留。
+- 自动测试 fixture 仅 `development` 且显式隔离 `_test` 数据库启用，页面明确标识；不能进入 production 或给真实用户充当 AI 成果。
 
 ## 有意排除在 MVP 之外
 
@@ -48,9 +58,9 @@
 - light mode 是首个支持的主题。
 - Presence 是可选且手动更新的，不是实时状态。
 
-## 已确认必做但尚未实施的能力
+## 已确认必做且尚未全部完成的能力
 
-以下项目不得作为技术债、optional backlog 或“未来增强”无限期延期；它们的目标已确认，但设计与实施授权尚未完成：
+以下项目不得作为技术债、optional backlog 或“未来增强”无限期延期；它们的目标已确认，AVATAR-01 本轮已获授权并推进，真实服务验收仍待完成：
 
 - `AVATAR-01`：自拍/上传 → 卡通候选 → 选择/调整或重新生成 → 明确确认 → 持续使用同一 Resident 角色。
 - `ANIMATION-01`：基于同一已确认角色表达用户主动留下的当前状态，并提供 reduced-motion / 静态等价。

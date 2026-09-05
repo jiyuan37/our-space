@@ -2,6 +2,56 @@ import type { Locale } from "@/lib/i18n/config";
 import { formatNumber } from "@/lib/i18n/format";
 
 const zhCN = {
+  "avatar.eyebrow": "一个小小的你",
+  "avatar.create": "创建我的像素形象",
+  "avatar.replace": "更换形象",
+  "avatar.intro":
+    "把喜欢的自己，留在这个家里。选好照片后，我们为你画一个像素角色。",
+  "avatar.homeInvite": "给这个家，添一个小小的你。",
+  "avatar.keepCurrent": "这是现在的形象。新形象确认前，它会保持不变。",
+  "avatar.testMode": "自动测试模式 · 候选为受控测试素材，不是 AI 生成。",
+  "avatar.generating": "正在画一个小小的你…",
+  "avatar.generatingNote":
+    "正在等待真实生成结果。可以取消；刷新后会读取同一次任务，不会自动再生成。",
+  "avatar.candidate": "先看看，喜欢这个你吗",
+  "avatar.candidateNote":
+    "只有你能看到这张候选。确认后，同一 Space 的另一位 Resident 才能看到。",
+  "avatar.candidateAlt": "待本人确认的像素角色候选",
+  "avatar.normalSize": "手机实际大小",
+  "avatar.select": "我选择这个形象作为我的角色",
+  "avatar.confirm": "确认并使用",
+  "avatar.regenerate": "重新生成",
+  "avatar.photo": "选择自己的照片",
+  "avatar.photoHint":
+    "JPEG、PNG 或 WebP，最多 5 MB。清晰单人正面照更容易辨认；不接受动画或 HEIC。",
+  "avatar.photoAlt": "所选照片的本地预览",
+  "avatar.localOnly": "本地预览 · 点击生成才会发送",
+  "avatar.privacyTitle": "照片会怎样处理",
+  "avatar.privacyInput":
+    "只把去除 EXIF、缩小后的本人照片与固定头像提示发给 Cloudflare Workers AI。模型支持时附带我们的原创风格参考；不发送姓名、位置、Presence、伴侣或生活记录。",
+  "avatar.privacyStorage":
+    "原照不保存到服务器磁盘。候选仅你可见，24 小时后失效并清理；取消即删除。确认后私密保存最终图，替换时删除旧图。",
+  "avatar.privacyProvider":
+    "Cloudflare 声明未经同意不将内容用于训练或改进服务。处理地域与服务侧逐项删除时限不作保证。已发送的请求取消后仍可能在服务侧完成。",
+  "avatar.providerPolicy": "查看 Cloudflare 数据说明",
+  "avatar.consent":
+    "这是我有权使用的本人照片；我同意仅为生成我的头像，将处理后的照片发送给 Cloudflare。",
+  "avatar.generate": "生成一张候选",
+  "avatar.costNote":
+    "使用 Workers Free 额度；额度用完后停止，不自动转付费。每次只生成一张，可由你决定是否重试。",
+  "avatar.cancel": "取消，回到 Home",
+  "errors.AVATAR_UNAVAILABLE":
+    "头像生成尚未配置好。可以先预览照片，也可以继续使用 Home；照片不会被发送。",
+  "errors.AVATAR_INVALID_PHOTO":
+    "请选一张清晰的 JPEG、PNG 或 WebP 照片（最多 5 MB，至少 128px，最多 2000 万像素）。",
+  "errors.AVATAR_GENERATION_FAILED":
+    "这次没有得到可用的像素形象。原来的形象没有改变，可以重试或退出。",
+  "errors.AVATAR_NOT_AVAILABLE": "这张候选已失效或无法访问，请重新开始。",
+  "errors.AVATAR_BUSY": "已有一张候选或生成正在进行，请先查看或取消它。",
+  "errors.AVATAR_CONSENT_REQUIRED": "请先阅读并同意头像照片处理说明。",
+  "errors.AVATAR_CONNECTION_UNCERTAIN":
+    "连接暂时中断，正在查询同一次生成。不会自动发起新请求；也可以取消退出。",
+
   "meta.description": "属于两个人的私密共同生活空间。",
   "shell.skip": "跳到主要内容",
   "shell.brand": "Our Space",
@@ -99,6 +149,61 @@ export type MessageKey = keyof typeof zhCN;
 export type Messages = Readonly<Record<MessageKey, string>>;
 
 const enUS: Messages = {
+  "avatar.eyebrow": "A LITTLE YOU",
+  "avatar.create": "Create my pixel character",
+  "avatar.replace": "Change my character",
+  "avatar.intro":
+    "Bring a little of yourself into this home. Choose a photo to create your pixel character.",
+  "avatar.homeInvite": "A little character to make this home yours.",
+  "avatar.keepCurrent":
+    "Your current character stays until you confirm a new one.",
+  "avatar.testMode":
+    "Automated test mode · controlled fixture, not AI generated.",
+  "avatar.generating": "Drawing a little you…",
+  "avatar.generatingNote":
+    "Waiting for the generation result. You can cancel. Reloading checks this request without starting another.",
+  "avatar.candidate": "Take a look at your character",
+  "avatar.candidateNote":
+    "Only you can see this candidate. The other Resident in your Space sees it only after confirmation.",
+  "avatar.candidateAlt": "Pixel character candidate awaiting your confirmation",
+  "avatar.normalSize": "Phone display size",
+  "avatar.select": "I choose this as my character",
+  "avatar.confirm": "Confirm and use",
+  "avatar.regenerate": "Generate again",
+  "avatar.photo": "Choose your photo",
+  "avatar.photoHint":
+    "JPEG, PNG or WebP, up to 5 MB. A clear, front-facing photo of just you works best. No animation or HEIC.",
+  "avatar.photoAlt": "Local preview of your selected photo",
+  "avatar.localOnly": "Local preview · sent only when you generate",
+  "avatar.privacyTitle": "How your photo is handled",
+  "avatar.privacyInput":
+    "Only your resized photo with EXIF removed and a fixed avatar prompt go to Cloudflare Workers AI. Our original style reference is included when supported. No names, location, Presence, partner or life records.",
+  "avatar.privacyStorage":
+    "The original photo is not saved to server disk. Candidates are private to you, expire after 24 hours and are cleaned up; cancelling deletes them. Confirmed images are stored privately, and replacements delete the previous image.",
+  "avatar.privacyProvider":
+    "Cloudflare states it does not use your content for training or service improvement without consent. We cannot guarantee processing region or per-item deletion timing at the provider. A dispatched request may still finish after cancellation.",
+  "avatar.providerPolicy": "Read Cloudflare’s data policy",
+  "avatar.consent":
+    "This is my photo and I have the right to use it. I consent to sending the processed photo to Cloudflare only to generate my avatar.",
+  "avatar.generate": "Generate one candidate",
+  "avatar.costNote":
+    "Uses Workers Free allocation. Stops when exhausted, with no automatic paid fallback. One candidate per request; you choose whether to try again.",
+  "avatar.cancel": "Cancel and return Home",
+  "errors.AVATAR_UNAVAILABLE":
+    "Avatar generation is not configured yet. You can preview a photo or continue using Home. Your photo will not be sent.",
+  "errors.AVATAR_INVALID_PHOTO":
+    "Choose a valid JPEG, PNG or WebP photo (up to 5 MB, at least 128px, at most 20 megapixels).",
+  "errors.AVATAR_GENERATION_FAILED":
+    "This request did not produce a usable pixel character. Your current character is unchanged. You can retry or leave.",
+  "errors.AVATAR_NOT_AVAILABLE":
+    "This candidate has expired or is unavailable. Please start again.",
+  "errors.AVATAR_BUSY":
+    "A candidate or generation is already in progress. View or cancel it first.",
+  "errors.AVATAR_CONSENT_REQUIRED":
+    "Read and agree to the avatar photo processing notice first.",
+  "errors.AVATAR_CONNECTION_UNCERTAIN":
+    "The connection was interrupted. Checking the same generation without another request. You can also cancel and leave.",
+
   "meta.description": "A private shared living space for two people.",
   "shell.skip": "Skip to main content",
   "shell.brand": "Our Space",

@@ -20,7 +20,13 @@ export type DomainErrorCode =
   | "PRESENCE_TEXT_INVALID"
   | "CANNOT_RESPOND_TO_OWN_LIFE_POINT"
   | "LIFE_POINT_NOT_VISIBLE"
-  | "UPLOAD_VALIDATION_FAILED";
+  | "UPLOAD_VALIDATION_FAILED"
+  | "AVATAR_UNAVAILABLE"
+  | "AVATAR_INVALID_PHOTO"
+  | "AVATAR_GENERATION_FAILED"
+  | "AVATAR_NOT_AVAILABLE"
+  | "AVATAR_BUSY"
+  | "AVATAR_CONSENT_REQUIRED";
 
 export abstract class DomainError extends Error {
   abstract readonly code: DomainErrorCode;
@@ -201,5 +207,53 @@ export class UploadValidationError extends DomainError {
 
   constructor(message = "Upload validation failed.", options?: ErrorOptions) {
     super(message, options);
+  }
+}
+
+export class AvatarUnavailableError extends DomainError {
+  readonly code = "AVATAR_UNAVAILABLE";
+  readonly statusCode = 503;
+  constructor() {
+    super("AVATAR_UNAVAILABLE");
+  }
+}
+
+export class AvatarInvalidPhotoError extends DomainError {
+  readonly code = "AVATAR_INVALID_PHOTO";
+  readonly statusCode = 422;
+  constructor() {
+    super("AVATAR_INVALID_PHOTO");
+  }
+}
+
+export class AvatarGenerationFailedError extends DomainError {
+  readonly code = "AVATAR_GENERATION_FAILED";
+  readonly statusCode = 502;
+  constructor() {
+    super("AVATAR_GENERATION_FAILED");
+  }
+}
+
+export class AvatarNotAvailableError extends DomainError {
+  readonly code = "AVATAR_NOT_AVAILABLE";
+  readonly statusCode = 404;
+  constructor() {
+    super("AVATAR_NOT_AVAILABLE");
+  }
+}
+
+export class AvatarBusyError extends DomainError {
+  readonly code = "AVATAR_BUSY";
+  readonly statusCode = 409;
+  constructor() {
+    super("AVATAR_BUSY");
+  }
+}
+
+export class AvatarConsentRequiredError extends DomainError {
+  readonly code = "AVATAR_CONSENT_REQUIRED";
+  readonly statusCode = 422;
+  constructor() {
+    super("AVATAR_CONSENT_REQUIRED");
   }
 }

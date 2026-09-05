@@ -4,13 +4,25 @@
 
 ## 当前 Phase
 
-- 当前 Phase：Phase 3 — Core Home / Presence 已完成；当前没有获批实施中的 Phase。
-- 当前状态：**隔离原型局部人物重绘已完成验证，等待用户查看人物前后对照。**
+- 当前工作包：AVATAR-01 — 自拍生成、用户确认与持久卡通身份；用户已明确批准正式实现，Phase 1–3 基础保留。
+- 当前状态：**头像正式账户流程及 Cloudflare adapter 已实现；真实 provider、样本与相似度/画风验证尚未完成，AVATAR-01 不标记完成。**
 - Phase 3 implementation 已完成并通过 Final Review；本轮不重做历史验收。
 - 实际项目根目录：`/Users/yuan/Desktop/our-space`。
-- 本轮具体规格、可行性研究、隔离原型与提交/push 已获批准；下一项生产实施尚未获批。
+- 最新授权仅执行 AVATAR-01；允许相关 Schema、正式 Home、配置、测试与文档改动，并在检查后正常提交/push。地图生产接入、定位和 ANIMATION-01 不在本轮范围。
 - Phase 2 已完成并通过最终 Review；Phase 3 前置 UI/UX Review、Design Decision Closure、implementation、Independent Final Review 与 Final Polish Patch 均已完成。
 - **Phase 4 尚未开始，也未获得批准。**
+
+## AVATAR-01 本轮结果（2026-09-05）
+
+- 已批准视觉参考及实际起点：`b6fe15a8c11270d3c1568f7f40af08484ce71fd3`。起点 main、工作树干净；fetch 后 main...origin/main 为 0/0，remote 与下文一致。未 reset、覆盖用户修改或强制推送。
+- 正式 `/home` 非阻断创建/更换入口、`/avatar` 本地预览/知情同意/真实任务状态/本人选择确认/重试/取消；中文默认、完整英文。
+- `AvatarGenerationProvider` 可替换；Cloudflare SDXL-Lightning img2img 优先，FLUX.2 klein 4B 仅显式配置后备测试，不自动切换。不接 OpenAI，不自动付费。
+- `Resident.avatarMediaAssetId` / `avatarVersion` 与支撑性 `AvatarGeneration` 记录；候选与最终图私密存储，只有本人确认才更新正式身份；原照不落盘。
+- 同 Space ACTIVE Resident 只能读取最终图；失败/取消不替换旧身份。服务端共享数据库防重复派发和滚动 24 小时 3 次/人、20 次/全站限额。
+- 新 migration `20260905130000_avatar_identity` 已在独立 PostgreSQL 测试库应用；既有 migrations 未修改。当前没有头像服务所需的本地配置，未迁移真实用户数据库、未配置 Cloudflare 凭据、未调用真实图片服务。
+- 自动测试使用明确标注的受控 fixture 与合成色块输入，仅证明应用流程，不证明 AI 生成或像本人。真实测试等待最多 2 张明确授权照片及 Cloudflare Free 配置；详情见 [AVATAR_OPERATIONS.md](./AVATAR_OPERATIONS.md)。
+- 本轮验证：23 files / 102 tests、26 项数据库集成、18/18 双端 E2E、production build、lint/typecheck、3/3 migrations、production audit 0、格式/diff 检查通过；production 双端未配置状态零上传，截图及命令见运行说明。ANIMATION-01、MAP-01 生产功能及 Phase 4 均未完成，仍为必交付目标。
+- 本轮提交信息 `feat: add private avatar generation and confirmation`；完整 hash 由 `git log -1 --format='%H %s'` 定位，避免自引用。提交/push 后目标 main、干净工作树、0/0；实际结果在最终交付报告记录，下轮仍须 fetch 核验。
 
 ## Git 连续性
 
@@ -57,12 +69,12 @@
 - warm cream、克制 surface、semantic design tokens、responsive 双人布局、44px 操作目标、visible focus、live announcement 与 reduced-motion。
 - Final Polish 已关闭 Independent Final Review 的 6 项非阻塞 MINOR：muted text AA contrast、inline secondary link touch target、Presence error description、语义 announcement、一次性 welcome query 与计划状态漂移。
 
-## 已确认但尚未实施的产品要求
+## 必交付产品要求（当前进度见上文）
 
 - `AVATAR-01`：Resident 必须能通过自拍/上传、AI 卡通候选生成、选择/调整或重试、明确确认建立持久卡通身份；入口需在注册后或首次进入时显著可见。
 - `ANIMATION-01`：用户主动留下状态后，必须由同一个已确认角色表达动作或表情；不能以静态头像或身份漂移的重复生成人物代替。
 - `MAP-01`：地图与 marker/status point 是核心空间表达，不能被降级为可无限延期的边缘附加页。
-- 三项方向进一步明确，具体规则及隔离原型见 AVATAR_AND_MAP_SPEC.md；provider、同意/lifecycle、后台客户端与生产 Phase 排期仍待批准。
+- 三项方向进一步明确，具体规则及隔离原型见 AVATAR_AND_MAP_SPEC.md；AVATAR-01 采用本轮明确批准的 Cloudflare 免费路线与单用途处理边界；后台客户端与后续生产安排仍需相应授权。
 - 地图已确认对应真实世界并作为未来 Home 主体；这不授权持续定位。Presence 与 LifePoint 保持概念区分，LifePoint 不强制 location。
 - Avatar 目标不自动授权外部 AI 处理；自拍、原图、Presence 或 Space 内容不得在未获专项批准前发送给外部 provider。
 - 详细状态、依赖、未决问题和验收目标见 `docs/AVATAR_AND_MAP_SPEC.md`；六个核心实体和已完成 Phase 1–3 的验收保持不变。
@@ -70,7 +82,7 @@
 ## 尚未开始
 
 - Phase 4 及后续功能：Life Point、Response、Shared Moment、Visit、Memory 与 media workflow。
-- AVATAR-01、ANIMATION-01 与 MAP-01 implementation。
+- ANIMATION-01 与 MAP-01 生产 implementation；AVATAR-01 正在实施与验证，不得列为尚未开始。
 - Seed data 与 demo account 属于后续阶段。
 
 ## Phase 3 已收口的设计基线
@@ -92,7 +104,7 @@
 - Foundation migration SHA-256：`69a9a905bc0d713a9fb57bf68a7aaaf436899c83472a207313708874df0df20f`。
 - Phase 3 未修改 Prisma Schema 或任何 migration；全新测试数据库已成功应用现有 2/2 migrations。
 
-## 当前验证状态
+## Phase 3 历史验证状态
 
 以下结果来自上一轮在 `ab18b49c0e27ff1903604d1263bc45d956b8ff34` 完成的 Phase 3 Final Polish 验证。本次规格与隔离原型未重新运行应用测试矩阵，不得把这些结果表述为本轮新执行证据。
 
