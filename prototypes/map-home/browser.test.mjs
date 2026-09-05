@@ -304,6 +304,29 @@ try {
         );
       assert.deepEqual(tiny, []);
       pass();
+      const ornamentCheck = await page.evaluate(() => {
+        const visible = [
+          ...document.querySelectorAll("[data-map-decoration]"),
+        ].filter((e) => getComputedStyle(e).visibility !== "hidden");
+        const obstacles = [
+          ...document.querySelectorAll(
+            ".resident svg, .resident .name, .moment",
+          ),
+        ].map((e) => e.getBoundingClientRect());
+        const overlaps = visible.some((e) => {
+          const b = e.getBoundingClientRect();
+          return obstacles.some(
+            (a) =>
+              b.left < a.right &&
+              b.right > a.left &&
+              b.top < a.bottom &&
+              b.bottom > a.top,
+          );
+        });
+        return { count: visible.length, overlaps };
+      });
+      assert.ok(ornamentCheck.count > 0 && ornamentCheck.count <= 10);
+      assert.equal(ornamentCheck.overlaps, false);
       const head = await page.locator("#residentLin svg").boundingBox();
       assert.ok(
         width === 375

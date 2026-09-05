@@ -9,6 +9,12 @@ import {
   currentPresence,
 } from "./movement.mjs";
 import { character } from "./characters.mjs";
+import {
+  textures,
+  buildingColor,
+  softenFeature,
+  plantGarden,
+} from "./background.mjs";
 const $ = (id) => document.getElementById(id);
 const pairs = {
   space: ["慢慢的家", "Our little place"],
@@ -259,7 +265,7 @@ function buildMap() {
   const world = $("world");
   world.replaceChildren();
   const defs = svgEl("defs");
-  defs.innerHTML = `<pattern id="waterTexture" width="190" height="140" patternUnits="userSpaceOnUse"><rect width="190" height="140" fill="#aecfe0"/><path d="M28 48h18v1.3H28ZM124 105h12v1.3h-12Z" fill="#bdd9e3"/></pattern>`;
+  defs.innerHTML = textures;
   world.append(defs);
   world.append(
     svgEl("rect", {
@@ -271,6 +277,7 @@ function buildMap() {
     }),
   );
   const order = ["water", "island", "park", "building", "road"];
+  let featureIndex = 0;
   for (const kind of order) {
     for (const f of geography.features.filter((f) => f.kind === kind)) {
       const road = kind === "road",
@@ -284,28 +291,30 @@ function buildMap() {
             : {
                 water: "url(#waterTexture)",
                 island: "#e8dcc4",
-                park: "#b8d1a4",
-                building: "#d2bda2",
+                park: "url(#grassTexture)",
+                building: buildingColor(f.id),
               }[kind],
           stroke: road
             ? major
               ? "#fff4df"
               : foot
-                ? "#eee5d2"
-                : "#f7edd8"
+                ? "#f3e7cc"
+                : "#f5e8cf"
             : kind === "building"
               ? "#bca98e"
               : kind === "park"
                 ? "#a0b990"
                 : "none",
-          "stroke-width": road ? (major ? 11 : foot ? 1.3 : 4.5) : 0.7,
+          "stroke-width": road ? (major ? 11 : foot ? 2.3 : 4.5) : 0.7,
           "stroke-linejoin": "round",
           "stroke-linecap": "round",
         }),
       );
+      if (kind === "park" || kind === "building")
+        softenFeature(world, defs, f, featureIndex++, { svgEl, path, project });
     }
   }
-  // V2 保留公园大色块，不叠加可能遮路或角色的装饰树。
+  plantGarden(world, defs, geography.features, { svgEl, path, project });
   const labels = [
     ["thames", [-0.1228, 51.5054], -28],
     ["jubilee", [-0.118, 51.5049], 0],
@@ -436,6 +445,26 @@ function drawAnchors() {
     )
       ? "hidden"
       : "visible";
+  }
+  const treeObstacles = [
+    ...$("anchors").querySelectorAll(".resident svg, .resident .name, .moment"),
+  ].map((e) => e.getBoundingClientRect());
+  const labels = [...$("world").querySelectorAll("[data-map-label]")]
+    .filter((e) => e.style.visibility !== "hidden")
+    .map((e) => e.getBoundingClientRect());
+  for (const tree of $("world").querySelectorAll("[data-map-decoration]")) {
+    const box = tree.getBoundingClientRect();
+    tree.style.visibility =
+      camera.scale < 0.85 ||
+      [...treeObstacles, ...labels].some(
+        (m) =>
+          box.left < m.right + 4 &&
+          box.right > m.left - 4 &&
+          box.top < m.bottom + 4 &&
+          box.bottom > m.top - 4,
+      )
+        ? "hidden"
+        : "visible";
   }
 }
 function drawRoute() {
