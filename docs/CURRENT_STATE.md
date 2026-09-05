@@ -5,14 +5,14 @@
 ## 当前 Phase
 
 - 当前工作包：AVATAR-01 — 自拍生成、用户确认与持久卡通身份；用户已明确批准正式实现，Phase 1–3 基础保留。
-- 当前状态：**头像正式账户流程及 Cloudflare adapter 已实现；真实 provider、样本与相似度/画风验证尚未完成，AVATAR-01 不标记完成。**
+- 当前状态：**头像正式账户流程及 Cloudflare adapter 已实现；真实 Cloudflare 调用已执行 2 次；相似度/画风及真实候选人工确认尚未完成，AVATAR-01 不标记完成。**
 - Phase 3 implementation 已完成并通过 Final Review；本轮不重做历史验收。
 - 实际项目根目录：`/Users/yuan/Desktop/our-space`。
 - 最新授权仅执行 AVATAR-01；允许相关 Schema、正式 Home、配置、测试与文档改动，并在检查后正常提交/push。地图生产接入、定位和 ANIMATION-01 不在本轮范围。
 - Phase 2 已完成并通过最终 Review；Phase 3 前置 UI/UX Review、Design Decision Closure、implementation、Independent Final Review 与 Final Polish Patch 均已完成。
 - **Phase 4 尚未开始，也未获得批准。**
 
-## AVATAR-01 本轮结果（2026-09-05）
+## AVATAR-01 上轮实现结果（2026-09-05，配置更新见下节）
 
 - 已批准视觉参考及实际起点：`b6fe15a8c11270d3c1568f7f40af08484ce71fd3`。起点 main、工作树干净；fetch 后 main...origin/main 为 0/0，remote 与下文一致。未 reset、覆盖用户修改或强制推送。
 - 正式 `/home` 非阻断创建/更换入口、`/avatar` 本地预览/知情同意/真实任务状态/本人选择确认/重试/取消；中文默认、完整英文。
@@ -23,6 +23,16 @@
 - 自动测试使用明确标注的受控 fixture 与合成色块输入，仅证明应用流程，不证明 AI 生成或像本人。真实测试等待最多 2 张明确授权照片及 Cloudflare Free 配置；详情见 [AVATAR_OPERATIONS.md](./AVATAR_OPERATIONS.md)。
 - 本轮验证：23 files / 102 tests、26 项数据库集成、18/18 双端 E2E、production build、lint/typecheck、3/3 migrations、production audit 0、格式/diff 检查通过；production 双端未配置状态零上传，截图及命令见运行说明。ANIMATION-01、MAP-01 生产功能及 Phase 4 均未完成，仍为必交付目标。
 - 本轮提交信息 `feat: add private avatar generation and confirmation`；完整 hash 由 `git log -1 --format='%H %s'` 定位，避免自引用。提交/push 后目标 main、干净工作树、0/0；实际结果在最终交付报告记录，下轮仍须 fetch 核验。
+
+## AVATAR-01 有限真实 smoke（本轮最新状态）
+
+- 起点 `7c96e3f98c4cee4d712f04148caf9ffa2f19f9aa`；main、干净，fetch 后与 origin/main 为 0/0，remote 未变。
+- 用户已补齐 Cloudflare 关键配置并授权本轮最多 2 次；实际 2 次已用完，禁止追加。仅样本 1 存在，样本 2 未找到；原自拍未复制到应用存储。
+- SDXL-Lightning：HTTP 400 / 3030，无图片；未确诊原因、未重试。FLUX.2 klein 4B：HTTP 200，1024px JPEG，实际去背景/像素规范化校验通过。
+- 已从 provider 与双语说明删除额外风格参考图外发，仅本人照片＋固定提示；测试白名单防止增加图片。自动审核拒绝的那次操作未派发，仍共 2 次。
+- 本次 smoke 输出仅在内存校验后释放，没有保留候选给用户人工确认；未验证像本人程度/批准画风，也未把真实照片结果绑定正式 Resident。AVATAR-01 仍未完成，不能以 HTTP 成功替代完整验收。
+- 本轮证据、后续所缺条件与检查见 AVATAR_SMOKE_2026-09-05.md。`AVATAR_STORAGE_DIR` 尚未配置；本轮不改用户 `.env.local`。
+- 本轮提交信息 `fix: narrow avatar inputs and record live smoke`，以包含本节的提交完整 hash 定位，目标正常推送后 main、干净、0/0；实际 Git 结果在交付中报告。
 
 ## Git 连续性
 

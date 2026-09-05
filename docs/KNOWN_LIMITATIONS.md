@@ -9,7 +9,7 @@
 - Phase 3 implementation 已完成并通过 Final Review；Phase 4 尚未开始，也未获得批准。
 - `/home` 已承载 Quiet Home 与 Presence；`/space` 继续作为次级 Invitation/account management 边界。
 - 尚未实现 Life Point、Response、Shared Moment、Visit、Memory 或 Phase 4 media workflow。
-- AVATAR-01 账户、私密生成/确认、持久身份及正式 Home 集成已写入；真实 Cloudflare 调用及相似度/画风未验证，闭环仍未完成。ANIMATION-01 和 MAP-01 生产未实现；三者保持必交付。
+- AVATAR-01 账户、私密生成/确认、持久身份及正式 Home 集成已写入；真实 Cloudflare 调用已执行，相似度/画风未验证，闭环仍未完成。ANIMATION-01 和 MAP-01 生产未实现；三者保持必交付。
 - locale preference 使用浏览器 HttpOnly cookie 持久化，不跨浏览器或设备同步；Phase 3 不为此增加数据库字段。
 - 尚无 seed data 或 demo account；这两项属于后续阶段。
 - Playwright 已配置 desktop Google Chrome 与 Pixel 7；本轮在独立 PostgreSQL 16.15 测试数据库 18/18 通过，头像为受控 provider，另覆盖 375px 视口。Safari 与 Firefox 尚未纳入当前自动化矩阵。
@@ -19,7 +19,7 @@
 
 ## AVATAR-01 当前具体缺口
 
-- 当前无 Cloudflare 账户配置及明确授权照片，真实服务调用为 0。SDXL 照片身份保持、FLUX 请求兼容性及模型生成质量尚未用真实响应验证；不能声称与批准画风一致或像本人已通过。
+- 关键 Cloudflare 配置及照片授权已提供。真实调用 2 次：SDXL 400 / 3030，FLUX 200 且规范化通过；未保留输出供人工确认，所以人物相似度和画风仍未验收，AVATAR-01 闭环未完成。上限已用完，不能追加真实请求。
 - `CLOUDFLARE_WORKERS_PLAN=free` 是部署者声明，不是账单 API 核验；必须实际确认 Free 账户。Workers Free 日额度共享给账户其他应用，不能保证所有请求可用；不自动付费/换模型。
 - 透明背景采用受控色背景、边缘连通去色、64px 最近邻再放大及输出验证；不合格输出拒绝，不保证所有 AI 图片天然有效或可动画化。当前资源是基础身份，无动作层/骨骼。
 - 私密本地存储需要持久卷、排除备份，并保证清理常驻运行；无共享文件卷的多实例部署不受支持。过期立即拒绝访问，物理删除在运行中定时处理；停机、I/O 失败存在补扫延迟，具体见 DEC-059。

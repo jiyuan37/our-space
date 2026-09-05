@@ -2,7 +2,7 @@
 
 Our Space 是一个属于两个人的私密共同生活空间。它的使命是“即使相隔，也一起生活”，产品目标是增加 Presence，而不是增加 engagement。
 
-当前 Phase 3 已完成并通过 Final Review，包含 Quiet Home、Presence 和中英文 i18n；Phase 4 尚未开始、未获实施批准。用户已批准像素视觉及 AVATAR-01 正式开发。头像账户流程与 Cloudflare adapter 已接入，真实照片生成验证仍等待账户配置及授权样本，不能宣称 AVATAR-01 完成。应用验收基线与证据见 [CURRENT_STATE.md](./docs/CURRENT_STATE.md)。
+当前 Phase 3 已完成并通过 Final Review，包含 Quiet Home、Presence 和中英文 i18n；Phase 4 尚未开始、未获实施批准。用户已批准像素视觉及 AVATAR-01 正式开发。头像账户流程与 Cloudflare adapter 已接入，已执行 2 次真实调用（SDXL 400、FLUX 200/规范化通过），仍缺候选人工质量与最终确认，不能宣称 AVATAR-01 完成。应用验收基线与证据见 [CURRENT_STATE.md](./docs/CURRENT_STATE.md)。
 
 ## 像素头像
 

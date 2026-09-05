@@ -28,7 +28,7 @@ const zhCN = {
   "avatar.localOnly": "本地预览 · 点击生成才会发送",
   "avatar.privacyTitle": "照片会怎样处理",
   "avatar.privacyInput":
-    "只把去除 EXIF、缩小后的本人照片与固定头像提示发给 Cloudflare Workers AI。模型支持时附带我们的原创风格参考；不发送姓名、位置、Presence、伴侣或生活记录。",
+    "只把去除 EXIF、缩小后的本人照片与固定头像提示发给 Cloudflare Workers AI。不发送姓名、位置、Presence、伴侣或生活记录。",
   "avatar.privacyStorage":
     "原照不保存到服务器磁盘。候选仅你可见，24 小时后失效并清理；取消即删除。确认后私密保存最终图，替换时删除旧图。",
   "avatar.privacyProvider":
@@ -177,7 +177,7 @@ const enUS: Messages = {
   "avatar.localOnly": "Local preview · sent only when you generate",
   "avatar.privacyTitle": "How your photo is handled",
   "avatar.privacyInput":
-    "Only your resized photo with EXIF removed and a fixed avatar prompt go to Cloudflare Workers AI. Our original style reference is included when supported. No names, location, Presence, partner or life records.",
+    "Only your resized photo with EXIF removed and a fixed avatar prompt go to Cloudflare Workers AI. No names, location, Presence, partner or life records.",
   "avatar.privacyStorage":
     "The original photo is not saved to server disk. Candidates are private to you, expire after 24 hours and are cleaned up; cancelling deletes them. Confirmed images are stored privately, and replacements delete the previous image.",
   "avatar.privacyProvider":

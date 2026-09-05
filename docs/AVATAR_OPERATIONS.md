@@ -4,7 +4,9 @@
 
 ## 当前完成程度
 
-正式应用已接入头像创建入口、上传验证、可替换 Cloudflare provider、私密候选、本人确认、持久 Resident 绑定及同 Space ACTIVE Resident 最终头像读取。自动测试使用受控素材，**真实外部生成调用为 0**；目前没有 Cloudflare 配置或明确授权照片，像本人程度、实际模型兼容性与批准像素风的一致性尚未验收，AVATAR-01 未完成。
+正式应用已接入头像创建入口、上传验证、可替换 Cloudflare provider、私密候选、本人确认、持久 Resident 绑定及同 Space ACTIVE Resident 最终头像读取。2026-09-05 后续获批并实际执行 **2/2 次真实 smoke**：SDXL-Lightning 返回 HTTP 400 / 3030；FLUX.2 klein 4B 返回 HTTP 200、1024px JPEG，经过实际规范化代码得到 256px 透明 PNG。没有自动重试或第三次请求。
+
+**AVATAR-01 仍未完成**：本次仅验证内存中的生成/格式处理，输出已释放，没有保留候选做人工相似度、画风或最终身份确认；不能将技术请求成功表述为完整闭环。详见 [真实 smoke 记录](./AVATAR_SMOKE_2026-09-05.md)。
 
 用户已批准大头像素风和本轮正式实现，并明确暂不批准 OpenAI 付费接入。不再风格比较、冻结或伦敦背景调整；ANIMATION-01 和 MAP-01 生产接入继续保留为后续必交付。
 
@@ -30,12 +32,12 @@
 | `AVATAR_EXTERNAL_PROCESSING_APPROVED` | 本轮头像单用途边界确认后填 `avatar-cloudflare-v1`                       |
 | `AVATAR_STORAGE_DIR`                  | 私密持久绝对目录，不在 public；文件 0600、目录 0700，必须排除备份       |
 
-缺少配置默认不派发。不得在付费账户上声称代码保证免费；用户尚未批准付费。如果改计划/计费/外发范围，需要相应明确授权。当前 `.env.local` 已存在，但头像相关变量均未配置，测试服务用进程内隔离环境，不代表真实部署就绪。
+缺少配置默认不派发。不得在付费账户上声称代码保证免费；用户尚未批准付费。如果改计划/计费/外发范围，需要相应明确授权。当前 Cloudflare 账户、Token、Free 声明、SDXL provider 与处理同意配置已存在；本轮未修改用户 `.env.local`。`AVATAR_STORAGE_DIR` 未配置，正式持久部署仍需落实私密卷/不备份规则；账户实际账单计划未通过 API 核验。
 
 2026-09-05 查阅官方当前资料：
 
-- [SDXL-Lightning](https://developers.cloudflare.com/workers-ai/models/stable-diffusion-xl-lightning/)：支持 `image` / `image_b64`、strength、guidance 等图像输入；Beta，模型页列每 step $0.00。本实现 1024×1024、4 steps、strength 0.65、guidance 7.5。接口测试仅验证构造，没有真实响应验证。
-- [FLUX.2 klein 4B](https://developers.cloudflare.com/workers-ai/models/flux-2-klein-4b/)：支持图像编辑/multipart；计量价每 512px 输入 tile $0.000059、输出 tile $0.000287。[Cloudflare 编辑示例](https://developers.cloudflare.com/changelog/post/2026-01-28-flux-2-klein-9b-workers-ai/)说明 `input_image_0` 等参数及小于 512px 输入；本实现照片缩至 480px、参考 392×200。4B adapter 的实际兼容性仍需真实 smoke，不能靠测试 fixture 宣称验证。
+- [SDXL-Lightning](https://developers.cloudflare.com/workers-ai/models/stable-diffusion-xl-lightning/)：支持 `image` / `image_b64`、strength、guidance 等图像输入；Beta，模型页列每 step $0.00。本实现 1024×1024、4 steps、strength 0.65、guidance 7.5。本轮一次真实请求返回 400 / 3030，原因未确诊；不能宣称该路径已可用。
+- [FLUX.2 klein 4B](https://developers.cloudflare.com/workers-ai/models/flux-2-klein-4b/)：支持图像编辑/multipart；计量价每 512px 输入 tile $0.000059、输出 tile $0.000287。[Cloudflare 编辑示例](https://developers.cloudflare.com/changelog/post/2026-01-28-flux-2-klein-9b-workers-ai/)说明 `input_image_0` 等参数及小于 512px 输入；本实现照片缩至 480px、不额外外发参考图。4B adapter 已用一次真实响应验证接口和输出规范化；相似度/画风未验收。
 - [Workers AI 定价](https://developers.cloudflare.com/workers-ai/platform/pricing/)：Workers Free 每日 10,000 Neurons；Free 额度耗尽请求失败，Paid 可计超额。账户其他应用共享额度，无法保证本应用可用次数；不自动升级/后备付费。
 - [数据规则](https://developers.cloudflare.com/workers-ai/platform/data-usage/)：Cloudflare 声明未经同意不将内容用于训练或改进服务，不给其他客户使用。未确认逐项保留/删除时限和固定处理地域，不承诺零保留或即时服务侧删除。
 - [REST 接入](https://developers.cloudflare.com/workers-ai/get-started/rest-api/)：目标账户与 API Token 由部署者配置，不提交密钥。
@@ -44,7 +46,7 @@
 
 ## 图片与身份生命周期
 
-服务端验证 5 MB、JPEG/PNG/WebP 实际解码与 MIME 一致、单帧、至少 128px、最多 2000 万像素；旋转方向后去 EXIF、最长边缩至 1024px。原始照片不写磁盘/数据库，派发仅本人照片与固定头像提示；FLUX 必要时附带原创风格参考。不发送姓名、Presence、位置、伴侣、生活记录或 Space 数据，不接 AI Gateway、R2/KV 日志缓存。
+服务端验证 5 MB、JPEG/PNG/WebP 实际解码与 MIME 一致、单帧、至少 128px、最多 2000 万像素；旋转方向后去 EXIF、最长边缩至 1024px。原始照片不写磁盘/数据库，派发仅本人照片与固定头像提示；FLUX 也只发送本人照片和固定提示，不附带额外风格参考图。不发送姓名、Presence、位置、伴侣、生活记录或 Space 数据，不接 AI Gateway、R2/KV 日志缓存。
 
 模型输出需是有效 1024px 单帧图，去除边缘连通的指定色背景，规范至 64×64 逻辑像素、透明 PNG，并最近邻放大到 256px。不合格透明边缘/尺寸/可见区域拒绝，不把任意图强行当作头像。基础图无奶茶/书本。规范化不保证相似度，不保证可拆层/骨骼动画；风格策略 `avatar-cloudflare-v1` 对应 `pixel-big-head-b6fe15a-v1`。
 
@@ -93,7 +95,7 @@ Playwright 通过 `development` + `AVATAR_E2E_FIXTURE=true` + DATABASE_URL 等�
 | `npm audit --omit=dev`                      | 0 vulnerabilities                                                                                      |
 | format / diff 检查                          | 通过；最终提交前复核                                                                                   |
 | production 实际页面检查                     | 1280px / 375px、本地预览零上传、无 fixture/生成按钮、英文切换与取消、0 page errors                     |
-| 真实照片/AI 服务                            | 未执行；0 次调用，未验证相似度与画风                                                                   |
+| 真实照片/AI 服务                            | 后续已执行 2 次；1 次 400、1 次 200 并通过规范化。未验证相似度与画风，详见真实 smoke 记录              |
 
 初轮失败是新增浏览器测试误把登出落点写为 `/login`（实际既有行为为 `/welcome`）、未限定错误提示和语言按钮真实可访问名称；修正测试后 18/18 通过。另修正 SQL advisory lock 返回类型、Node-only 清理导入、断网查询超时及组件测试 DOM 隔离。未调整原有认证/邀请/Presence 产品语义。
 
@@ -109,8 +111,8 @@ Playwright 通过 `development` + `AVATAR_E2E_FIXTURE=true` + DATABASE_URL 等�
 
 上述人物全部为自动测试 fixture，不是本人照片 AI 成果。原型人物代码未分配给真实账户。
 
-## 有限真实 smoke 的剩余条件
+## 本轮真实 smoke 的上限与剩余工作
 
-需要用户在本地完成上述 Cloudflare Free 配置，并给出最多 2 张本地测试照片路径及允许发往 Cloudflare 的明确授权。收到后先测试 SDXL-Lightning，记录实际调用数、原始模型/输出兼容性、脸部可辨程度、像本人程度和批准风格一致性；不足时才比较 FLUX.2 klein。不得偷偷加请求数量或付费模型，不把 mock 当真实通过。
+用户明确授权最多 2 次真实请求，已全部用完；只使用实际存在的样本 1，指定样本 2 未找到。照片去 EXIF、最长边不超过 1024px，FLUX 再缩至 480px；原照未持久化入应用，未输出照片/base64/凭据/私密资源地址。额外风格图外发被自动审核拒绝后已从实际 provider 删除，拒绝本身未派发请求。
 
-目前没有授权样本，故这一步未执行。最终资源仍需本人明确确认才能成为正式身份；测试比较图不会直接替换任何真实用户头像。AVATAR-01 尚未满足完整退出标准。
+本轮成功返回的是临时内存输出，已释放，没有建立真实用户最终身份，也未提供效果图。后续需要用户另行授权生成并在私密候选流程中人工查看、确认，才能继续验证相似度、批准画风和真实生成后的身份闭环；不得借此自动追加请求。已有受控测试的持久性/权限证据仍有效，但不能替代这一缺口。

@@ -81,7 +81,7 @@ describe("可替换 Cloudflare provider", () => {
     });
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
-  it("FLUX 显式选用时发送小于512px照片与原创建模参考", async () => {
+  it("FLUX 仅发送小于512px本人照片，不外发其他参考图片", async () => {
     configure();
     const fetcher = vi.fn().mockResolvedValue(
       Response.json({
@@ -98,7 +98,7 @@ describe("可替换 Cloudflare provider", () => {
     await new CloudflareAvatarProvider("cloudflare-flux-klein").generate(photo);
     const form = fetcher.mock.calls[0][1].body as FormData;
     expect(Array.from(form.keys()).sort()).toEqual(
-      ["prompt", "width", "height", "input_image_0", "input_image_1"].sort(),
+      ["prompt", "width", "height", "input_image_0"].sort(),
     );
     expect(
       (

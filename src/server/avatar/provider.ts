@@ -1,5 +1,3 @@
-import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
 import sharp from "sharp";
 import { AVATAR } from "@/lib/avatar/config";
 import {
@@ -53,10 +51,7 @@ export class CloudflareAvatarProvider implements AvatarGenerationProvider {
       });
     } else {
       const form = new FormData();
-      form.set(
-        "prompt",
-        `Image 0 is the consenting user's photo. Image 1 is only our original pixel-art style reference, do not copy its identities. ${AVATAR_PROMPT}`,
-      );
+      form.set("prompt", AVATAR_PROMPT);
       form.set("width", String(AVATAR.generationSize));
       form.set("height", String(AVATAR.generationSize));
       const photo = await sharp(selfie)
@@ -67,12 +62,6 @@ export class CloudflareAvatarProvider implements AvatarGenerationProvider {
         "input_image_0",
         new Blob([new Uint8Array(photo)], { type: "image/jpeg" }),
         "selfie.jpg",
-      );
-      const reference = await readFile(resolve("assets/avatar/style-v1.png"));
-      form.append(
-        "input_image_1",
-        new Blob([new Uint8Array(reference)], { type: "image/png" }),
-        "style.png",
       );
       body = form;
     }
