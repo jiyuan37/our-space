@@ -1,6 +1,6 @@
 # 真实世界像素地图 Home — 隔离交互原型
 
-**隔离原型 V2 背景精修已完成验证，等待用户视觉确认；生产实施未批准。**
+**隔离原型局部人物重绘已完成验证，等待用户查看人物前后对照；生产实施未批准。**
 
 本原型采用用户进一步指定的《星露谷物语》式温暖像素乡野方向，所有头像与保留的稀疏水纹均为原创代码绘制，不含游戏原素材。真实伦敦街区结构来自 OpenStreetMap；人物、状态、生活内容和移动是合成演示。
 
@@ -33,7 +33,8 @@ node prototypes/map-home/serve.mjs
 - `app.mjs`：本地渲染、面板、双语、回放与镜头控制。
 - `background.mjs`：原创草地/水纹、树冠、建筑配色与细部；装饰不代表实测树木或建筑外观。
 - `movement.mjs`：可测试状态机、合成样本、集中配置、查看者游标 key。
-- `characters.mjs`：原创 SVG 头肩头像、8 帧轻微朝向/节奏、读书/奶茶单一道具；没有 raster 或第三方资产依赖。
+- `characters.mjs`：原创 SVG 大头状态角色、8 帧轻微朝向/节奏、读书/奶茶单一道具；没有第三方人物资产依赖。
+- `avatar-preview.mjs`：从真实旧/新绘制代码生成手机原尺寸对照和 4× 最近邻预览，默认输出到仓库外。
 - `geography.json`：OSM 公开地理数据的过滤派生库，ODbL-1.0；不包含任何用户私人数据。
 - `prepare-data.py`：从两份 Overpass JSON 生成地理数据，拒绝未闭合水域关系；原始临时下载不提交。
 - `serve.mjs`：只服务本目录的本地静态服务器；`Permissions-Policy` 禁止 geolocation/camera/microphone，页面 CSP 限制外部连接。
@@ -66,6 +67,42 @@ python3 prototypes/map-home/prepare-data.py /tmp/our-space-osm.json /tmp/our-spa
 ```
 
 当前源数据会更新；上述命令复现处理流程，不保证未来返回与已提交 snapshot 字节一致。原型无需再次下载。
+
+## 局部人物美术重绘（2026-09-05）
+
+本轮从实际基线 `b2d9b8f1f821cd123e3ba3704d0ae69f37904747` 继续；main、干净工作树，fetch 后 0/0。用户明确要求人物素材重绘，本轮不是新 Phase 或完整 Review。
+
+- 旧版为 SVG 头肩像，脸较窄、明显脖子/肩膀和 3px 浅色外圈；本轮直接重画 `characters.mjs` 的轮廓、脸型、发型、五官与托持道具，不通过 CSS 放大制造变化。
+- 同一 48×50 画布内，脸颊和下巴改成宽圆像素阶梯，消除细长脖子，仅保留极少衣领；浅色外线减为 1 个绘制单位。脸宽 36 个绘制单位，衣服高 7 个单位。手机 SVG 仍为 60×62.5 CSS px，桌面沿用 76px 宽，点击区和锚点不变。
+- 小林保留长发/发夹身份，睁眼温和专注、小幅微笑，以一只极简小手托书；小雨保留短发身份，放松弯眼和小微笑，以小手托带吸管的奶茶。两者表情形状不同；每人一个道具，位于五官下方/外侧，不添加徽章、数字或奖励装饰。
+- 从实际 SVG 的 alpha 像素覆盖测量：排除背景/阴影，扣除道具遮盖后，可见头部占角色总可见面积，小林约 84.4%、小雨约 82.9%。这是本轮试绘的测量口径，不作为生成人像系统验收。
+- `app.mjs`、`background.mjs`、地理 JSON、移动状态机、HTML/CSS 与生产文件均未修改。主动状态/位置分离、过期回中性、移动微动和单一道具继续沿用调用契约。
+
+### 人物对照与复现
+
+```bash
+PROTOTYPE_OUTPUT=/tmp/our-space-avatar-redraw node prototypes/map-home/avatar-preview.mjs
+node --test prototypes/map-home/movement.test.mjs
+PROTOTYPE_OUTPUT=/tmp/our-space-avatar-redraw node prototypes/map-home/browser.test.mjs
+npm run format:check
+git diff --check
+```
+
+预览脚本默认只读上述 `b2d9b8f` 中的旧素材，并导入工作树中的新素材；不会切换分支或回退工作树。可通过 `AVATAR_BEFORE_REF` 显式指定其他对照 ref。旧/新 SVG 各自先在真实 Chromium 中以 60px 宽渲染，生成含 2px 留白的 64×68 PNG，再用 `image-rendering: pixelated` 放大为 256×272，确为 4 倍最近邻，不是另一张效果图或放大的矢量重渲染。HTML 预览内嵌这些 PNG，可独立打开。
+
+本机实际证据目录：
+
+`/Users/yuan/.codex/visualizations/2026/09/05/01a06f69-36dd-7ce0-bada-87b2bbbfd321/avatar-redraw/`
+
+包含 `comparison-1x.png` / `.html`、`comparison-4x.png` / `.html`、两人的旧/新 SVG 和原尺寸 PNG、`mobile-before.png` / `mobile-after.png`、`preview-evidence.json` 与 `verification.json`。手机对照均为 375×812，中心 `[-0.1181, 51.50455]`，scale 1.05。两锚点分别保持 `left:169.309px;top:480.993px` 和 `left:274.818px;top:434.239px`。图片和临时浏览器产物未提交到 Git。
+
+### 本轮验证与边界
+
+Node.js 22：23/23 状态机、旧 30 组浏览器检查保留并增加造型/五官不被道具遮挡检查，合计 31 组通过。覆盖原有点击/详情/焦点、双端双语、至少 44px、移动/跳过/刷新不重播/reduced-motion。运行时外部请求/真实定位调用/页面错误均为 0；格式与 diff 检查通过。未重跑生产 Phase 3 全量 Review。
+
+修复过程：浏览器首次实际位移检查出现 `page.waitForFunction: Timeout 4000ms exceeded.`，保留原断言重新运行后通过。新增遮挡断言最初用奶茶所有部件的整体矩形，误把吸管与杯身之间的空白判为遮挡；改为检查各实际绘制路径后通过，没有移除检查。正常尺寸复核后收小小雨的笑口、加高杯身并把吸管移到脸外侧。
+
+本轮只交付两名原创模拟人物的局部美术迭代；真人头像生成、真实定位和生产 `/home` 均未实现或修改，背景气质沿用上一版。人物美术仍等待用户确认，完成后停止。
 
 ## V2 背景精修（2026-09-05）
 

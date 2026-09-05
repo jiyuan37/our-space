@@ -181,7 +181,7 @@ try {
   await page.locator("#debugClose").click();
   for (const id of ["residentLin", "residentYu"]) {
     assert.equal(
-      await page.locator(`#${id} svg[data-kind="head-shoulders"]`).count(),
+      await page.locator(`#${id} svg[data-kind="big-head"]`).count(),
       1,
     );
     assert.equal(await page.locator(`#${id} [data-prop]`).count(), 1);
@@ -198,6 +198,40 @@ try {
       /Reading|milk tea|读|奶茶/,
     );
   }
+  // 新角色正常尺寸下五官无遮挡，道具保持在脸的下方/外侧。
+  for (const id of ["residentLin", "residentYu"]) {
+    const parts = await page.locator(`#${id} svg`).evaluate((svg) => {
+      const face = svg.querySelector('[data-part="face"]').getBBox();
+      const expression = svg
+        .querySelector('[data-part="expression"]')
+        .getBBox();
+      const prop = svg.querySelector("[data-prop]").getBBox();
+      const body = svg.querySelector('[data-part="body"]').getBBox();
+      return {
+        faceWidth: face.width,
+        bodyHeight: body.height,
+        propWidth: prop.width,
+        expression: svg.querySelector("[data-expression]").dataset.expression,
+        overlap: [...svg.querySelectorAll("[data-prop] path")].some((part) => {
+          const box = part.getBBox();
+          return (
+            box.x < expression.x + expression.width &&
+            box.x + box.width > expression.x &&
+            box.y < expression.y + expression.height &&
+            box.y + box.height > expression.y
+          );
+        }),
+      };
+    });
+    assert.ok(parts.faceWidth >= 34 && parts.bodyHeight <= 7);
+    assert.ok(parts.propWidth < parts.faceWidth);
+    assert.equal(parts.overlap, false);
+    assert.equal(
+      parts.expression,
+      id === "residentLin" ? "gentle-focus" : "relaxed-smile",
+    );
+  }
+  pass();
   assert.equal(await page.locator("#replayNote").isVisible(), false);
   assert.equal(await page.locator(".intro").count(), 0);
   assert.equal(await page.locator("#residents").isVisible(), false);
