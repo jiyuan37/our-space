@@ -195,3 +195,15 @@ P 编号是本轮工作包索引，不等于重新批准 Phase 4–7。可在用
 已针对性检查 `src/components/home/home-view.tsx`、`home-header.tsx`、`src/lib/presence/freshness.ts`、`src/lib/i18n/config.ts`、`src/styles/globals.css` 和 `src/server/services/home-service.ts`：HomeService 的 ACTIVE membership/最小 view model、typed i18n 与 freshness 可复用；地图样本权限不能只依赖这些页面能力。生产 CSS 的 cream/语义 token 和 reduced-motion 思路可延续，候选地图色不覆盖现有 token。本轮未重新审计 Phase 1–3。
 
 [Phase 3 Design](./PHASE_3_DESIGN.md) 仅增加演进引用；[Phase 3 Review](./PHASE_3_REVIEW.md) 完全保留。README 的旧 Phase 2 描述本轮同步为当前已验证状态。新规格不追溯改写历史验收，不声称本轮重跑 76/15/12 项应用测试。
+
+## 隔离原型 V2 迭代记录（2026-09-04）
+
+用户在查看 V1 后批准“头像优先与视觉降噪”迭代，仅限隔离原型及相关文档。本节更新 Home 原型的展示方式；上文约 2.5–3 头身和 40–44px 全身 marker 是 V1 记录，V2 地图改为重新绘制的头肩头像（手机 60px、桌面 76px），不取消持久身份/完整状态动画产品目标，也不批准生产头像流程。
+
+- 小林专注看书、小雨轻松喝奶茶；发型轮廓稳定，每人一个道具，姓名简短。主动 Presence 与位置仍独立，移动保持道具；过期/清除回中性。
+- 保留真实地理数据、坐标投影和原移动状态机；移除密集屋顶/地面纹理与装饰树，减少次要道路视觉权重，地图标签按 zoom 和头像遮挡控制。
+- 删除大宣传板，定位入口收进轻菜单；单一创建主操作与次级无地点入口。页面统一演示标注、真实底图说明和可点击 OSM 归因。技术性无变化说明仅在实验台；有主动状态时不无条件宣称双方安静。
+- 详情为可切换人物的单一非模态面板；手机底部 sheet 不遮住所选头像，关闭/Escape 返回最新触发头像，拖动不误开详情。针尖保留地理锚点，选中层级不改变位置。
+- 本轮验证：23/23 状态机、保留旧 24 组并扩至 30 组 Chrome 浏览器检查；双端双语、44px、5.20:1 以上文字对比度、0 外部请求/定位调用/页面错误。真实 before/after 同中心同 scale；截图与报告在仓库外，路径与复现见 [原型 README](../prototypes/map-home/README.md)。
+
+状态：**隔离原型 V2 已完成验证，等待用户视觉确认。** 生产 `/home` 未修改，真实头像生成与定位未实现；生产 Phase/外部 AI/provider/数据 lifecycle 的批准门槛保持原状。

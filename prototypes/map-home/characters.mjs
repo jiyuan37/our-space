@@ -1,15 +1,31 @@
-// 原创 SVG 角色：阶梯轮廓 + 柔和表情。8 个步态与地图位移独立。
+// 原创头像资源：重新绘制头肩构图，表情与单一道具表达主动状态。
+// 移动仅改变少量像素的朝向/节奏，持续身份和道具不随位置更换。
 export function character(
   person = "lin",
   pose = "idle",
   frame = 0,
   direction = 1,
+  moving = false,
 ) {
-  const lin = person === "lin",
-    hair = lin ? "#554136" : "#353d41",
-    shirt = lin ? "#9b5848" : "#567564",
-    pants = lin ? "#6a695d" : "#596579";
-  const steps = [0, 2, 3, 2, 0, -2, -3, -2],
-    step = pose === "walk" ? steps[frame % 8] : 0;
-  return `<svg viewBox="0 0 40 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g transform="${direction < 0 ? "translate(40 0) scale(-1 1)" : ""}"><g transform="scale(1 .75)"><path d="M12 3h16v3h5v6h3v17h-4v5H8v-5H4V12h3V6h5Z" fill="${hair}"/><path d="M10 13h20v16h-3v4H13v-4h-3Z" fill="#f2c69e"/><path d="M9 9h22v6H18v-3h-5v7H9Z" fill="${hair}"/>${lin ? '<path d="M29 13h5v22h-6v-6h2Z" fill="' + hair + '"/><rect x="28" y="10" width="5" height="3" rx="1" fill="#e7ba79"/>' : '<path d="M10 8h8V4h8v6h5v6H19V13h-9Z" fill="' + hair + '"/>'}<path d="M14 22v2m12-2v2" stroke="#3e3831" stroke-width="2.2" stroke-linecap="round"/><path d="M18 27q2 2 4 0" fill="none" stroke="#915b46" stroke-width="1.2"/></g><g transform="translate(0 -18.2) scale(1 1.3)"><path d="M12 34h16v3h4v16H8V37h4Z" fill="${shirt}"/><path d="M17 34l3 4 3-4" fill="#fff4df"/><path d="M12 51h7v${8 + step}h-9v-3h2Zm10 0h7v${8 - step}h-9v-3h2Z" fill="${pants}"/><path d="M10 ${59 + step}h10v3H8v-3Zm11 ${59 - step}h10v3H21Z" fill="#3e3831"/>${pose === "read" ? '<path d="M8 42l12 3 12-3v11l-12 3-12-3Z" fill="#fff4df" stroke="#3e3831" stroke-width="1.5"/><path d="M20 45v11" stroke="#9a7b55"/><path d="M6 43h5v5H6Zm23 0h5v5h-5Z" fill="#f2c69e"/>' : pose === "cup" ? '<path d="M7 41h7v5h-7Zm19 0h7v5h-7Z" fill="#f2c69e"/><path d="M16 42h10v9H16Z" fill="#fff4df" stroke="#3e3831"/><path d="M26 43h4v5h-4" fill="none" stroke="#3e3831"/>' : `<path d="M6 ${39 - step}h5v12H6Zm23 ${39 + step}h5v12h-5Z" fill="${shirt}"/><path d="M6 ${49 - step}h5v4H6Zm23 ${49 + step}h5v4h-5Z" fill="#f2c69e"/>`}</g></g></svg>`;
+  const lin = person === "lin";
+  const hair = lin ? "#684735" : "#343e42";
+  const shade = lin ? "#936644" : "#54616a";
+  const shirt = lin ? "#bd795d" : "#548576";
+  const beat = moving ? [0, 0, -0.6, -0.6, 0, 0, 0.6, 0.6][frame % 8] : 0;
+  const glance = moving ? direction * 0.6 : 0;
+  const eyes =
+    pose === "cup"
+      ? '<path d="M13 25q2-3 4 0m8 0q2-3 4 0" fill="none" stroke="#46382f" stroke-width="1.7" stroke-linecap="round"/>'
+      : '<path d="M14 24h3v4h-3Zm12 0h3v4h-3Z" fill="#46382f"/><path d="M14 24h1v1h-1Zm12 0h1v1h-1Z" fill="#fff4df"/>';
+  const mouth =
+    pose === "read"
+      ? '<path d="M20 32h4" stroke="#965e49" stroke-width="1.5"/>'
+      : '<path d="M19 31q3 4 6 0" fill="none" stroke="#965e49" stroke-width="1.5" stroke-linecap="round"/>';
+  const prop =
+    pose === "read"
+      ? '<g data-prop="book" aria-hidden="true"><path d="M26 35l9 2 9-2v11l-9 2-9-2Z" fill="#6d8261" stroke="#3f5340" stroke-width="1.3"/><path d="M28 36l7 2 7-2v8l-7 2-7-2Z" fill="#fff4df"/><path d="M35 38v8" stroke="#b4a486"/><path d="M29 39l4 1m-4 2 4 1m4-3 4-1m-4 4 4-1" stroke="#b4a486"/></g>'
+      : pose === "cup"
+        ? '<g data-prop="milk-tea" aria-hidden="true"><path d="M36 29l2-7" stroke="#7c5b40" stroke-width="2"/><path d="M30 31h13l-2 15h-9Z" fill="#d5aa78" stroke="#795b42" stroke-width="1.3"/><path d="M29 30h15v3H29Z" fill="#fff4df" stroke="#795b42"/><path d="M33 41h2v2h-2Zm5 1h2v2h-2Zm-2-4h2v2h-2Z" fill="#674b3b"/><path d="M33 35v4" stroke="#efd7ac" stroke-width="2"/></g>'
+        : "";
+  return `<svg class="character" data-kind="head-shoulders" data-person="${person}" data-motion="${moving ? "moving" : "still"}" viewBox="0 0 48 50" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g transform="translate(0 ${beat})"><path d="M13 3h16v3h7v6h4v23h-6v4h4v8H6v-8h4v-4H4V14h3V8h6Z" fill="#fff4df" stroke="#fff4df" stroke-width="3" stroke-linejoin="round"/><path d="M13 5h16v3h6v6h3v21h-6v5H9v-5H6V14h3V9h4Z" fill="${hair}"/><path d="M12 39h18v3h6v5H8v-5h4Z" fill="${shirt}"/><path d="M18 36h9v6l-4 3-5-3Z" fill="#edba90"/><path d="M10 18h24v13h-3v5h-5v3h-9v-3h-5v-6h-2Z" fill="#f5caa4"/><path d="M8 23h4v7H8Zm24 0h4v7h-4Z" fill="#edba90"/>${lin ? `<path d="M10 12h5V8h13v4h5v9h-6v-5h-6v4H11v9H8V16h2Z" fill="${hair}"/><path d="M13 10h12v3H13Zm-3 6h3v4h-3Z" fill="${shade}"/><path d="M31 17h5v18h-5Z" fill="${hair}"/><path d="M31 17h5v3h-5Z" fill="#dfb655"/>` : `<path d="M9 16h5v-5h6V7h9v5h6v11h-6v-7h-5v5h-7v-3h-8Z" fill="${hair}"/><path d="M19 10h9v3h-9Zm-6 4h6v3h-6Z" fill="${shade}"/>`}<g transform="translate(${glance} 0)">${eyes}<path d="M12 30h5v2h-5Zm15 0h5v2h-5Z" fill="#e8a88a"/>${mouth}</g>${prop}</g></svg>`;
 }

@@ -40,32 +40,32 @@
         </div>
       </header>
       <div class="prototype-label" data-i18n="prototype">
-        交互原型 / 模拟位置变化
+        交互原型 · 角色与移动为演示
       </div>
-      <section class="intro">
-        <span class="eyebrow" data-i18n="place">伦敦 · 南岸</span>
-        <h2 data-i18n="hello">各自在今天，<br />也在一起。</h2>
-        <p data-i18n="intro">一个可以安静待着的地方。</p>
-      </section>
-      <nav class="residents" aria-label="Resident">
-        <button id="focusLin">
-          <span class="mini" id="miniLin"></span
-          ><span data-i18n="lin">小林 · 示例</span></button
-        ><button id="focusYu">
-          <span class="mini" id="miniYu"></span
-          ><span data-i18n="yu">小雨 · 示例</span>
+      <div class="locate-control">
+        <button
+          id="locate"
+          aria-expanded="false"
+          aria-controls="residents"
+          data-i18n="locate"
+        >
+          找我们
         </button>
-      </nav>
+        <nav id="residents" class="residents" hidden aria-label="Resident">
+          <button id="focusLin"><span data-i18n="lin">小林</span></button>
+          <button id="focusYu"><span data-i18n="yu">小雨</span></button>
+        </nav>
+      </div>
       <div class="map-controls">
         <button id="zoomIn" aria-label="放大">＋</button
         ><button id="zoomOut" aria-label="缩小">−</button
         ><button id="center" aria-label="回到关注区域">⌖</button>
       </div>
       <div class="place-caption" id="placeCaption" data-i18n="mapCaption">
-        泰晤士河畔 · 公开街区
+        伦敦南岸 · 真实地理底图
       </div>
       <div class="bottom">
-        <section class="replay-note" aria-live="polite">
+        <section class="replay-note" id="replayNote" aria-live="polite">
           <div>
             <strong id="statusTitle"></strong>
             <p id="statusCopy"></p>

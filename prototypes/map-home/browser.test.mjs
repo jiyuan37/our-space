@@ -3,9 +3,10 @@ import { format } from "prettier";
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
-const root = path.dirname(fileURLToPath(import.meta.url));
-const output = process.env.PROTOTYPE_OUTPUT ?? path.join(root, "screenshots");
+import { tmpdir } from "node:os";
+const output =
+  process.env.PROTOTYPE_OUTPUT ??
+  path.join(tmpdir(), "our-space-map-home-v2-evidence");
 await fs.mkdir(output, { recursive: true });
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 let checks = 0;
@@ -44,6 +45,7 @@ try {
     if (!(await page.locator("#debug").isVisible()))
       await page.locator("#debugToggle").click();
     await page.locator("#scenario").selectOption(name);
+    await page.bringToFront();
   }
   assert.equal(await state(), "NO_CHANGE");
   const before = await page.locator("#residentLin").getAttribute("style");
@@ -75,6 +77,7 @@ try {
     { polling: 50, timeout: 6000 },
   );
   pass();
+  await page.screenshot({ path: path.join(output, "mobile-settled.png") });
   const settled = await page.locator("#residentLin").getAttribute("style");
   await page.waitForTimeout(200);
   assert.equal(
@@ -154,9 +157,11 @@ try {
   pass();
   await scene("far");
   await page.locator("#debugClose").click();
+  await page.locator("#locate").click();
   await page.locator("#focusYu").click();
   assert.equal(await page.locator("#remoteNote").isVisible(), true);
   assert.equal(await page.locator("#geography").isVisible(), false);
+  await page.locator("#locate").click();
   await page.locator("#focusLin").click();
   assert.equal(await page.locator("#remoteNote").isVisible(), false);
   pass();
@@ -170,6 +175,111 @@ try {
   );
   await page.keyboard.press("Escape");
   pass();
+  // V2 保留原有语义检查，增加头像、面板、手势和信息层级证据。
+  await scene("quiet");
+  await page.locator("#pose").selectOption("read");
+  await page.locator("#debugClose").click();
+  for (const id of ["residentLin", "residentYu"]) {
+    assert.equal(
+      await page.locator(`#${id} svg[data-kind="head-shoulders"]`).count(),
+      1,
+    );
+    assert.equal(await page.locator(`#${id} [data-prop]`).count(), 1);
+    assert.equal(
+      await page.locator(`#${id} svg`).getAttribute("aria-hidden"),
+      "true",
+    );
+    assert.doesNotMatch(
+      await page.locator(`#${id} .name`).innerText(),
+      /示例|example/,
+    );
+    assert.match(
+      await page.locator(`#${id}`).getAttribute("aria-label"),
+      /Reading|milk tea|读|奶茶/,
+    );
+  }
+  assert.equal(await page.locator("#replayNote").isVisible(), false);
+  assert.equal(await page.locator(".intro").count(), 0);
+  assert.equal(await page.locator("#residents").isVisible(), false);
+  assert.match(
+    await page.locator(".prototype-label").innerText(),
+    /交互原型|Prototype/,
+  );
+  assert.match(
+    await page.locator(".attribution").getAttribute("href"),
+    /openstreetmap.org\/copyright/,
+  );
+  pass();
+  await page.locator("#residentLin").click();
+  await page.locator("#residentYu").click();
+  assert.equal(await page.locator("dialog[open]").count(), 1);
+  assert.match(await page.locator("#detailBody").innerText(), /Yu|小雨/);
+  const selectedCamera = await page.locator("#world").getAttribute("transform");
+  await page.locator("#detailTitle").click();
+  assert.equal(
+    await page.locator("#world").getAttribute("transform"),
+    selectedCamera,
+  );
+  await page.keyboard.press("Escape");
+  assert.equal(
+    await page.evaluate(() => document.activeElement.id),
+    "residentYu",
+  );
+  pass();
+  await page.locator("#residentLin").focus();
+  await page.keyboard.press("Enter");
+  assert.equal(await page.locator("#detail").isVisible(), true);
+  await page.locator("#closeDetail").click();
+  assert.equal(
+    await page.evaluate(() => document.activeElement.id),
+    "residentLin",
+  );
+  pass();
+  const avatarBox = await page.locator("#residentLin").boundingBox();
+  await page.mouse.move(avatarBox.x + 30, avatarBox.y + 30);
+  await page.mouse.down();
+  await page.mouse.move(avatarBox.x + 70, avatarBox.y + 50, { steps: 8 });
+  await page.mouse.up();
+  assert.equal(await page.locator("#detail").isVisible(), false);
+  assert.notEqual(
+    await page.locator("#world").getAttribute("transform"),
+    selectedCamera,
+  );
+  await page.waitForTimeout(160);
+  await page.locator("#center").click();
+  pass();
+  await scene("move");
+  await page.locator("#reset").click();
+  assert.equal(
+    await page.locator('#residentLin [data-prop="book"]').count(),
+    1,
+  );
+  assert.equal(
+    await page.locator("#residentLin svg").getAttribute("data-motion"),
+    "moving",
+  );
+  await page.locator("#debugClose").click();
+  const movingCamera = await page.locator("#world").getAttribute("transform");
+  await page.locator("#map").focus();
+  await page.keyboard.press("ArrowLeft");
+  const draggedCamera = await page.locator("#world").getAttribute("transform");
+  assert.notEqual(draggedCamera, movingCamera);
+  await page.locator("#skip").click();
+  assert.equal(
+    await page.locator("#world").getAttribute("transform"),
+    draggedCamera,
+  );
+  assert.equal(
+    await page.locator('#residentLin [data-prop="book"]').count(),
+    1,
+  );
+  assert.equal(
+    await page.locator("#residentLin svg").getAttribute("data-motion"),
+    "still",
+  );
+  pass();
+  await scene("quiet");
+  await page.locator("#debugClose").click();
   for (const width of [375, 1280]) {
     await page.setViewportSize({ width, height: width === 375 ? 812 : 850 });
     await page.locator("#center").click();
@@ -194,6 +304,15 @@ try {
         );
       assert.deepEqual(tiny, []);
       pass();
+      const head = await page.locator("#residentLin svg").boundingBox();
+      assert.ok(
+        width === 375
+          ? head.width >= 52 && head.width <= 64
+          : head.width >= 64 && head.width <= 80,
+      );
+      const markerBox = await page.locator("#residentLin").boundingBox();
+      const bottomBox = await page.locator(".bottom").boundingBox();
+      assert.ok(markerBox.y + markerBox.height < bottomBox.y);
       await page.screenshot({
         path: path.join(
           output,
@@ -202,6 +321,18 @@ try {
       });
     }
   }
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.locator("#center").click();
+  if ((await page.locator("html").getAttribute("lang")) !== "zh-CN")
+    await page.locator("#locale").click();
+  await page.locator("#residentLin").click();
+  const sheet = await page.locator("#detail").boundingBox();
+  assert.ok(sheet.height < 812 * 0.5 && sheet.y > 350);
+  const selectedHead = await page.locator("#residentLin svg").boundingBox();
+  assert.ok(selectedHead.y + selectedHead.height < sheet.y);
+  await page.screenshot({ path: path.join(output, "mobile-selected.png") });
+  await page.keyboard.press("Escape");
+  pass();
   await page.setViewportSize({ width: 1280, height: 850 });
   await scene("sampled");
   await page.locator("#reset").click();

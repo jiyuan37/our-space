@@ -12,13 +12,19 @@ import { character } from "./characters.mjs";
 const $ = (id) => document.getElementById(id);
 const pairs = {
   space: ["慢慢的家", "Our little place"],
-  prototype: ["交互原型 / 模拟位置变化", "Prototype / simulated movement"],
+  prototype: [
+    "交互原型 · 角色与移动为演示",
+    "Prototype · demo people & movement",
+  ],
+  locate: ["找我们", "Find us"],
+  locationHint: [
+    "位置：演示共享点 · 伦敦南岸",
+    "Place: demo shared point · South Bank",
+  ],
   place: ["伦敦 · 南岸", "LONDON · SOUTH BANK"],
-  hello: ["各自在今天，<br/>也在一起。", "Our own days.<br/>A shared place."],
-  intro: ["一个可以安静待着的地方。", "A place for quiet company."],
-  lin: ["小林 · 示例", "Lin · example"],
-  yu: ["小雨 · 示例", "Yu · example"],
-  mapCaption: ["泰晤士河畔 · 公开街区", "Thames riverside · public area"],
+  lin: ["小林", "Lin"],
+  yu: ["小雨", "Yu"],
+  mapCaption: ["伦敦南岸 · 真实地理底图", "South Bank · real geography"],
   skip: ["跳过", "Skip"],
   create: ["留一点今天", "Leave a little"],
   unplaced: ["没有地点的时刻", "Without a place"],
@@ -93,7 +99,7 @@ const pairs = {
   personTitle: ["小林的此刻", "Lin’s moment"],
   yuTitle: ["小雨的此刻", "Yu’s moment"],
   read: ["在读几页书。", "Reading a few pages."],
-  cup: ["抱着一杯热茶。", "Holding a warm cup."],
+  cup: ["喝杯奶茶，放松一下。", "A milk tea break."],
   idle: ["安静待一会儿。", "Taking a quiet moment."],
   presenceHint: [
     "自愿状态与地点独立；在看书不等于在图书馆。",
@@ -165,7 +171,7 @@ const pairs = {
   ],
 };
 const scenarios = {
-  quiet: ["双方安静 · 没有新移动", "Quiet · no new movement"],
+  quiet: ["没有新移动 · 状态独立", "No new movement · separate states"],
   move: ["新的端点变化 · 自动一次", "New endpoints · once"],
   seen: ["同段已展示 · 不再走动", "Already shown · no replay"],
   baseline: ["只有终点 · 无基线", "Endpoint only · no baseline"],
@@ -182,12 +188,12 @@ const scenarios = {
 const poses = {
   idle: ["平静", "Quiet"],
   read: ["看书", "Reading"],
-  cup: ["抱杯子", "Holding a cup"],
+  cup: ["喝奶茶", "Milk tea"],
   expired: ["Presence 跨日/清除", "Presence expired / cleared"],
 };
 let locale = "zh-CN",
   name = "quiet",
-  pose = "idle",
+  pose = "read",
   result = {},
   input,
   point = A,
@@ -253,7 +259,7 @@ function buildMap() {
   const world = $("world");
   world.replaceChildren();
   const defs = svgEl("defs");
-  defs.innerHTML = `<pattern id="groundTexture" width="40" height="40" patternUnits="userSpaceOnUse"><rect width="40" height="40" fill="#e8dcc4"/><path d="M5 8h3v2H5ZM26 27h4v2h-4Z" fill="#d7c8a9"/></pattern><pattern id="grassTexture" width="32" height="32" patternUnits="userSpaceOnUse"><rect width="32" height="32" fill="#b8d1a4"/><path d="M5 12v-3h2v3h3v2H5ZM24 26v-4h2v2h2v2Z" fill="#96b483"/><path d="M18 5h2v2h-2Z" fill="#d4dfac"/></pattern><pattern id="waterTexture" width="65" height="52" patternUnits="userSpaceOnUse"><rect width="65" height="52" fill="#aecfe0"/><path d="M8 14h13v2H8ZM13 17h17v2H13ZM39 40h14v2H39Z" fill="#c8e1e8"/></pattern><pattern id="roofTexture" width="12" height="10" patternUnits="userSpaceOnUse"><rect width="12" height="10" fill="#c7aa89"/><path d="M0 0h12M0 5h12M6 0v5M2 5v5" stroke="#b89a77" stroke-width="1"/></pattern><symbol id="pixelTree" viewBox="0 0 24 34"><path d="M10 20h5v14h-5Z" fill="#846247"/><path d="M10 29h3v5h-3Z" fill="#b38b58"/><path d="M8 0h8v3h4v5h3v13h-4v4H5v-4H1V8h3V3h4Z" fill="#557949"/><path d="M8 2h7v3h4v5h2v8h-6v4H5v-5H3V9h4V5h1Z" fill="#789853"/><path d="M8 5h7v3H8Zm-3 6h6v4H5Z" fill="#a0b86c"/><path d="M16 14h4v6h-4v3h-5v-3h5Z" fill="#63864a"/></symbol>`;
+  defs.innerHTML = `<pattern id="waterTexture" width="190" height="140" patternUnits="userSpaceOnUse"><rect width="190" height="140" fill="#aecfe0"/><path d="M28 48h18v1.3H28ZM124 105h12v1.3h-12Z" fill="#bdd9e3"/></pattern>`;
   world.append(defs);
   world.append(
     svgEl("rect", {
@@ -261,7 +267,7 @@ function buildMap() {
       y: -2500,
       width: 5000,
       height: 5000,
-      fill: "url(#groundTexture)",
+      fill: "#e8dcc4",
     }),
   );
   const order = ["water", "island", "park", "building", "road"];
@@ -277,9 +283,9 @@ function buildMap() {
             ? "none"
             : {
                 water: "url(#waterTexture)",
-                island: "url(#groundTexture)",
-                park: "url(#grassTexture)",
-                building: "url(#roofTexture)",
+                island: "#e8dcc4",
+                park: "#b8d1a4",
+                building: "#d2bda2",
               }[kind],
           stroke: road
             ? major
@@ -288,59 +294,18 @@ function buildMap() {
                 ? "#eee5d2"
                 : "#f7edd8"
             : kind === "building"
-              ? "#9d876a"
+              ? "#bca98e"
               : kind === "park"
-                ? "#8ca779"
+                ? "#a0b990"
                 : "none",
-          "stroke-width": road ? (major ? 12 : foot ? 2.3 : 7) : 0.7,
+          "stroke-width": road ? (major ? 11 : foot ? 1.3 : 4.5) : 0.7,
           "stroke-linejoin": "round",
           "stroke-linecap": "round",
         }),
       );
     }
   }
-  // 树冠仅为公园内部的原创风格化装饰，不是实测树木或 POI。
-  const inside = (x, y, ring) => {
-    let hit = false;
-    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-      const a = ring[i],
-        b = ring[j];
-      if (
-        a.y > y !== b.y > y &&
-        x < ((b.x - a.x) * (y - a.y)) / (b.y - a.y) + a.x
-      )
-        hit = !hit;
-    }
-    return hit;
-  };
-  for (const park of geography.features.filter((f) => f.kind === "park")) {
-    const ring = park.coordinates.map(project),
-      xs = ring.map((p) => p.x),
-      ys = ring.map((p) => p.y);
-    let count = 0;
-    for (let y = Math.min(...ys) + 18; y < Math.max(...ys) - 18; y += 42)
-      for (let x = Math.min(...xs) + 18; x < Math.max(...xs) - 18; x += 44) {
-        if (
-          count > 90 ||
-          !inside(x, y, ring) ||
-          !inside(x + 12, y + 14, ring) ||
-          !inside(x - 12, y - 14, ring)
-        )
-          continue;
-        // 保留公园中央留白，装饰不盖住角色或主要路径。
-        if ((Math.round(x / 44) + Math.round(y / 42)) % 3 !== 0) continue;
-        world.append(
-          svgEl("use", {
-            href: "#pixelTree",
-            x: x - 10,
-            y: y - 26,
-            width: 20,
-            height: 30,
-          }),
-        );
-        count++;
-      }
-  }
+  // V2 保留公园大色块，不叠加可能遮路或角色的装饰树。
   const labels = [
     ["thames", [-0.1228, 51.5054], -28],
     ["jubilee", [-0.118, 51.5049], 0],
@@ -360,6 +325,7 @@ function buildMap() {
           "letter-spacing": k === "thames" ? 4 : 1,
           transform: `rotate(${r} ${q.x} ${q.y})`,
           class: k === "thames" ? "river-label" : "",
+          "data-map-label": k,
         },
         t(k),
       ),
@@ -374,6 +340,9 @@ function applyCamera() {
   $("geography").style.display = remote ? "none" : "";
   $("remoteNote").hidden = !remote;
   $("remoteNote").innerHTML = t("remote");
+  for (const label of $("world").querySelectorAll("[data-map-label]"))
+    label.style.display =
+      camera.scale < 0.85 && label.dataset.mapLabel !== "thames" ? "none" : "";
   drawAnchors();
   drawRoute();
 }
@@ -396,6 +365,12 @@ function anchor(id, p, html, cls, action, label) {
   const e = $(id) ?? document.createElement("button");
   e.id = id;
   e.className = `anchor ${cls}`;
+  e.classList.toggle(
+    "selected",
+    detailKind ===
+      (id === "residentLin" ? "lin" : id === "residentYu" ? "yu" : "moment"),
+  );
+  e.setAttribute("aria-pressed", String(e.classList.contains("selected")));
   if (e.dataset.markup !== html) {
     e.innerHTML = html;
     e.dataset.markup = html;
@@ -404,7 +379,9 @@ function anchor(id, p, html, cls, action, label) {
   const q = screen(p);
   e.style.left = `${q.x}px`;
   e.style.top = `${q.y}px`;
-  e.onclick = action;
+  e.onclick = (event) => {
+    if (performance.now() > suppressClickUntil) action(event);
+  };
   if (!e.isConnected) $("anchors").append(e);
 }
 function drawAnchors() {
@@ -418,19 +395,19 @@ function drawAnchors() {
     anchor(
       "residentLin",
       point,
-      `${character("lin", result.state === "REPLAYING" ? "walk" : activePose, frame, direction)}<span class="foot"></span><span class="name">${t("lin")}</span>`,
+      `${character("lin", activePose, frame, direction, result.state === "REPLAYING")}<span class="name">${t("lin")}</span><span class="pin" aria-hidden="true"></span>`,
       "resident",
       () => openDetail("lin"),
-      t("lin"),
+      `${t("lin")} · ${t(activePose)}`,
     );
   if (name !== "far" || remote)
     anchor(
       "residentYu",
       SELF,
-      `${character("yu", "cup")}<span class="foot"></span><span class="name">${t("yu")}</span>`,
+      `${character("yu", "cup")}<span class="name">${t("yu")}</span><span class="pin" aria-hidden="true"></span>`,
       "resident",
       () => openDetail("yu"),
-      t("yu"),
+      `${t("yu")} · ${t("cup")}`,
     );
   if (!remote) {
     anchor(
@@ -444,6 +421,22 @@ function drawAnchors() {
   }
   for (const child of $("anchors").children)
     if (!anchorIds.has(child.id)) child.remove();
+  // 地名服从人物层级；只隐藏与可见头像相交的标签，不移动地理位置。
+  const markers = [...$("anchors").querySelectorAll(".resident")].map((e) =>
+    e.getBoundingClientRect(),
+  );
+  for (const label of $("world").querySelectorAll("[data-map-label]")) {
+    const box = label.getBoundingClientRect();
+    label.style.visibility = markers.some(
+      (m) =>
+        box.left < m.right + 6 &&
+        box.right > m.left - 6 &&
+        box.top < m.bottom + 6 &&
+        box.bottom > m.top - 6,
+    )
+      ? "hidden"
+      : "visible";
+  }
 }
 function drawRoute() {
   const route = $("route");
@@ -512,11 +505,14 @@ function status() {
     title = "paused";
     copy = "pausedCopy";
   }
+  // 无位置变化并不意味着没有主动状态；技术原因只在实验台展示。
+  $("replayNote").hidden = result.state === "NO_CHANGE";
   $("statusTitle").textContent = t(title);
   $("statusCopy").textContent = t(copy);
+  $("statusTitle").classList.toggle("sr-only", result.state === "REPLAYING");
   $("skip").hidden = result.state !== "REPLAYING";
   $("machine").textContent =
-    `${result.state} · auto=${replays} · mode=${input?.mode ?? "endpoints"} · omitted=${result.omitted ?? 0}${storageOK ? "" : " · storage unavailable: static only"}`;
+    `${result.state === "NO_CHANGE" ? t("nochange") + " " : ""}${result.state} · auto=${replays} · mode=${input?.mode ?? "endpoints"} · omitted=${result.omitted ?? 0}${storageOK ? "" : " · storage unavailable: static only"}`;
   document.body.dataset.state = result.state;
   document.body.dataset.replays = replays;
 }
@@ -628,7 +624,7 @@ function detailContent() {
     const who = detailKind;
     title = t(who === "lin" ? "personTitle" : "yuTitle");
     const state = who === "yu" ? "cup" : pose;
-    content = `<div class="portrait">${character(who, state === "expired" ? "idle" : state)}<div><strong>${t(who)}</strong><p>${t(state === "expired" ? "expired" : state)}</p></div></div><p>${t("presenceHint")}</p>${who === "lin" && ["SHARING_PAUSED", "INSUFFICIENT_DATA"].includes(result.state) ? `<p>${t("nodata")}</p>` : ""}`;
+    content = `<div class="portrait">${character(who, state === "expired" ? "idle" : state)}<div><strong>${t(who)}</strong><p>${t(state === "expired" ? "expired" : state)}</p></div></div><p class="location-nature">${who === "lin" && result.state === "SHARING_PAUSED" ? t("paused") : who === "lin" && !point ? t("nodata") : name === "far" && who === "yu" ? t("remote").replace("<br/>", " · ") : t("locationHint")}</p>${who === "lin" && ["SHARING_PAUSED", "INSUFFICIENT_DATA"].includes(result.state) ? `<p>${t("nodata")}</p>` : ""}`;
   }
   if (detailKind === "moment") {
     title = t("momentTitle");
@@ -653,20 +649,46 @@ function detailContent() {
       $("identityResult").textContent = t("selected");
     };
 }
+let detailTrigger = null;
 function openDetail(kind) {
+  if (!$("detail").contains(document.activeElement))
+    detailTrigger = document.activeElement;
+  $("debug").hidden = true;
+  setLocate(false);
   detailKind = kind;
   detailContent();
-  if (!$("detail").open) $("detail").showModal();
+  if (!$("detail").open) $("detail").show();
+  drawAnchors();
+  $("closeDetail").focus();
 }
 function closeDetail() {
   $("detail").close();
   detailKind = null;
+  drawAnchors();
+  if (detailTrigger?.isConnected) detailTrigger.focus();
 }
 $("closeDetail").onclick = closeDetail;
-$("detail").addEventListener("cancel", () => {
-  detailKind = null;
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    if ($("detail").open) closeDetail();
+    else if (!$("residents").hidden) {
+      setLocate(false);
+      $("locate").focus();
+    } else if (!$("debug").hidden) $("debugClose").click();
+  }
 });
+function setLocate(open) {
+  $("residents").hidden = !open;
+  $("locate").setAttribute("aria-expanded", String(open));
+}
+$("locate").onclick = () => {
+  if ($("detail").open) closeDetail();
+  $("debug").hidden = true;
+  setLocate($("residents").hidden);
+};
 $("debugToggle").onclick = () => {
+  if ($("detail").open) closeDetail();
+  setLocate(false);
   $("debug").hidden = !$("debug").hidden;
 };
 $("debugClose").onclick = () => {
@@ -713,12 +735,17 @@ matchMedia("(prefers-reduced-motion: reduce)").addEventListener(
 $("pose").onchange = (e) => {
   pose = e.target.value;
   drawAnchors();
+  status();
 };
 $("focusLin").onclick = () => {
+  setLocate(false);
   if (!point) openDetail("lin");
   else focus("lin");
 };
-$("focusYu").onclick = () => focus("yu");
+$("focusYu").onclick = () => {
+  setLocate(false);
+  focus("yu");
+};
 $("center").onclick = () => focus();
 for (const [id, k] of [
   ["create", "create"],
@@ -733,23 +760,34 @@ function zoom(delta) {
 }
 $("zoomIn").onclick = () => zoom(1.2);
 $("zoomOut").onclick = () => zoom(1 / 1.2);
-let drag;
+let drag,
+  suppressClickUntil = 0;
 $("map").addEventListener("pointerdown", (e) => {
-  if (e.target.closest("button")) return;
-  drag = { x: e.clientX, y: e.clientY, cx: camera.x, cy: camera.y };
-  $("map").setPointerCapture(e.pointerId);
+  drag = {
+    x: e.clientX,
+    y: e.clientY,
+    cx: camera.x,
+    cy: camera.y,
+    moved: false,
+  };
 });
 $("map").addEventListener("pointermove", (e) => {
   if (!drag) return;
+  if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 6 && !drag.moved)
+    return;
+  drag.moved = true;
+  $("map").setPointerCapture(e.pointerId);
   camera.x = drag.cx - (e.clientX - drag.x) / camera.scale;
   camera.y = drag.cy - (e.clientY - drag.y) / camera.scale;
   applyCamera();
 });
 for (const event of ["pointerup", "pointercancel"])
   $("map").addEventListener(event, () => {
+    if (drag?.moved) suppressClickUntil = performance.now() + 150;
     drag = null;
   });
 $("map").addEventListener("keydown", (e) => {
+  if (e.target !== $("map")) return;
   const delta = {
     ArrowLeft: [-50, 0],
     ArrowRight: [50, 0],
@@ -769,9 +807,8 @@ window.addEventListener("resize", applyCamera);
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) finish();
 });
-$("miniLin").innerHTML = character("lin");
-$("miniYu").innerHTML = character("yu");
-$("account").innerHTML = character("yu");
+$("account").innerHTML =
+  `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3"/><path d="M5 21v-3a7 7 0 0 1 14 0v3"/></svg>`;
 try {
   const response = await fetch("./geography.json");
   if (!response.ok) throw Error("地理文件读取失败");

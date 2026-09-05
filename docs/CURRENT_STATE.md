@@ -5,7 +5,7 @@
 ## 当前 Phase
 
 - 当前 Phase：Phase 3 — Core Home / Presence 已完成；当前没有获批实施中的 Phase。
-- 当前状态：**具体规格与隔离原型已完成，等待用户确认视觉和实现方案。**
+- 当前状态：**隔离原型 V2 已完成验证，等待用户视觉确认。**
 - Phase 3 implementation 已完成并通过 Final Review；本轮不重做历史验收。
 - 实际项目根目录：`/Users/yuan/Desktop/our-space`。
 - 本轮具体规格、可行性研究、隔离原型与提交/push 已获批准；下一项生产实施尚未获批。
@@ -132,3 +132,12 @@
 - 修正 README 的过时 Phase 2 状态描述；Phase 3 Review 未改动，Design 仅附加后续演进引用。
 - 当前 Web/PWA 不保证隐藏/锁屏/关闭后的持续采样；前台有限能力尚未生产实施，完整后台需批准原生范围与采集隐私方案。
 - 具体规格与隔离原型已完成，等待用户确认视觉和实现方案。
+
+## 隔离原型 V2：头像优先与视觉降噪
+
+- 本轮起始 HEAD：`a335e858b11748531a9481726762c83aebdc0f16`，main，干净工作树；成功 `git fetch origin` 后 `main...origin/main = 0 0`，remote 与上文一致。
+- 用户已批准仅修改 `prototypes/map-home/` 与 AVATAR_AND_MAP_SPEC 的迭代记录、本文和 CHANGELOG；验证后正常提交/push。提交信息为 `design: refine pixel map home avatar hierarchy`，以 `git log -1 --format='%H %s'` 定位本节所属提交，避免自引用 hash。交付同步目标：main、干净、0/0；实际完整 hash 与 push 结果在最终交付报告记录，下轮仍需 fetch 核对。
+- 重绘原创头肩头像（手机 60px / 桌面 76px）、专注看书与奶茶道具；简化底图纹理、宣传浮层、重复定位入口和底部操作。真实地理 JSON 与移动状态机未改。
+- 23/23 独立状态机；旧 24 组浏览器语义完整保留并扩至 30 组，通过双端双语、44px、移动停止/刷新不重播/静态等价、详情与焦点/拖动、0 外部请求/定位调用/页面错误。5 对文字色最低对比度 5.20:1。
+- before/after 同视角截图、手机选中、英文、moving/settled 及验证报告默认仓库外；完整路径和复现命令见 `prototypes/map-home/README.md`。现有 tracked V1 截图保留，不提交新临时浏览器产物。
+- 生产 `/home` 未修改；真实头像生成与定位未实现。本轮仅隔离原型 V2，等待用户视觉确认；Phase 4 和生产三项能力仍未批准，应用测试基线仍为 `ab18b49c0e27ff1903604d1263bc45d956b8ff34`。

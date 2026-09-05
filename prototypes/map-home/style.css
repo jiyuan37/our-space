@@ -39,7 +39,7 @@ select {
   min-height: 44px;
   border: 1px solid var(--line);
   background: var(--panel);
-  border-radius: 4px;
+  border-radius: 6px;
   padding: 9px 14px;
   cursor: pointer;
 }
@@ -50,16 +50,13 @@ button:focus-visible,
 a:focus-visible,
 input:focus-visible,
 select:focus-visible,
+textarea:focus-visible,
 #map:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 3px;
 }
-button[hidden],
 [hidden] {
   display: none !important;
-}
-button:active {
-  transform: translateY(1px);
 }
 h1,
 h2,
@@ -67,12 +64,23 @@ p {
   margin: 0;
 }
 h2 {
-  font-size: 23px;
+  font-size: 21px;
   font-weight: 600;
   line-height: 1.45;
 }
 a {
   color: inherit;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 #home {
   height: 100dvh;
@@ -106,8 +114,6 @@ a {
 }
 .anchor {
   position: absolute;
-  left: 0;
-  top: 0;
   pointer-events: auto;
   padding: 0;
   border: 0;
@@ -115,65 +121,87 @@ a {
   display: flex;
   align-items: center;
   flex-direction: column;
-  min-width: 60px;
+  min-width: 80px;
   transform: translate(-50%, -100%);
   cursor: pointer;
+  border-radius: 8px;
 }
 .anchor:hover {
   background: transparent;
 }
-.anchor svg {
-  width: 44px;
-  height: 70px;
+.anchor svg.character {
+  width: 76px;
+  height: 79px;
   overflow: visible;
-  filter: drop-shadow(0 2px 0 #fff4df);
+  filter: drop-shadow(0 2px 0 #84725c);
 }
 .anchor .name {
   white-space: nowrap;
-  font-size: 12px;
+  font-size: 13px;
+  line-height: 20px;
   font-weight: 600;
-  padding: 2px 7px;
+  padding: 1px 9px;
   background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 2px;
+  border-radius: 4px;
+  position: relative;
 }
-.anchor .foot {
-  width: 17px;
-  height: 5px;
-  background: #665a4d;
+.anchor .pin {
+  height: 12px;
+  width: 2px;
+  background: var(--line);
+  position: relative;
+}
+.anchor .pin:after {
+  content: "";
+  position: absolute;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  opacity: 0.3;
+  background: var(--accent);
+  bottom: -3px;
+  left: -2px;
+  box-shadow: 0 0 0 2px var(--panel);
+}
+.anchor.selected {
+  z-index: 3;
+}
+.anchor.selected .name {
+  background: var(--accent);
+  color: var(--panel);
+}
+.anchor.selected svg.character {
+  filter: drop-shadow(0 2px 0 #536b46);
 }
 .anchor.moment {
   width: 44px;
-  height: 56px;
+  height: 48px;
   min-width: 44px;
   justify-content: flex-start;
 }
 .moment-icon {
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 36px;
+  width: 34px;
+  height: 32px;
   background: var(--panel);
-  border: 2px solid var(--accent);
-  border-radius: 4px;
-  font-size: 23px;
+  border: 1.5px solid var(--accent);
+  border-radius: 5px;
+  font-size: 22px;
 }
 .moment-icon:after {
   content: "";
   position: absolute;
-  top: 34px;
-  width: 8px;
-  height: 8px;
+  top: 30px;
+  width: 6px;
+  height: 6px;
   background: var(--panel);
-  border-right: 2px solid var(--accent);
-  border-bottom: 2px solid var(--accent);
+  border-right: 1.5px solid var(--accent);
+  border-bottom: 1.5px solid var(--accent);
   transform: rotate(45deg);
 }
 header {
   position: absolute;
-  top: 27px;
+  top: 26px;
   left: 32px;
   right: 32px;
   display: flex;
@@ -184,104 +212,106 @@ header {
 header > * {
   pointer-events: auto;
 }
+header > div:first-child {
+  background: var(--panel);
+  padding: 8px 14px;
+  border-radius: 6px;
+}
 .wordmark {
-  font-size: 11px;
-  letter-spacing: 3px;
-  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 2.2px;
+  font-weight: 600;
+  color: var(--muted);
 }
 h1 {
-  font-size: 22px;
-  letter-spacing: 2px;
-  margin-top: 4px;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 1px;
 }
 .header-tools {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   align-items: center;
 }
+.header-tools button {
+  border: 0;
+}
 .avatar-button {
-  width: 48px;
-  height: 48px;
-  overflow: hidden;
-  padding: 2px;
+  width: 44px;
+  height: 44px;
+  padding: 10px;
 }
 .avatar-button svg {
-  width: 28px;
-  height: 46px;
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
 }
 .prototype-label {
   position: absolute;
-  top: 105px;
+  top: 110px;
   left: 32px;
   color: var(--muted);
   background: var(--panel);
-  font-size: 11px;
-  padding: 4px 9px;
-  border-left: 3px solid var(--accent);
+  font-size: 12px;
+  padding: 3px 7px;
+  border-radius: 3px;
 }
-.intro {
+.locate-control {
   position: absolute;
-  top: 170px;
-  left: 32px;
-  pointer-events: none;
-  max-width: 250px;
+  right: 32px;
+  top: 88px;
+  z-index: 4;
 }
-.eyebrow {
-  font-size: 11px;
-  letter-spacing: 2px;
-  color: var(--muted);
-}
-.intro h2 {
-  font-size: 32px;
-  margin-top: 16px;
-  letter-spacing: 3px;
-}
-.intro p {
-  font-size: 13px;
-  margin-top: 12px;
+#locate {
+  border: 0;
+  font-size: 12px;
 }
 .residents {
   position: absolute;
-  right: 32px;
-  top: 145px;
-  display: flex;
-  gap: 8px;
+  right: 0;
+  top: 50px;
+  display: grid;
+  width: 140px;
+  background: var(--panel);
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  box-shadow: 0 3px 8px #665a4d18;
 }
 .residents button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 5px 12px;
-}
-.mini {
-  width: 24px;
-  height: 38px;
-  display: block;
-  overflow: hidden;
-}
-.mini svg {
-  width: 24px;
-  height: 38px;
+  border: 0;
+  text-align: left;
 }
 .map-controls {
   position: absolute;
   right: 32px;
-  top: 225px;
+  top: 155px;
   display: grid;
-  gap: 6px;
+  background: var(--panel);
+  border-radius: 6px;
+  box-shadow: 0 1px 3px #665a4d20;
+  overflow: hidden;
 }
 .map-controls button {
-  font-size: 24px;
+  font-size: 23px;
   width: 44px;
   padding: 0;
+  border: 0;
+  border-radius: 0;
+}
+.map-controls button + button {
+  border-top: 1px solid #d2c4ac;
 }
 .place-caption {
   position: absolute;
-  bottom: 180px;
-  left: 32px;
+  bottom: 35px;
+  left: 170px;
   font-size: 12px;
   background: var(--panel);
-  padding: 5px 9px;
+  padding: 3px 7px;
+  border-radius: 3px;
 }
 .bottom {
   position: absolute;
@@ -291,49 +321,64 @@ h1 {
   width: 440px;
   max-width: calc(100% - 32px);
   display: grid;
-  gap: 10px;
+  gap: 5px;
+  pointer-events: none;
+}
+.bottom > * {
+  pointer-events: auto;
 }
 .replay-note {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  justify-content: center;
+  gap: 8px;
   background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  padding: 13px 16px;
+  border-radius: 5px;
+  padding: 7px 10px;
+  margin-bottom: 7px;
 }
 .replay-note strong {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 500;
 }
 .replay-note p {
   font-size: 12px;
   color: var(--muted);
-  margin-top: 2px;
+}
+#skip {
+  border: 0;
+  text-decoration: underline;
+  padding: 6px;
 }
 .actions {
   display: flex;
-  gap: 8px;
   align-items: center;
-}
-.actions button {
-  white-space: nowrap;
-  flex: 1;
-  padding-inline: 8px;
+  flex-direction: column;
+  gap: 0;
 }
 .primary {
   background: var(--accent);
   color: var(--panel);
-  border: 2px solid #3b5133;
-  border-radius: 3px;
-  box-shadow: 3px 3px 0 #c3c6a5;
+  border: 1px solid #3b5133;
+  border-radius: 6px;
+  min-width: 200px;
+  min-height: 48px;
+  padding: 10px 24px;
+  box-shadow: 0 2px 0 #3b5133;
 }
 .primary:hover {
   background: #405636;
 }
 .primary span:first-child {
   font-size: 18px;
+}
+#unplaced {
+  font-size: 12px;
+  border: 0;
+  background: var(--panel);
+  margin-top: 7px;
+  padding: 5px 12px;
+  min-height: 44px;
 }
 .attribution {
   font-size: 10px;
@@ -345,26 +390,30 @@ h1 {
   background: var(--panel);
   padding: 0 8px;
   justify-self: center;
+  border-radius: 3px;
 }
 #debugToggle {
   position: absolute;
-  bottom: 24px;
+  bottom: 20px;
   left: 32px;
   font-size: 12px;
+  border: 0;
+  padding: 6px 10px;
 }
 #debug {
   position: absolute;
   left: 24px;
-  bottom: 82px;
+  bottom: 195px;
   width: 330px;
   max-width: calc(100% - 32px);
-  max-height: calc(100% - 145px);
+  max-height: calc(100% - 345px);
   overflow-y: auto;
   background: var(--panel);
-  border: 2px solid var(--line);
+  border: 1px solid var(--line);
+  border-radius: 8px;
   padding: 18px;
   z-index: 8;
-  box-shadow: 4px 4px 0 #bdb198;
+  box-shadow: 0 4px 14px #665a4d22;
 }
 #debug h2 {
   font-size: 18px;
@@ -374,10 +423,11 @@ h1 {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 .panel-heading button {
   font-size: 12px;
+  border: 0;
 }
 #debug p {
   font-size: 12px;
@@ -422,29 +472,31 @@ output {
 }
 dialog {
   position: absolute;
-  inset: auto 24px 185px auto;
+  inset: auto 32px 190px auto;
   margin: 0;
-  width: 350px;
+  width: 340px;
   max-width: calc(100% - 32px);
   max-height: 65%;
   overflow-y: auto;
   color: var(--text);
   background: var(--panel);
-  border: 2px solid var(--line);
-  border-radius: 4px;
-  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px 20px;
   z-index: 10;
-  box-shadow: 4px 4px 0 #bdb198;
-}
-dialog::backdrop {
-  background: transparent;
+  box-shadow: 0 6px 18px #665a4d22;
 }
 dialog p {
   color: var(--muted);
-  margin: 12px 0;
+  margin: 10px 0;
 }
 dialog h2 {
   margin: 4px 0;
+}
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--muted);
 }
 dialog textarea {
   display: block;
@@ -458,16 +510,22 @@ dialog textarea {
 }
 dialog .portrait {
   display: flex;
-  gap: 24px;
+  gap: 16px;
   align-items: center;
-  margin: 16px 0;
+  margin: 14px 0;
 }
 dialog .portrait svg {
-  width: 60px;
-  height: 96px;
+  width: 72px;
+  height: 75px;
+  flex-shrink: 0;
 }
-.portrait-caption {
+dialog .portrait p {
+  margin: 4px 0;
+}
+.location-nature {
   font-size: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #d2c4ac;
 }
 #remoteNote {
   position: absolute;
@@ -493,111 +551,95 @@ svg text {
 }
 @media (max-width: 650px) {
   header {
-    top: 18px;
-    left: 20px;
-    right: 20px;
+    top: 16px;
+    left: 16px;
+    right: 16px;
+    align-items: flex-start;
+  }
+  header > div:first-child {
+    padding: 6px 10px;
   }
   h1 {
-    font-size: 20px;
+    font-size: 18px;
+    letter-spacing: 0;
   }
   .wordmark {
-    font-size: 10px;
+    font-size: 9px;
   }
   .header-tools {
-    gap: 7px;
+    gap: 4px;
   }
   .prototype-label {
     top: 90px;
-    left: 20px;
-  }
-  .intro {
-    top: 136px;
-    left: 20px;
-    max-width: 200px;
-  }
-  .intro h2 {
-    font-size: 26px;
-    margin-top: 9px;
-  }
-  .intro p {
-    font-size: 12px;
-    margin-top: 7px;
-  }
-  .residents {
-    top: auto;
-    bottom: 209px;
-    right: auto;
     left: 16px;
-    gap: 6px;
+    font-size: 11px;
   }
-  .residents button {
-    font-size: 12px;
-    padding: 3px 9px;
+  .locate-control {
+    right: 16px;
+    top: 116px;
   }
   .map-controls {
     right: 16px;
-    top: 135px;
-    bottom: auto;
+    top: 173px;
   }
   .place-caption {
-    bottom: 267px;
+    bottom: 182px;
     left: 16px;
-    font-size: 10px;
+    font-size: 11px;
   }
   .bottom {
     bottom: 0;
-    gap: 8px;
+    gap: 0;
   }
   .replay-note {
-    padding: 10px 12px;
+    margin-bottom: 8px;
+    padding: 6px 9px;
   }
   .replay-note p {
     font-size: 11px;
   }
-  .actions button {
-    font-size: 12px;
-  }
   .attribution {
     font-size: 9px;
     justify-self: end;
-    min-height: 44px;
     max-width: 240px;
   }
   #debugToggle {
     left: 16px;
-    bottom: 3px;
+    bottom: 0;
     padding: 5px;
     font-size: 10px;
     min-width: 80px;
-    border: 0;
-    background: transparent;
   }
   #debug {
     left: 16px;
-    bottom: 205px;
-    max-height: calc(100% - 335px);
+    bottom: 233px;
+    max-height: calc(100% - 363px);
   }
   dialog {
     left: 16px;
     right: auto;
-    bottom: 201px;
-    max-height: calc(100% - 315px);
+    bottom: 52px;
+    max-height: 44%;
     width: 343px;
   }
-  .anchor svg {
-    width: 40px;
-    height: 64px;
+  dialog h2 {
+    font-size: 19px;
+  }
+  .anchor {
+    min-width: 68px;
+  }
+  .anchor svg.character {
+    width: 60px;
+    height: 62.5px;
   }
   .anchor .name {
-    font-size: 11px;
+    font-size: 12px;
   }
-  .intro {
-    background: #fff4dfdd;
-    padding: 10px 12px;
-    border-radius: 2px;
+  .primary {
+    min-width: 208px;
   }
-  .place-caption {
-    display: none;
+  html[lang="en-US"] h1 {
+    font-size: 17px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -608,20 +650,10 @@ svg text {
   }
 }
 
-.anchor:active {
-  transform: translate(-50%, -100%);
-}
-
-@media (min-width: 651px) {
-  .intro {
-    background: #fff4dfed;
-    padding: 16px;
-    max-width: 280px;
+@media (max-width: 650px) {
+  #home:has(dialog[open]) .actions,
+  #home:has(dialog[open]) .place-caption,
+  #home:has(dialog[open]) .replay-note {
+    display: none;
   }
-}
-
-html[lang="en-US"] .intro h2 {
-  font-size: 24px;
-  letter-spacing: 0.2px;
-  line-height: 1.35;
 }
