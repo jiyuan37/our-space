@@ -2,6 +2,10 @@ import { PrismaClient } from "@prisma/client";
 import { test, expect, type Page } from "@playwright/test";
 import sharp from "sharp";
 import { mkdir } from "node:fs/promises";
+import { AvatarService } from "@/server/services/avatar-service";
+import { LocalAvatarStorage } from "@/server/avatar/storage";
+import { parseCloudflareImageResponse } from "@/server/avatar/response";
+import { AVATAR } from "@/lib/avatar/config";
 import { AuthService } from "@/server/services/auth-service";
 import { SpaceService } from "@/server/services/space-service";
 import { InvitationService } from "@/server/services/invitation-service";
@@ -261,6 +265,76 @@ test("未登录上传、跨站上传和非法文件被拒绝", async ({ page, re
       await db.avatarGeneration.count({
         where: { resident: { userId: owner.id } },
       }),
+    ).toBe(0);
+  } finally {
+    await db.$disconnect();
+  }
+});
+
+test("规范化失败保留真实持久测试源图：本人双语预览，不能确认或给 Partner 读取", async ({
+  page,
+  request,
+}) => {
+  const db = database();
+  const { owner } = await setup(db);
+  try {
+    const generated = await sharp({
+      create: { width: 1024, height: 1024, channels: 3, background: "#acb8be" },
+    })
+      .jpeg()
+      .toBuffer();
+    const http200 = Response.json({
+      success: true,
+      result: { image: generated.toString("base64") },
+      errors: [],
+    });
+    const bytes = Buffer.from(await http200.arrayBuffer());
+    const provider = {
+      model: "offline-cloudflare-schema-fixture-not-ai",
+      generate: async () =>
+        parseCloudflareImageResponse(http200.headers.get("content-type"), bytes)
+          .bytes,
+    };
+    const service = new AvatarService(
+      db,
+      new LocalAvatarStorage(
+        process.env.AVATAR_TEST_STORAGE_DIR ??
+          "/tmp/our-space-avatar-e2e-storage",
+      ),
+      provider,
+    );
+    const job = await service.generateOwn(
+      owner.id,
+      crypto.randomUUID(),
+      AVATAR.policyVersion,
+      generated,
+      "image/jpeg",
+    );
+    expect(job.status).toBe("FAILED");
+    await login(page, owner.email);
+    await page.goto("/avatar");
+    await expect(
+      page.getByText("生成图片已私密保留", { exact: false }),
+    ).toBeVisible();
+    await expect(page.getByRole("button", { name: "就用这个" })).toHaveCount(0);
+    const source = await page.request.get(job.candidateUrl!);
+    expect(source.status()).toBe(200);
+    expect(source.headers()["content-type"]).toBe("image/jpeg");
+    expect((await request.get(job.candidateUrl!)).status()).toBe(401);
+    await screenshot(page, "saved-source-offline-fixture");
+    await page.getByRole("button", { name: "EN English", exact: true }).click();
+    await expect(
+      page.getByText("Your generated image was saved privately", {
+        exact: false,
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Use this character" }),
+    ).toHaveCount(0);
+    await page.getByRole("button", { name: "Cancel and return Home" }).click();
+    expect((await page.request.get(job.candidateUrl!)).status()).toBe(404);
+    expect(
+      await db.mediaAsset.count({ where: { uploadedByUserId: owner.id } }),
     ).toBe(0);
   } finally {
     await db.$disconnect();

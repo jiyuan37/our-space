@@ -18,6 +18,8 @@ import { AvatarService } from "./avatar-service";
 import { HomeService } from "./home-service";
 import { LocalAvatarStorage } from "@/server/avatar/storage";
 import { FixtureAvatarProvider } from "@/server/avatar/test-provider";
+import { parseCloudflareImageResponse } from "@/server/avatar/response";
+import { AvatarPipelineError } from "@/server/avatar/pipeline-error";
 import { AVATAR } from "@/lib/avatar/config";
 const suite = process.env.TEST_DATABASE_URL ? describe : describe.skip;
 suite.sequential("头像真实 PostgreSQL 授权与持久性", () => {
@@ -378,29 +380,41 @@ suite.sequential("头像真实 PostgreSQL 授权与持久性", () => {
       await expect(storage.get(asset.storageKey)).rejects.toThrow();
     expect(await db.mediaAsset.count()).toBe(2);
   });
-  it("第二个文件保存失败会删除第一个文件并保持旧身份", async () => {
+  it("显示文件保存失败保留已提交源图和旧身份，取消后清理", async () => {
     const old = await generate();
     await service.confirmOwn(own, old.id);
     const originalPut = storage.put.bind(storage);
-    let partialKey = "";
+    let sourceKey = "";
     const spy = vi
       .spyOn(storage, "put")
-      .mockImplementationOnce(async (bytes) => {
-        partialKey = await originalPut(bytes);
-        return partialKey;
+      .mockImplementationOnce(async (bytes, mime) => {
+        sourceKey = await originalPut(bytes, mime);
+        return sourceKey;
       })
       .mockRejectedValueOnce(new Error("controlled disk failure"));
+    let failed;
     try {
-      await expect(generate()).rejects.toThrow("controlled disk failure");
+      failed = await generate();
     } finally {
       spy.mockRestore();
     }
-    expect(await db.mediaAsset.count()).toBe(2);
-    await expect(storage.get(partialKey)).rejects.toThrow();
+    expect(failed.status).toBe("FAILED");
+    expect(failed.previewKind).toBe("source");
+    expect(await db.mediaAsset.count()).toBe(3);
+    await expect(storage.get(sourceKey)).resolves.toBeInstanceOf(Buffer);
+    expect(
+      (
+        await db.avatarGeneration.findUniqueOrThrow({
+          where: { id: failed.id },
+        })
+      ).failureStage,
+    ).toBe("AVATAR_DISPLAY_PERSIST_FAILED");
     expect(
       (await db.resident.findUniqueOrThrow({ where: { id: ownResident } }))
         .avatarVersion,
     ).toBe(1);
+    await service.cancelOwn(own, failed.id);
+    await expect(storage.get(sourceKey)).rejects.toThrow();
   });
   it("确认事务失败和源图丢失都保留旧资源，成功替换清理旧源图", async () => {
     const first = await generate();
@@ -508,5 +522,138 @@ suite.sequential("头像真实 PostgreSQL 授权与持久性", () => {
     await expect(
       service.readAsset(partner, after.avatarMediaAssetId!),
     ).resolves.toBeInstanceOf(Buffer);
+  });
+  it.each(["png", "jpeg"] as const)(
+    "HTTP200 result.image %s → 私密 source → 256透明图 → 本人预览",
+    async (format) => {
+      const generated =
+        format === "png"
+          ? output
+          : await sharp(output)
+              .flatten({ background: "#ff00ff" })
+              .jpeg({ quality: 100 })
+              .toBuffer();
+      provider.generate.mockImplementationOnce(
+        async () =>
+          parseCloudflareImageResponse(
+            "application/json",
+            Buffer.from(
+              JSON.stringify({
+                success: true,
+                result: { image: generated.toString("base64") },
+                errors: [],
+              }),
+            ),
+          ).bytes,
+      );
+      const job = await generate();
+      expect(job.status).toBe("READY");
+      expect(job.previewKind).toBe("display");
+      const stored = await db.avatarGeneration.findUniqueOrThrow({
+        where: { id: job.id },
+        include: { sourceMediaAsset: true },
+      });
+      expect(stored.sourceMediaAsset!.mimeType).toBe(`image/${format}`);
+      const original = await storage.get(stored.sourceMediaAsset!.storageKey);
+      expect(original.equals(generated)).toBe(true);
+      expect((await sharp(original).metadata()).width).toBe(1024);
+      const preview = await service.readCandidateImage(own, job.id);
+      expect(preview.mimeType).toBe("image/png");
+      expect(await sharp(preview.bytes).metadata()).toMatchObject({
+        width: 256,
+        height: 256,
+        hasAlpha: true,
+      });
+      await expect(service.readCandidate(partner, job.id)).rejects.toThrow();
+      await service.confirmOwn(own, job.id);
+      expect(await db.mediaAsset.count()).toBe(2);
+    },
+  );
+  it("规范化拒绝有效 JPEG 时源图仍可恢复预览，但本人/Partner 都不能确认为头像", async () => {
+    const image = await sharp({
+      create: { width: 1024, height: 1024, channels: 3, background: "#aaa" },
+    })
+      .jpeg()
+      .toBuffer();
+    provider.generate.mockResolvedValueOnce(image);
+    const job = await generate();
+    expect(job).toMatchObject({ status: "FAILED", previewKind: "source" });
+    const row = await db.avatarGeneration.findUniqueOrThrow({
+      where: { id: job.id },
+      include: { sourceMediaAsset: true },
+    });
+    expect(row.failureStage).toBe("AVATAR_IMAGE_NORMALIZE_FAILED");
+    expect(row.candidateMediaAssetId).toBeNull();
+    expect(
+      (await storage.get(row.sourceMediaAsset!.storageKey)).equals(image),
+    ).toBe(true);
+    const restored = await new AvatarService(db, storage).latestOwn(own);
+    expect(restored?.candidateUrl).toBe(job.candidateUrl);
+    expect((await service.readCandidateImage(own, job.id)).mimeType).toBe(
+      "image/jpeg",
+    );
+    await expect(service.confirmOwn(own, job.id)).rejects.toThrow();
+    await expect(service.readCandidate(partner, job.id)).rejects.toThrow();
+    await expect(
+      service.readAsset(partner, row.sourceMediaAssetId!),
+    ).rejects.toThrow();
+    expect(
+      (await new HomeService(db).get(own)).residents.every(
+        (r) => r.avatarUrl === null,
+      ),
+    ).toBe(true);
+    await db.avatarGeneration.update({
+      where: { id: job.id },
+      data: { expiresAt: new Date(0) },
+    });
+    await expect(service.readCandidate(own, job.id)).rejects.toThrow();
+    await expect(
+      storage.get(row.sourceMediaAsset!.storageKey),
+    ).rejects.toThrow();
+  });
+  it("各处理阶段独立记录，不将解析/解码失败误报为规范化失败", async () => {
+    for (const stage of [
+      "PROVIDER_RESPONSE_PARSE_FAILED",
+      "PROVIDER_IMAGE_DECODE_FAILED",
+    ] as const) {
+      provider.generate.mockRejectedValueOnce(new AvatarPipelineError(stage));
+      const id = randomUUID();
+      await expect(generate(id)).rejects.toMatchObject({ stage });
+      expect(
+        (await db.avatarGeneration.findUniqueOrThrow({ where: { id } }))
+          .failureStage,
+      ).toBe(stage);
+    }
+    expect(await db.mediaAsset.count()).toBe(0);
+  });
+  it("保存源图后进程中断，超时只转失败保留预览，到24h才清除", async () => {
+    const job = await generate();
+    const row = await db.avatarGeneration.findUniqueOrThrow({
+      where: { id: job.id },
+      include: { candidateMediaAsset: true, sourceMediaAsset: true },
+    });
+    await db.avatarGeneration.update({
+      where: { id: job.id },
+      data: {
+        status: "PENDING",
+        candidateMediaAssetId: null,
+        createdAt: new Date(Date.now() - AVATAR.pendingTtlMs - 1),
+      },
+    });
+    await db.mediaAsset.delete({ where: { id: row.candidateMediaAssetId! } });
+    await storage.remove(row.candidateMediaAsset!.storageKey);
+    await service.cleanup();
+    expect((await service.getOwn(own, job.id)).previewKind).toBe("source");
+    expect(
+      (await db.avatarGeneration.findUniqueOrThrow({ where: { id: job.id } }))
+        .failureStage,
+    ).toBe("AVATAR_PROCESSING_INTERRUPTED");
+    await expect(
+      storage.get(row.sourceMediaAsset!.storageKey),
+    ).resolves.toBeInstanceOf(Buffer);
+    await service.cancelOwn(own, job.id);
+    await expect(
+      storage.get(row.sourceMediaAsset!.storageKey),
+    ).rejects.toThrow();
   });
 });

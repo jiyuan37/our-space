@@ -1,9 +1,7 @@
 import sharp from "sharp";
+import { AvatarPipelineError } from "./pipeline-error";
 import { AVATAR } from "@/lib/avatar/config";
-import {
-  AvatarInvalidPhotoError,
-  AvatarGenerationFailedError,
-} from "@/server/errors/domain-error";
+import { AvatarInvalidPhotoError } from "@/server/errors/domain-error";
 
 export async function normalizeSelfie(
   bytes: Buffer,
@@ -115,7 +113,7 @@ export async function normalizeCandidate(bytes: Buffer): Promise<Buffer> {
       .png({ palette: true, colours: 64, dither: 0 })
       .toBuffer();
   } catch {
-    throw new AvatarGenerationFailedError();
+    throw new AvatarPipelineError("AVATAR_IMAGE_NORMALIZE_FAILED");
   }
 }
 
@@ -137,6 +135,6 @@ export async function normalizeGeneratedSource(bytes: Buffer): Promise<Buffer> {
       throw new Error();
     return await decoder.png().toBuffer();
   } catch {
-    throw new AvatarGenerationFailedError();
+    throw new AvatarPipelineError("AVATAR_IMAGE_NORMALIZE_FAILED");
   }
 }

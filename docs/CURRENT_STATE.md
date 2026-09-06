@@ -1,18 +1,29 @@
 # Our Space — 当前状态
 
-最后更新：2026-09-05
+最后更新：2026-09-06
 
 ## 当前 Phase
 
 - 当前工作包：AVATAR-01 — 自拍生成、用户确认与持久卡通身份；用户已明确批准正式实现，Phase 1–3 基础保留。
-- 当前状态：**AVATAR-01 产品流程已实现到真实视觉验收前一步；等待用户授权 1 次最终 FLUX candidate generation。不是 fully validated，画风/相似度尚未验收。**
+- 当前状态：**AVATAR-01 HTTP 200 后本地解析/规范化与源图保存修复已通过离线验证；额外1次授权已用完，本轮0次真实调用。等待新的单次真实生成授权，尚未通过真实视觉验收。**
 - Phase 3 implementation 已完成并通过 Final Review；本轮不重做历史验收。
 - 实际项目根目录：`/Users/yuan/Desktop/our-space`。
 - 最新授权仅执行 AVATAR-01；允许相关 Schema、正式 Home、配置、测试与文档改动，并在检查后正常提交/push。地图生产接入、定位和 ANIMATION-01 不在本轮范围。
 - Phase 2 已完成并通过最终 Review；Phase 3 前置 UI/UX Review、Design Decision Closure、implementation、Independent Final Review 与 Final Polish Patch 均已完成。
 - **Phase 4 尚未开始，也未获得批准。**
 
-## AVATAR-01 私密候选闭环（本轮最新状态）
+## AVATAR-01 解析与源图保存修复（本轮最新状态）
+
+- 实际起点 `710440ef1df28c44755850bf1eab780c06da98c9`，main、干净、0/0，remote未变。上一轮额外1次请求HTTP200后失败，既没有candidate也没有source可恢复；实际错误分支因旧诊断不足不能还原。
+- 本轮真实外部调用0次，只查公开官方文档并用合成fixture测试。当前正确拆分response parse、image decode与normalize阶段；直接image与result.image都支持，按magic处理JPEG/PNG，不硬假设PNG。
+- FLUX专属输入约束双边<512，仍采用480px；旧代码已经480px，不能误报此前输入1024px是根因。
+- 有效生成source先私密持久化，再规范化；失败source本人可预览、不能确认、Partner不可读，取消/24h清理。新增failureStage字段，不改旧migration或核心实体。
+- 具体根因证据、官方依据、测试数字、截图与限制见 [AVATAR_PARSER_REPAIR_2026-09-06.md](./AVATAR_PARSER_REPAIR_2026-09-06.md)。本轮提交信息 `fix: preserve avatar sources and parse Cloudflare image responses`，完整hash以包含本节的提交定位；正常提交推送后目标main、干净、0/0，实际交付记录复核。
+- 本地正式账户数据库和私密存储已在额外请求前配置，原有4条migration及本轮新增可空诊断字段均已应用（5/5）；真实生成开关始终关闭于常驻页面，用户账户由本人注册，不混入测试素材。图片目录已通过本机Time Machine排除检查；外部部署/其他备份仍需实际配置。
+- 本轮验证：25 files / 142 tests（36项真实PostgreSQL）、20/20双端E2E、build、typecheck/lint、format/diff与production audit 0；本地正式服务已恢复。
+- ANIMATION-01与MAP-01生产接入仍未实现，不开始新Phase。头像真实画风仍未验收。
+
+## AVATAR-01 私密候选闭环（历史实现）
 
 - 实际起点 `7228b8f8ba41cb94d809f013beead5b31e6f478f`，main、干净工作树、origin/main 同步 0/0，远程未变；不使用旧视觉提交重置代码。
 - 本轮真实外部调用 **0 次**。此前 2/2 已用完；FLUX.2 klein 4B 是唯一已有真实成功证据的 provider candidate，不能据此判断画风。SDXL 400 / 3030 保留为 provider-specific unresolved issue，不重试、不阻塞。

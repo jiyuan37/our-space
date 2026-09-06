@@ -10,7 +10,7 @@ import {
 import { resolve, relative, isAbsolute } from "node:path";
 
 export interface AvatarStorage {
-  put(bytes: Buffer): Promise<string>;
+  put(bytes: Buffer, mimeType?: "image/png" | "image/jpeg"): Promise<string>;
   get(key: string): Promise<Buffer>;
   remove(key: string): Promise<void>;
 }
@@ -26,12 +26,13 @@ export class LocalAvatarStorage implements AvatarStorage {
       throw new Error("AVATAR_STORAGE_DIR 不能位于 public 内");
   }
   private path(key: string) {
-    if (!/^[a-f0-9-]{36}\.png$/.test(key)) throw new Error("无效资源键");
+    if (!/^[a-f0-9-]{36}\.(?:png|jpg)$/.test(key))
+      throw new Error("无效资源键");
     return resolve(this.root, key);
   }
-  async put(bytes: Buffer) {
+  async put(bytes: Buffer, mimeType: "image/png" | "image/jpeg" = "image/png") {
     await mkdir(this.root, { recursive: true, mode: 0o700 });
-    const key = `${randomUUID()}.png`;
+    const key = `${randomUUID()}.${mimeType === "image/jpeg" ? "jpg" : "png"}`;
     await writeFile(this.path(key), bytes, { flag: "wx", mode: 0o600 });
     return key;
   }
@@ -50,7 +51,7 @@ export class LocalAvatarStorage implements AvatarStorage {
     });
     const result = [];
     for (const key of files) {
-      if (!/^[a-f0-9-]{36}\.png$/.test(key)) continue;
+      if (!/^[a-f0-9-]{36}\.(?:png|jpg)$/.test(key)) continue;
       const info = await stat(this.path(key)).catch(() => null);
       if (info && info.mtime < olderThan) result.push(key);
     }

@@ -4,6 +4,13 @@
 
 ## [未发布]
 
+### AVATAR-01 Cloudflare响应解析与源图保留修复（2026-09-06）
+
+- 按官方schema分离直接image/result.image、严格Base64、实际JPEG/PNG magic和全图解码；FLUX独立输入预处理双边严格<512。
+- 有效生成source先私密持久化再规范化；失败source可本人预览但不可确认/共享，24h/取消清理；新增稳定内部failureStage及增量migration。
+- 使用Cloudflare-like HTTP200 fixture离线跑通正式Service、数据库、透明256px输出与候选预览，新增损坏图片、失败恢复、双语/移动浏览器验证。
+- 本轮0真实Cloudflare调用；此前额外1次HTTP200后失败、未保存输出，历史实际分支不可回溯。根因证据与检查见AVATAR_PARSER_REPAIR_2026-09-06.md。
+
 ### AVATAR-01 私密候选闭环与生成源图（2026-09-05）
 
 - 独立 candidate/final route、稳定候选 identity；刷新恢复私密候选，本人「就用这个」后才切换正式 Resident 头像，Partner 只能读取最终版本。

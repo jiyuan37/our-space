@@ -8,12 +8,13 @@ import {
   RateLimitExceededError,
 } from "@/server/errors/domain-error";
 import { ResidentService } from "@/server/services/resident-service";
-import {
-  normalizeSelfie,
-  normalizeCandidate,
-  normalizeGeneratedSource,
-} from "@/server/avatar/images";
+import { normalizeSelfie, normalizeCandidate } from "@/server/avatar/images";
 import type { AvatarGenerationProvider } from "@/server/avatar/provider";
+import { decodeProviderImage } from "@/server/avatar/response";
+import {
+  AvatarPipelineError,
+  type AvatarFailureStage,
+} from "@/server/avatar/pipeline-error";
 import type { AvatarStorage } from "@/server/avatar/storage";
 
 export class AvatarService {
@@ -36,7 +37,9 @@ export class AvatarService {
       job.createdAt.getTime() + AVATAR.pendingTtlMs <= Date.now();
     const status =
       (expired || stalePending) &&
-      (job.status === "READY" || job.status === "PENDING")
+      (job.status === "READY" ||
+        job.status === "PENDING" ||
+        (job.status === "FAILED" && job.sourceMediaAssetId !== null))
         ? expired
           ? "EXPIRED"
           : "FAILED"
@@ -45,9 +48,16 @@ export class AvatarService {
       id: job.id,
       status,
       candidateUrl:
-        status === "READY" && job.candidateMediaAssetId
+        (status === "READY" && job.candidateMediaAssetId) ||
+        (status === "FAILED" && job.sourceMediaAssetId)
           ? `/api/avatar/candidates/${job.id}`
           : null,
+      previewKind:
+        status === "READY"
+          ? "display"
+          : status === "FAILED" && job.sourceMediaAssetId
+            ? "source"
+            : null,
       expiresAt: job.expiresAt.toISOString(),
     };
   }
@@ -66,7 +76,10 @@ export class AvatarService {
     const job = await this.db.avatarGeneration.findFirst({
       where: {
         residentId: resident.id,
-        status: { in: ["PENDING", "READY"] },
+        OR: [
+          { status: { in: ["PENDING", "READY"] } },
+          { status: "FAILED", sourceMediaAssetId: { not: null } },
+        ],
         expiresAt: { gt: new Date() },
       },
       orderBy: { createdAt: "desc" },
@@ -106,6 +119,11 @@ export class AvatarService {
               OR: [
                 { status: "PENDING", createdAt: { gt: pendingSince } },
                 { status: "READY", expiresAt: { gt: new Date() } },
+                {
+                  status: "FAILED",
+                  sourceMediaAssetId: { not: null },
+                  expiresAt: { gt: new Date() },
+                },
               ],
             },
           })
@@ -139,61 +157,103 @@ export class AvatarService {
       });
       if (!reserved.dispatch) return this.view(reserved.job);
       const keys: string[] = [];
-      let retained = false;
+      const retained = new Set<string>();
+      let stage: AvatarFailureStage = "PROVIDER_REQUEST_FAILED";
       try {
-        // 取消可以早于上传到达，预先写入的取消记录让同一 id 永不派发。
         const before = await this.getOwn(userId, id);
         if (before.status !== "PENDING") return before;
         const generated = await this.provider.generate(selfie);
+        stage = "PROVIDER_IMAGE_DECODE_FAILED";
+        const decoded = await decodeProviderImage(generated);
+        stage = "AVATAR_SOURCE_PERSIST_FAILED";
+        const sourceKey = await this.storage.put(
+          decoded.bytes,
+          decoded.mimeType,
+        );
+        keys.push(sourceKey);
+        // 先提交私密生成源图；规范化与显示资源保存失败都不能丢弃它。
+        const staged = await this.locked(async (tx) => {
+          const resident = await new ResidentService(tx).requireActive(userId);
+          const job = await tx.avatarGeneration.findUniqueOrThrow({
+            where: { id },
+          });
+          if (job.residentId !== resident.id)
+            throw new AvatarNotAvailableError();
+          if (job.status !== "PENDING" || this.view(job).status !== "PENDING")
+            return this.view(job);
+          const source = await tx.mediaAsset.create({
+            data: {
+              spaceId: resident.spaceId,
+              uploadedByUserId: userId,
+              storageKey: sourceKey,
+              mimeType: decoded.mimeType,
+              sizeBytes: decoded.bytes.length,
+            },
+          });
+          return this.view(
+            await tx.avatarGeneration.update({
+              where: { id },
+              data: { sourceMediaAssetId: source.id },
+            }),
+          );
+        });
+        if (staged.status !== "PENDING") return staged;
+        retained.add(sourceKey);
+        stage = "AVATAR_IMAGE_NORMALIZE_FAILED";
         const candidate = await normalizeCandidate(generated);
-        const source = await normalizeGeneratedSource(generated);
-        keys.push(await this.storage.put(candidate));
-        keys.push(await this.storage.put(source));
+        stage = "AVATAR_DISPLAY_PERSIST_FAILED";
+        const key = await this.storage.put(candidate);
+        keys.push(key);
         const result = await this.locked(async (tx) => {
           const resident = await new ResidentService(tx).requireActive(userId);
           const job = await tx.avatarGeneration.findUniqueOrThrow({
             where: { id },
           });
+          if (job.residentId !== resident.id)
+            throw new AvatarNotAvailableError();
           if (job.status !== "PENDING" || this.view(job).status !== "PENDING")
             return this.view(job);
           const asset = await tx.mediaAsset.create({
             data: {
               spaceId: resident.spaceId,
               uploadedByUserId: userId,
-              storageKey: keys[0],
+              storageKey: key,
               mimeType: "image/png",
               sizeBytes: candidate.length,
             },
           });
-          const sourceAsset = await tx.mediaAsset.create({
-            data: {
-              spaceId: resident.spaceId,
-              uploadedByUserId: userId,
-              storageKey: keys[1],
-              mimeType: "image/png",
-              sizeBytes: source.length,
-            },
-          });
-          const ready = await tx.avatarGeneration.update({
-            where: { id },
-            data: {
-              status: "READY",
-              candidateMediaAssetId: asset.id,
-              sourceMediaAssetId: sourceAsset.id,
-            },
-          });
-          return this.view(ready);
+          return this.view(
+            await tx.avatarGeneration.update({
+              where: { id },
+              data: {
+                status: "READY",
+                candidateMediaAssetId: asset.id,
+                failureStage: null,
+              },
+            }),
+          );
         });
-        retained = result.status === "READY";
+        if (result.status === "READY") retained.add(key);
         return result;
       } catch (error) {
+        const failureStage =
+          error instanceof AvatarPipelineError ? error.stage : stage;
         await this.db.avatarGeneration.updateMany({
           where: { id, status: "PENDING" },
-          data: { status: "FAILED" },
+          data: { status: "FAILED", failureStage },
         });
-        throw error;
+        // 仅固定阶段码。前端不会收到数据库路径、第三方错误正文或图像内容。
+        console.error(failureStage);
+        const failed = await this.db.avatarGeneration.findUniqueOrThrow({
+          where: { id },
+        });
+        if (failed.status === "FAILED" && failed.sourceMediaAssetId)
+          return this.view(failed);
+        throw error instanceof AvatarPipelineError
+          ? error
+          : new AvatarPipelineError(failureStage);
       } finally {
-        if (!retained) await this.removeFiles(keys);
+        await this.removeFiles(keys.filter((key) => !retained.has(key)));
       }
     } finally {
       selfie.fill(0);
@@ -308,20 +368,28 @@ export class AvatarService {
     await this.removeFiles(oldKeys);
     return { cancelled: true };
   }
-  async readCandidate(userId: string, id: string) {
+  async readCandidateImage(userId: string, id: string) {
     const resident = await new ResidentService(this.db).requireActive(userId);
     await this.cleanup(new Date(), resident.id);
     const job = await this.db.avatarGeneration.findFirst({
       where: {
         id,
         residentId: resident.id,
-        status: "READY",
+        status: { in: ["READY", "FAILED"] },
         expiresAt: { gt: new Date() },
       },
-      include: { candidateMediaAsset: true },
+      include: { candidateMediaAsset: true, sourceMediaAsset: true },
     });
-    if (!job?.candidateMediaAsset) throw new AvatarNotAvailableError();
-    return this.storage.get(job.candidateMediaAsset.storageKey);
+    const asset =
+      job?.status === "READY" ? job.candidateMediaAsset : job?.sourceMediaAsset;
+    if (!asset) throw new AvatarNotAvailableError();
+    return {
+      bytes: await this.storage.get(asset.storageKey),
+      mimeType: asset.mimeType,
+    };
+  }
+  async readCandidate(userId: string, id: string) {
+    return (await this.readCandidateImage(userId, id)).bytes;
   }
   async readAsset(userId: string, id: string) {
     const resident = await new ResidentService(this.db).requireActive(userId);
@@ -340,25 +408,56 @@ export class AvatarService {
       const jobs = await tx.avatarGeneration.findMany({
         where: {
           residentId,
+          AND: [
+            {
+              OR: [
+                { status: { in: ["READY", "PENDING"] } },
+                { status: "FAILED", sourceMediaAssetId: { not: null } },
+              ],
+            },
+          ],
           OR: [
-            { status: { in: ["READY", "PENDING"] }, expiresAt: { lte: now } },
+            {
+              status: { in: ["READY", "PENDING", "FAILED"] },
+              expiresAt: { lte: now },
+            },
             {
               status: "PENDING",
               createdAt: { lte: new Date(now.getTime() - AVATAR.pendingTtlMs) },
             },
             {
-              status: { in: ["READY", "PENDING"] },
+              status: { in: ["READY", "PENDING", "FAILED"] },
               resident: {
                 OR: [{ status: "LEFT" }, { space: { status: "ARCHIVED" } }],
               },
             },
           ],
         },
-        include: { candidateMediaAsset: true, sourceMediaAsset: true },
+        include: {
+          candidateMediaAsset: true,
+          sourceMediaAsset: true,
+          resident: { include: { space: true } },
+        },
         take: 100,
       });
       const removed: string[] = [];
       for (const job of jobs) {
+        if (
+          job.status === "PENDING" &&
+          job.sourceMediaAssetId &&
+          job.expiresAt > now &&
+          job.resident.status === "ACTIVE" &&
+          job.resident.space.status === "ACTIVE"
+        ) {
+          await tx.avatarGeneration.update({
+            where: { id: job.id },
+            data: {
+              status: "FAILED",
+              failureStage: "AVATAR_PROCESSING_INTERRUPTED",
+            },
+          });
+          continue;
+        }
         await tx.avatarGeneration.update({
           where: { id: job.id },
           data: {
@@ -378,7 +477,11 @@ export class AvatarService {
           residentId,
           createdAt: { lt: new Date(now.getTime() - 7 * 24 * 60 * 60_000) },
           OR: [
-            { status: { in: ["FAILED", "CANCELLED", "EXPIRED"] } },
+            {
+              status: { in: ["FAILED", "CANCELLED", "EXPIRED"] },
+              sourceMediaAssetId: null,
+              candidateMediaAssetId: null,
+            },
             {
               status: "CONFIRMED",
               confirmedMediaAssetId: null,

@@ -1,16 +1,20 @@
 # Our Space — 实施计划
 
-最后更新：2026-09-05
+最后更新：2026-09-06
 
 ## 状态
 
-**当前工作包：AVATAR-01 正式实现；产品流程已实现到真实视觉验收前一步；本轮零外部调用，等待授权 1 次 FLUX 候选生成及本人验收。用户已确认视觉，不再风格冻结或比较方案。**
+**当前工作包：AVATAR-01 本地解析/规范化修复；额外1次真实请求已失败并耗尽授权。本轮离线修复与适用检查已通过，等待新的单次真实验收授权；不重测模型或比较风格。**
 
 Phase 3 implementation 已完成并通过 Final Review。
 
 阶段 0、Phase 1 已完成，Phase 1 已通过最终 Review。Phase 2 已实施，在首次 Final Review 后完成 Repair，并通过 Closure Review。Phase 3 前置 UI/UX Review、Design Decision Closure、implementation、Independent Final Review 与 Final Polish Patch 已完成，设计基线记录于 [`PHASE_3_DESIGN.md`](./PHASE_3_DESIGN.md)，实施与 Review 证据记录于 [`PHASE_3_REVIEW.md`](./PHASE_3_REVIEW.md)。Phase 4 尚未开始，也未获得批准。
 
 ## AVATAR-01 当前实施 checklist
+
+- [x] 独立response parser、严格Base64、JPEG/PNG magic与全图解码、FLUX双边<512预处理。
+- [x] 规范化前保存source，失败恢复本人预览与阶段码，失败结果不可确认且按24h/取消清理。
+- [ ] 新1次真实视觉验收：必须本轮离线链路全部通过后取得新授权，历史已用额度不能复用。
 
 - [x] 完整读取规格/决策并核对实际 Git，保留 Phase 1–3 基础与用户改动。
 - [x] 将本轮范围限定为自拍头像闭环，非阻断 Home 创建/更换入口。
@@ -20,9 +24,9 @@ Phase 3 implementation 已完成并通过 Final Review。
 - [x] 独立 candidate/final route 与引用；持久保存 256px 显示图和 1024px 生成源图、确认原子切换、旧资源失败保护、双资源取消/过期/lazy cleanup。
 - [x] 数据库防重复/限额，失败和取消保持旧头像；中英文、手机和键盘流程。
 - [x] 受控 provider 自动测试及认证/邀请/Presence 回归；运行证据见 AVATAR_OPERATIONS.md。
-- [x] 用户提供 Cloudflare 关键配置与明确授权；本轮上限为 2 次请求，已经用完。样本 2 未找到，只用已授权样本 1；账户 Free 是配置声明，未核验账单。
+- [x] 用户提供 Cloudflare 关键配置与明确授权；最初上限为 2 次请求，已经用完；之后额外批准的 1 次也已用完。样本 2 未找到，只用已授权样本 1；账户 Free 是配置声明，未核验账单。
 - [x] 有限真实服务调用：SDXL-Lightning 400 / 3030；FLUX.2 klein 200，实际图像规范化通过；共 2 次，无重试。
-- [ ] 人工相似度、画风与候选确认：上轮输出已释放；本轮已改为真正持久候选。等待只对 photo-1 的 1 次明确授权，成功后实际预览、确认或拒绝。
+- [ ] 人工相似度、画风与候选确认：历史输出均不可恢复；本轮已修复有效生成源图的先行持久化。等待只对 photo-1 的新 1 次明确授权，成功后实际预览、确认或拒绝。
 - [ ] 真实用户照片生成、本人确认与重新登录/Partner 读取的真实生成闭环验收。当前不能声明 AVATAR-01 完成。
 
 本轮完成可独立验证的代码后正常提交/push，并停止等待上述具体条件，不自动开始地图、定位、ANIMATION-01 或 Phase 4。

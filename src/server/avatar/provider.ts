@@ -1,9 +1,8 @@
-import sharp from "sharp";
+import { prepareFluxReference } from "./flux-input";
+import { parseCloudflareImageResponse, decodeProviderImage } from "./response";
+import { AvatarPipelineError } from "./pipeline-error";
 import { AVATAR } from "@/lib/avatar/config";
-import {
-  AvatarGenerationFailedError,
-  AvatarUnavailableError,
-} from "@/server/errors/domain-error";
+import { AvatarUnavailableError } from "@/server/errors/domain-error";
 
 // Service 只依赖此接口，模型配置不进入 Resident 核心身份模型。
 export interface AvatarGenerationProvider {
@@ -53,10 +52,7 @@ export class CloudflareAvatarProvider implements AvatarGenerationProvider {
       form.set("prompt", AVATAR_PROMPT);
       form.set("width", String(AVATAR.generationSize));
       form.set("height", String(AVATAR.generationSize));
-      const photo = await sharp(selfie)
-        .resize(AVATAR.fluxInputSize, AVATAR.fluxInputSize, { fit: "inside" })
-        .jpeg()
-        .toBuffer();
+      const photo = await prepareFluxReference(selfie);
       form.append(
         "input_image_0",
         new Blob([new Uint8Array(photo)], { type: "image/jpeg" }),
@@ -76,29 +72,32 @@ export class CloudflareAvatarProvider implements AvatarGenerationProvider {
           redirect: "error",
         },
       );
-      if (!response.ok) throw new Error();
+      if (!response.ok)
+        throw new AvatarPipelineError("PROVIDER_REQUEST_FAILED");
       const reader = response.body?.getReader();
-      if (!reader) throw new Error();
+      if (!reader)
+        throw new AvatarPipelineError("PROVIDER_RESPONSE_PARSE_FAILED");
       const chunks: Uint8Array[] = [];
       let size = 0;
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         size += value.length;
-        if (size > 18 * 1024 * 1024) {
+        if (size > AVATAR.maxProviderResponseBytes) {
           await reader.cancel();
-          throw new Error();
+          throw new AvatarPipelineError("PROVIDER_RESPONSE_PARSE_FAILED");
         }
         chunks.push(value);
       }
-      const bytes = Buffer.concat(chunks);
-      if (this.kind === "cloudflare-sdxl-lightning") return bytes;
-      const result = JSON.parse(bytes.toString("utf8"));
-      if (result.success === false || typeof result.result?.image !== "string")
-        throw new Error();
-      return Buffer.from(result.result.image, "base64");
-    } catch {
-      throw new AvatarGenerationFailedError();
+      const parsed = parseCloudflareImageResponse(
+        response.headers.get("content-type"),
+        Buffer.concat(chunks),
+      );
+      await decodeProviderImage(parsed.bytes);
+      return parsed.bytes;
+    } catch (error) {
+      if (error instanceof AvatarPipelineError) throw error;
+      throw new AvatarPipelineError("PROVIDER_REQUEST_FAILED");
     }
   }
 }

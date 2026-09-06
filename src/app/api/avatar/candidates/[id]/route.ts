@@ -8,15 +8,15 @@ export async function GET(
 ) {
   try {
     const session = await requireSession();
-    const bytes = await avatarService().readCandidate(
+    const image = await avatarService().readCandidateImage(
       session.user.userId,
       (await params).id,
     );
-    return new Response(new Uint8Array(bytes), {
+    return new Response(new Uint8Array(image.bytes), {
       headers: {
         ...privateHeaders,
-        "Content-Type": "image/png",
-        "Content-Disposition": 'inline; filename="avatar.png"',
+        "Content-Type": image.mimeType,
+        "Content-Disposition": `inline; filename="avatar.${image.mimeType === "image/jpeg" ? "jpg" : "png"}"`,
       },
     });
   } catch (error) {

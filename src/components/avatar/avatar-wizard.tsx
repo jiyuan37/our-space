@@ -47,8 +47,8 @@ export function AvatarWizard({
     return () => URL.revokeObjectURL(url);
   }, [file]);
   useEffect(() => {
-    if (job?.status === "READY") candidateHeading.current?.focus();
-  }, [job?.status]);
+    if (job?.candidateUrl) candidateHeading.current?.focus();
+  }, [job?.candidateUrl]);
   useEffect(() => {
     if (!pendingId) return;
     let stopped = false;
@@ -144,7 +144,7 @@ export function AvatarWizard({
     }
   }
   async function confirm() {
-    if (!job || !selected || saving) return;
+    if (!job || job.status !== "READY" || !selected || saving) return;
     setSaving(true);
     setError(null);
     try {
@@ -193,12 +193,19 @@ export function AvatarWizard({
           <h2>{t("avatar.generating")}</h2>
           <p>{t("avatar.generatingNote")}</p>
         </section>
-      ) : job?.status === "READY" && job.candidateUrl ? (
+      ) : job?.candidateUrl &&
+        (job.status === "READY" || job.status === "FAILED") ? (
         <section className="avatar-stage" aria-labelledby="candidate-title">
           <h2 id="candidate-title" ref={candidateHeading} tabIndex={-1}>
             {t("avatar.candidate")}
           </h2>
-          <p>{t("avatar.candidateNote")}</p>
+          <p>
+            {t(
+              job.previewKind === "source"
+                ? "avatar.savedSourceNote"
+                : "avatar.candidateNote",
+            )}
+          </p>
           <div className="avatar-candidate-preview">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -220,24 +227,28 @@ export function AvatarWizard({
               />
             </div>
           </div>
-          <label className="avatar-consent">
-            <input
-              type="checkbox"
-              checked={selected}
-              onChange={(e) => setSelected(e.target.checked)}
-              disabled={saving}
-            />
-            <span>{t("avatar.select")}</span>
-          </label>
+          {job.status === "READY" && (
+            <label className="avatar-consent">
+              <input
+                type="checkbox"
+                checked={selected}
+                onChange={(e) => setSelected(e.target.checked)}
+                disabled={saving}
+              />
+              <span>{t("avatar.select")}</span>
+            </label>
+          )}
           <div className="avatar-actions">
-            <PrimaryButton
-              type="button"
-              pending={saving}
-              disabled={!selected}
-              onClick={() => void confirm()}
-            >
-              {t("avatar.confirm")}
-            </PrimaryButton>
+            {job.status === "READY" && (
+              <PrimaryButton
+                type="button"
+                pending={saving}
+                disabled={!selected}
+                onClick={() => void confirm()}
+              >
+                {t("avatar.confirm")}
+              </PrimaryButton>
+            )}
             <SecondaryButton
               type="button"
               disabled={saving}

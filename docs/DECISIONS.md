@@ -687,3 +687,12 @@
 - FLUX.2 klein 4B 为当前唯一证实真实链路工作的候选。SDXL 400/3030 为 provider-specific unresolved issue；保留 adapter 和静态测试，正式 runtime 不再选它。不自动换模型或外部重试。
 - 新增默认关闭的 AVATAR_EXTERNAL_REQUESTS_ENABLED，与精确匹配 avatar-cloudflare-v1、Free 配置及用户前端同意共同约束外发。本轮 0 次真实请求；此前 2/2 已用完，下一次仅在另行明确授权后用 photo-1 生成 1 张可实际打开的私密候选。
 - AVATAR-01 产品流程实现不等于真实视觉验收。ANIMATION-01 与 MAP-01 生产接入均尚未实现，继续保持必交付。
+
+## DEC-062 — 响应分层解析与规范化前私密保存生成源图
+
+- 日期：2026-09-06。状态：本轮离线修复授权；不授权真实请求。
+- 模型直接image与REST result.image分别解析；Base64严格校验，文件magic与完整解码决定JPEG/PNG，不信任PNG假设。FLUX reference宽高均<512，保持480px目标。
+- 有效生成source在规范化前私密保存并关联任务；保留JPEG/PNG原始生成编码，不是原自拍。规范化/显示写入失败记录failureStage，并保留本人可查看的失败结果至24h；不允许确认失败source，不向Partner共享。
+- 复用sourceMediaAssetId并增加failureStage可空字段；取消/过期清理、旧头像原子切换保护不变。进程中断已保存source时保留可恢复结果，不提前丢弃。
+- 原来的result.image已经支持且FLUX已480px；此前额外1次HTTP200实际触发层无法因无响应和无阶段码而回溯。可确定的丢失机制是规范化先于持久化，不能拿新fixture冒充历史真实结果或画风验收。
+- 官方依据与离线完整链路结果见AVATAR_PARSER_REPAIR_2026-09-06.md。通过适用检查后才能向用户请求新的1次真实授权，不自动重试。

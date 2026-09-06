@@ -14,6 +14,9 @@ export const AVATAR = {
   maxUploadBytes: 5 * 1024 * 1024,
   maxBodyBytes: 6 * 1024 * 1024,
   maxInputPixels: 20_000_000,
+  maxProviderImageBytes: 12 * 1024 * 1024,
+  maxProviderResponseBytes: 18 * 1024 * 1024,
+  maxProviderPixels: 4_000_000,
   logicalSize: 64,
   outputSize: 256,
   candidateTtlMs: 24 * 60 * 60_000,
@@ -32,5 +35,6 @@ export type AvatarJobView = {
     | "FAILED"
     | "EXPIRED";
   candidateUrl: string | null;
+  previewKind?: "display" | "source" | null;
   expiresAt: string;
 };

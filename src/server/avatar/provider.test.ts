@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import sharp from "sharp";
 import { AVATAR } from "@/lib/avatar/config";
 import { CloudflareAvatarProvider } from "./provider";
@@ -8,6 +8,14 @@ vi.mock("@/lib/db/prisma", () => ({ prisma: {} }));
 afterEach(() => {
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
+});
+let validImage: Buffer;
+beforeAll(async () => {
+  validImage = await sharp({
+    create: { width: 1024, height: 1024, channels: 3, background: "#baa" },
+  })
+    .png()
+    .toBuffer();
 });
 function configure() {
   vi.stubEnv("AVATAR_EXTERNAL_REQUESTS_ENABLED", "true");
@@ -52,7 +60,7 @@ describe("可替换 Cloudflare provider", () => {
   it("SDXL img2img 仅发送白名单图像输入与固定提示，无隐式重试", async () => {
     configure();
     const fetcher = vi.fn().mockResolvedValue(
-      new Response(new Uint8Array([1, 2, 3]), {
+      new Response(new Uint8Array(validImage), {
         headers: { "content-type": "image/png" },
       }),
     );
@@ -104,7 +112,7 @@ describe("可替换 Cloudflare provider", () => {
     const fetcher = vi.fn().mockResolvedValue(
       Response.json({
         success: true,
-        result: { image: Buffer.from("result").toString("base64") },
+        result: { image: validImage.toString("base64") },
       }),
     );
     vi.stubGlobal("fetch", fetcher);

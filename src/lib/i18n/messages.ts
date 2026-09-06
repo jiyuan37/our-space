@@ -16,6 +16,8 @@ const zhCN = {
   "avatar.candidate": "先看看，喜欢这个你吗",
   "avatar.candidateNote":
     "只有你能看到这张候选。确认后，同一 Space 的另一位 Resident 才能看到。",
+  "avatar.savedSourceNote":
+    "生成图片已私密保留，但暂未整理成可用的像素头像。只有你能查看；当前不能设为正式形象，可以取消。24 小时后清理。",
   "avatar.candidateAlt": "待本人确认的像素角色候选",
   "avatar.normalSize": "手机实际大小",
   "avatar.select": "我选择这个形象作为我的角色",
@@ -165,6 +167,8 @@ const enUS: Messages = {
   "avatar.candidate": "Take a look at your character",
   "avatar.candidateNote":
     "Only you can see this candidate. The other Resident in your Space sees it only after confirmation.",
+  "avatar.savedSourceNote":
+    "Your generated image was saved privately, but could not be prepared as a pixel avatar. Only you can preview it. It cannot be used as your character yet; you can cancel. It expires in 24 hours.",
   "avatar.candidateAlt": "Pixel character candidate awaiting your confirmation",
   "avatar.normalSize": "Phone display size",
   "avatar.select": "I choose this as my character",

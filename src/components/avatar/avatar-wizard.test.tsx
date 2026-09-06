@@ -26,7 +26,7 @@ afterEach(() => {
 const job: AvatarJobView = {
   id: "e67b7b9d-cee8-4bc2-9ea9-0bc614eea9c8",
   status: "READY",
-  candidateUrl: "/api/avatar/assets/test",
+  candidateUrl: "/api/avatar/candidates/test",
   expiresAt: new Date(Date.now() + AVATAR.candidateTtlMs).toISOString(),
 };
 describe("头像交互的网络恢复", () => {
@@ -78,5 +78,18 @@ describe("头像交互的网络恢复", () => {
     );
     expect(screen.getByRole("button", { name: "avatar.cancel" })).toBeEnabled();
     expect(screen.getByAltText("avatar.candidateAlt")).toBeVisible();
+  });
+  it("规范化失败的私密源图可看可取消，不能假装确认可用头像", () => {
+    render(
+      <AvatarWizard
+        currentUrl={null}
+        initialJob={{ ...job, status: "FAILED", previewKind: "source" }}
+        enabled={false}
+      />,
+    );
+    expect(screen.getByText("avatar.savedSourceNote")).toBeVisible();
+    expect(screen.getByAltText("avatar.candidateAlt")).toBeVisible();
+    expect(screen.queryByRole("button", { name: "avatar.confirm" })).toBeNull();
+    expect(screen.getByRole("button", { name: "avatar.cancel" })).toBeEnabled();
   });
 });

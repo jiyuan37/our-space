@@ -1,6 +1,6 @@
 # Our Space — 已知限制
 
-最后更新：2026-09-05
+最后更新：2026-09-06
 
 本文档记录有意设置的 MVP 边界、尚未解决的实现细节、技术债务和未来改进。本文档不授权实施 Master Spec 范围外的功能。
 
@@ -12,19 +12,22 @@
 - AVATAR-01 账户、私密生成/确认、持久身份及正式 Home 集成已写入；产品流程自动验证已完成，相似度/画风及真实候选确认仍待验收。ANIMATION-01 和 MAP-01 生产未实现；三者保持必交付。
 - locale preference 使用浏览器 HttpOnly cookie 持久化，不跨浏览器或设备同步；Phase 3 不为此增加数据库字段。
 - 尚无 seed data 或 demo account；这两项属于后续阶段。
-- Playwright 已配置 desktop Google Chrome 与 Pixel 7；本轮在独立 PostgreSQL 16.15 测试数据库 18/18 通过，头像为受控 provider，另覆盖 375px 视口。Safari 与 Firefox 尚未纳入当前自动化矩阵。
+- Playwright 已配置 desktop Google Chrome 与 Pixel 7；本轮在独立 PostgreSQL 16.15 测试数据库 20/20 通过，头像为受控 provider，另覆盖 375px 视口。Safari 与 Firefox 尚未纳入当前自动化矩阵。
 - 当前主机没有 Docker CLI，因此无法实际执行 `docker compose config` 或容器启动；`docker-compose.yml` 已通过 YAML 解析验证，clean migration 已在本机 PostgreSQL 16.15 全新数据库中以 2/2 通过。
 - 本地 `MemoryRateLimiter` 只适合单进程开发与测试；多实例 production 必须替换为共享存储 adapter。
 - Password reset、email verification 与 production email delivery 不属于 Phase 2，尚未实现。
 
 ## AVATAR-01 当前具体缺口
 
-- 上轮 2/2 真实调用已用完：SDXL 400 / 3030（provider-specific unresolved issue），FLUX 200 且规范化通过，但未保留输出。本轮 0 调用，已实现持久私密候选到确认闭环；等待仅 photo-1 的 1 次授权真实生成及人工验收，不能写 fully validated 或 style accepted。
-- AVATAR_EXTERNAL_REQUESTS_ENABLED 默认关闭；配置政策同意不等于允许当前追加调用。当前用户 .env.local 未修改，AVATAR_STORAGE_DIR 仍需落实私密持久卷/不备份，旧 SDXL 选择需在下次授权运行时改为 cloudflare-flux-klein。
+- 最新额外1次真实请求已HTTP200后本地处理失败；旧代码没有响应/源图/阶段记录，不能确诊历史具体触发层。已修复解析兼容性和规范化前source保存顺序；这不等于模型画风通过。本轮0真实请求，新的1次需另行授权。
+- source现在保留有效生成的实际JPEG/PNG编码，供恢复诊断；规范化失败source只能本人预览，不能作为正式身份，24h或取消清理。最初磁盘/数据库写入本身失败仍会阻止交付，会记录独立保存阶段码。
+
+- 最初 2/2 真实调用已用完：SDXL 400 / 3030（provider-specific unresolved issue），FLUX 200 且规范化通过，但未保留输出。之后另获批的 1 次 HTTP 200 后本地处理失败也已耗尽；本轮 0 调用，等待仅 photo-1 的新 1 次授权及人工验收，不能写 fully validated 或 style accepted。
+- AVATAR_EXTERNAL_REQUESTS_ENABLED 默认关闭；配置政策同意不等于允许当前追加调用。额外真实请求前本机已配置 cloudflare-flux-klein、私密 AVATAR_STORAGE_DIR 并通过 Time Machine 排除检查；其他主机的持久卷/备份政策仍须独立落实。本轮保持真实请求开关关闭。
 - `CLOUDFLARE_WORKERS_PLAN=free` 是部署者声明，不是账单 API 核验；必须实际确认 Free 账户。Workers Free 日额度共享给账户其他应用，不能保证所有请求可用；不自动付费/换模型。
 - 透明背景采用受控色背景、边缘连通去色、64px 最近邻再放大及输出验证；不合格输出拒绝，不保证所有 AI 图片天然有效或可动画化。当前资源是基础身份，无动作层/骨骼。
 - 私密本地存储需要持久卷、排除备份，并保证清理常驻运行；无共享文件卷的多实例部署不受支持。过期立即拒绝访问，物理删除在运行中定时处理；停机、I/O 失败存在补扫延迟，访问时同时 lazy cleanup，具体见 DEC-061。
-- 真实用户数据库/部署尚未配置；新 migration 只在隔离测试数据库应用。未做 Safari/Firefox 或真实 Cloudflare production smoke。
+- 本机真实账户数据库已配置并保留用户本人注册的账户；本轮新增 migration 仅增加可空诊断字段。外部 production 部署、Safari/Firefox 与真实视觉候选验收未完成。
 - Cloudflare 声明未经同意不训练，但具体逐项保留、删除时限及处理地域未确认；本应用取消不撤回服务已收到的请求。不能承诺外部零保留。
 - 自动测试 fixture 仅 `development` 且显式隔离 `_test` 数据库启用，页面明确标识；不能进入 production 或给真实用户充当 AI 成果。
 
