@@ -4,6 +4,13 @@
 
 ## [未发布]
 
+### 已保存真实头像离线恢复与双参考输入（2026-09-06）
+
+- 全分辨率边缘自适应纯色去背景、JPEG边缘处理、256px透明PNG；保留真实source和原期限，离线恢复未确认候选，不修改final。
+- 本人before/after私密预览，源图权限和取消/到期规则保持。
+- 从批准原创原型复现style0，无道具；selfie1仅身份，固定双参考提示和输入白名单、双语处理说明及离线测试。
+- 本轮0真实调用，画风尚未验收。证据见AVATAR_OFFLINE_NORMALIZATION_2026-09-06.md。
+
 ### AVATAR-01 Cloudflare响应解析与源图保留修复（2026-09-06）
 
 - 按官方schema分离直接image/result.image、严格Base64、实际JPEG/PNG magic和全图解码；FLUX独立输入预处理双边严格<512。

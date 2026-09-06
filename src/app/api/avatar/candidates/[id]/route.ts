@@ -3,7 +3,7 @@ import { avatarService } from "@/server/avatar/runtime";
 import { avatarError, privateHeaders } from "@/server/avatar/http";
 export const runtime = "nodejs";
 export async function GET(
-  _: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
@@ -11,6 +11,7 @@ export async function GET(
     const image = await avatarService().readCandidateImage(
       session.user.userId,
       (await params).id,
+      new URL(request.url).searchParams.get("variant") === "source",
     );
     return new Response(new Uint8Array(image.bytes), {
       headers: {

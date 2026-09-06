@@ -19,6 +19,9 @@ const zhCN = {
   "avatar.savedSourceNote":
     "生成图片已私密保留，但暂未整理成可用的像素头像。只有你能查看；当前不能设为正式形象，可以取消。24 小时后清理。",
   "avatar.candidateAlt": "待本人确认的像素角色候选",
+  "avatar.sourceBefore": "查看生成原图（规范化前）",
+  "avatar.normalizedNote":
+    "上方候选已去背景并缩为显示图。画风和相似度仍由你判断，不会自动确认。",
   "avatar.normalSize": "手机实际大小",
   "avatar.select": "我选择这个形象作为我的角色",
   "avatar.confirm": "就用这个",
@@ -30,7 +33,7 @@ const zhCN = {
   "avatar.localOnly": "本地预览 · 点击生成才会发送",
   "avatar.privacyTitle": "照片会怎样处理",
   "avatar.privacyInput":
-    "只把去除 EXIF、缩小后的本人照片与固定头像提示发给 Cloudflare Workers AI。不发送姓名、位置、Presence、伴侣或生活记录。",
+    "只把去除 EXIF、缩小后的本人照片、Our Space 原创像素风格参考与固定头像提示发给 Cloudflare Workers AI。不发送姓名、位置、Presence、伴侣或生活记录。",
   "avatar.privacyStorage":
     "原照不保存到服务器磁盘。候选仅你可见，24 小时后失效并清理；取消即删除。确认后私密保存最终显示图和模型生成的高分辨率源图，替换时一并删除旧图。",
   "avatar.privacyProvider":
@@ -170,6 +173,9 @@ const enUS: Messages = {
   "avatar.savedSourceNote":
     "Your generated image was saved privately, but could not be prepared as a pixel avatar. Only you can preview it. It cannot be used as your character yet; you can cancel. It expires in 24 hours.",
   "avatar.candidateAlt": "Pixel character candidate awaiting your confirmation",
+  "avatar.sourceBefore": "View generated source (before processing)",
+  "avatar.normalizedNote":
+    "The candidate above has its background removed and is resized for display. You decide whether its style and likeness are right; it is never confirmed automatically.",
   "avatar.normalSize": "Phone display size",
   "avatar.select": "I choose this as my character",
   "avatar.confirm": "Use this character",
@@ -181,7 +187,7 @@ const enUS: Messages = {
   "avatar.localOnly": "Local preview · sent only when you generate",
   "avatar.privacyTitle": "How your photo is handled",
   "avatar.privacyInput":
-    "Only your resized photo with EXIF removed and a fixed avatar prompt go to Cloudflare Workers AI. No names, location, Presence, partner or life records.",
+    "Only your resized photo with EXIF removed, an original Our Space pixel style reference and a fixed avatar prompt go to Cloudflare Workers AI. No names, location, Presence, partner or life records.",
   "avatar.privacyStorage":
     "The original photo is not saved to server disk. Candidates are private to you, expire after 24 hours and are cleaned up; cancelling deletes them. Confirmed display images and high-resolution model-generated source images are stored privately. Replacements delete both previous images.",
   "avatar.privacyProvider":

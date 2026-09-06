@@ -2,7 +2,8 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import sharp from "sharp";
 import { AVATAR } from "@/lib/avatar/config";
-import { CloudflareAvatarProvider } from "./provider";
+import { approvedStyleReference } from "./style-reference";
+import { CloudflareAvatarProvider, FLUX_AVATAR_PROMPT } from "./provider";
 import { avatarEnabled, avatarTestMode } from "./runtime";
 vi.mock("@/lib/db/prisma", () => ({ prisma: {} }));
 afterEach(() => {
@@ -107,7 +108,7 @@ describe("可替换 Cloudflare provider", () => {
     });
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
-  it("FLUX 仅发送小于512px本人照片，不外发其他参考图片", async () => {
+  it("FLUX 图0仅原创风格、图1仅本人身份，两图严格小于512px且不自动重试", async () => {
     configure();
     const fetcher = vi.fn().mockResolvedValue(
       Response.json({
@@ -124,14 +125,37 @@ describe("可替换 Cloudflare provider", () => {
     await new CloudflareAvatarProvider("cloudflare-flux-klein").generate(photo);
     const form = fetcher.mock.calls[0][1].body as FormData;
     expect(Array.from(form.keys()).sort()).toEqual(
-      ["prompt", "width", "height", "input_image_0"].sort(),
+      ["prompt", "width", "height", "input_image_0", "input_image_1"].sort(),
     );
     expect(
       (
         await sharp(
-          Buffer.from(await (form.get("input_image_0") as File).arrayBuffer()),
+          Buffer.from(await (form.get("input_image_1") as File).arrayBuffer()),
         ).metadata()
       ).width,
     ).toBe(480);
+    const reference = Buffer.from(
+      await (form.get("input_image_0") as File).arrayBuffer(),
+    );
+    expect(reference.equals(await approvedStyleReference())).toBe(true);
+    expect(await sharp(reference).metadata()).toMatchObject({
+      width: 480,
+      height: 320,
+      format: "png",
+    });
+    const identity = await sharp(
+      Buffer.from(await (form.get("input_image_1") as File).arrayBuffer()),
+    ).metadata();
+    expect(identity.height).toBeLessThan(512);
+    expect(identity.exif).toBeUndefined();
+    expect(form.get("prompt")).toBe(FLUX_AVATAR_PROMPT);
+    expect(FLUX_AVATAR_PROMPT).toContain(
+      "Image 1 (input_image_1) supplies ONLY the user's identity",
+    );
+    expect(FLUX_AVATAR_PROMPT).toContain(
+      "Image 0 (input_image_0) supplies ONLY visual style",
+    );
+    expect(form.has("guidance")).toBe(false);
+    expect(fetcher).toHaveBeenCalledTimes(1);
   });
 });

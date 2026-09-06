@@ -5,14 +5,22 @@
 ## 当前 Phase
 
 - 当前工作包：AVATAR-01 — 自拍生成、用户确认与持久卡通身份；用户已明确批准正式实现，Phase 1–3 基础保留。
-- 当前状态：**AVATAR-01 HTTP 200 后本地解析/规范化与源图保存修复已通过离线验证；额外1次授权已用完，本轮0次真实调用。等待新的单次真实生成授权，尚未通过真实视觉验收。**
+- 当前状态：**AVATAR-01 当前真实source已离线恢复为透明display候选；未确认，画风尚未验收。本轮0次外部请求，已修复纯色背景处理及style0/identity1双参考payload，未进行新真实生成。**
 - Phase 3 implementation 已完成并通过 Final Review；本轮不重做历史验收。
 - 实际项目根目录：`/Users/yuan/Desktop/our-space`。
 - 最新授权仅执行 AVATAR-01；允许相关 Schema、正式 Home、配置、测试与文档改动，并在检查后正常提交/push。地图生产接入、定位和 ANIMATION-01 不在本轮范围。
 - Phase 2 已完成并通过最终 Review；Phase 3 前置 UI/UX Review、Design Decision Closure、implementation、Independent Final Review 与 Final Polish Patch 均已完成。
 - **Phase 4 尚未开始，也未获得批准。**
 
-## AVATAR-01 解析与源图保存修复（本轮最新状态）
+## AVATAR-01 当前真实source离线恢复（本轮）
+
+- 起点 f80b3e2bea0b36a180a81ef5e8976a4d9fa5eb51，main、干净、0/0。上一轮新批准1次已耗尽，HTTP200后保存source但规范化失败。
+- 已准确定位为旧固定色相阈值未识别实际背景；本轮用边缘自适应本地处理，从同一source恢复256px透明PNG，source字节/期限及final引用不变。
+- 当前READY只表示资源可预览/由本人确认，不表示用户已接受风格。本轮没有自动确认。
+- 上一次仅发送480×443自拍，无style reference、无guidance。本轮加入批准原创原型导出的style0（480×320）与selfie1，固定语义、双边<512；尚未发出。
+- 证据与检查见 [AVATAR_OFFLINE_NORMALIZATION_2026-09-06.md](./AVATAR_OFFLINE_NORMALIZATION_2026-09-06.md)。提交信息 `fix: normalize saved avatars and separate style references`，完整hash以包含本节的提交定位；正常push后目标main、干净、0/0。
+
+## AVATAR-01 解析与源图保存修复（上一轮修复）
 
 - 实际起点 `710440ef1df28c44755850bf1eab780c06da98c9`，main、干净、0/0，remote未变。上一轮额外1次请求HTTP200后失败，既没有candidate也没有source可恢复；实际错误分支因旧诊断不足不能还原。
 - 本轮真实外部调用0次，只查公开官方文档并用合成fixture测试。当前正确拆分response parse、image decode与normalize阶段；直接image与result.image都支持，按magic处理JPEG/PNG，不硬假设PNG。

@@ -1,3 +1,4 @@
+import { approvedStyleReference } from "./style-reference";
 import { prepareFluxReference } from "./flux-input";
 import { parseCloudflareImageResponse, decodeProviderImage } from "./response";
 import { AvatarPipelineError } from "./pipeline-error";
@@ -13,6 +14,8 @@ export type CloudflareAvatarModel =
   | "cloudflare-sdxl-lightning"
   | "cloudflare-flux-klein";
 export const AVATAR_PROMPT = `One original warm cute pixel-art portrait of the person in the input photo. Preserve their visible hairstyle, hair colour, skin tone and eyewear. Frontal oversized head, rounded stepped cheeks and chin, head 80-85 percent of the character, no neck, tiny shoulders. Clear gentle eyes and small smile, readable at 60 pixels. Hand-drawn 64x64 logical pixel scale, flat pixel clusters, one-pixel light contour, restrained warm beige and terracotta palette. Centre the complete head with 6 percent margin on all sides. Solid pure magenta #FF00FF background for removal, absolutely no magenta on character. No prop, no book, no drink, no badge, no text, no scenery. Not realistic, not full body, not a circle crop, no commercial game assets.`;
+// 模板版本见 AVATAR.promptVersion；图序由白名单 payload 测试固定。
+export const FLUX_AVATAR_PROMPT = `Create one original Our Space warm cute pixel big-head character. Image 1 (input_image_1) supplies ONLY the user's identity: visible hairstyle, hair colour, skin tone and eyewear. Image 0 (input_image_0) supplies ONLY visual style: pixel scale, stepped rounded silhouette, head proportions, warm palette, lightweight outlines and readable facial expression. Do NOT copy either reference character's face, hairstyle or identity from image 0. Render the identity of image 1 in the style of image 0. Override the selfie portrait composition: an oversized rounded head occupying 80-85 percent of the character, round cheeks and chin, no long neck, extremely little shoulder area, clear eyes and a small smile. Flat coherent pixel clusters, original hand-drawn pixel cartoon, not realistic or smooth vector. Single head/head-and-tiny-shoulders centered with margin, no full body. Base identity with no book, drink, prop, badge, text or scenery. A uniform flat background contrasting with the hair and skin, no gradient, texture or cast shadow; the application removes this background. Never copy commercial game assets.`;
 export class CloudflareAvatarProvider implements AvatarGenerationProvider {
   readonly model: string;
   constructor(readonly kind: CloudflareAvatarModel = "cloudflare-flux-klein") {
@@ -49,12 +52,18 @@ export class CloudflareAvatarProvider implements AvatarGenerationProvider {
       });
     } else {
       const form = new FormData();
-      form.set("prompt", AVATAR_PROMPT);
+      form.set("prompt", FLUX_AVATAR_PROMPT);
       form.set("width", String(AVATAR.generationSize));
       form.set("height", String(AVATAR.generationSize));
-      const photo = await prepareFluxReference(selfie);
+      const style = await approvedStyleReference();
       form.append(
         "input_image_0",
+        new Blob([new Uint8Array(style)], { type: "image/png" }),
+        "our-space-style.png",
+      );
+      const photo = await prepareFluxReference(selfie);
+      form.append(
+        "input_image_1",
         new Blob([new Uint8Array(photo)], { type: "image/jpeg" }),
         "selfie.jpg",
       );

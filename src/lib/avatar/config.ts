@@ -1,7 +1,9 @@
 // 模型、费用边界与资源版本集中定义；变更外部处理范围须重新批准。
 export const AVATAR = {
   policyVersion: "avatar-cloudflare-v1",
-  styleVersion: "pixel-big-head-b6fe15a-v1",
+  styleVersion: "pixel-big-head-b6fe15a-multi-v2",
+  promptVersion: "flux-style0-identity1-v2",
+  normalizationVersion: "edge-adaptive-fullres-v2",
   sdxlModel: "@cf/bytedance/stable-diffusion-xl-lightning",
   fluxModel: "@cf/black-forest-labs/flux-2-klein-4b",
   sdxlSteps: 4,
@@ -35,6 +37,7 @@ export type AvatarJobView = {
     | "FAILED"
     | "EXPIRED";
   candidateUrl: string | null;
+  sourceUrl?: string | null;
   previewKind?: "display" | "source" | null;
   expiresAt: string;
 };

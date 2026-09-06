@@ -52,6 +52,10 @@ export class AvatarService {
         (status === "FAILED" && job.sourceMediaAssetId)
           ? `/api/avatar/candidates/${job.id}`
           : null,
+      sourceUrl:
+        (status === "READY" || status === "FAILED") && job.sourceMediaAssetId
+          ? `/api/avatar/candidates/${job.id}?variant=source`
+          : null,
       previewKind:
         status === "READY"
           ? "display"
@@ -368,7 +372,72 @@ export class AvatarService {
     await this.removeFiles(oldKeys);
     return { cancelled: true };
   }
-  async readCandidateImage(userId: string, id: string) {
+  // 离线恢复已有未确认 source，不接受照片、不调用 provider、不延长24h期限。
+  async renormalizeOwn(userId: string, id: string) {
+    z.string().uuid().parse(id);
+    const resident = await new ResidentService(this.db).requireActive(userId);
+    await this.cleanup(new Date(), resident.id);
+    const job = await this.db.avatarGeneration.findFirst({
+      where: {
+        id,
+        residentId: resident.id,
+        status: { in: ["FAILED", "READY"] },
+        expiresAt: { gt: new Date() },
+      },
+      include: { sourceMediaAsset: true, candidateMediaAsset: true },
+    });
+    if (!job?.sourceMediaAsset) throw new AvatarNotAvailableError();
+    const output = await normalizeCandidate(
+      await this.storage.get(job.sourceMediaAsset.storageKey),
+    );
+    const key = await this.storage.put(output);
+    let committed = false;
+    try {
+      const result = await this.locked(async (tx) => {
+        const active = await new ResidentService(tx).requireActive(userId);
+        const current = await tx.avatarGeneration.findUniqueOrThrow({
+          where: { id },
+        });
+        if (
+          active.id !== job.residentId ||
+          !["FAILED", "READY"].includes(current.status) ||
+          current.sourceMediaAssetId !== job.sourceMediaAssetId ||
+          current.candidateMediaAssetId !== job.candidateMediaAssetId ||
+          current.expiresAt <= new Date()
+        )
+          throw new AvatarNotAvailableError();
+        const asset = await tx.mediaAsset.create({
+          data: {
+            spaceId: active.spaceId,
+            uploadedByUserId: userId,
+            storageKey: key,
+            mimeType: "image/png",
+            sizeBytes: output.length,
+          },
+        });
+        const updated = await tx.avatarGeneration.update({
+          where: { id },
+          data: {
+            status: "READY",
+            candidateMediaAssetId: asset.id,
+            failureStage: null,
+          },
+        });
+        if (job.candidateMediaAssetId)
+          await tx.mediaAsset.delete({
+            where: { id: job.candidateMediaAssetId },
+          });
+        return this.view(updated);
+      });
+      committed = true;
+      if (job.candidateMediaAsset)
+        await this.removeFiles([job.candidateMediaAsset.storageKey]);
+      return result;
+    } finally {
+      if (!committed) await this.removeFiles([key]);
+    }
+  }
+  async readCandidateImage(userId: string, id: string, source = false) {
     const resident = await new ResidentService(this.db).requireActive(userId);
     await this.cleanup(new Date(), resident.id);
     const job = await this.db.avatarGeneration.findFirst({
@@ -381,7 +450,9 @@ export class AvatarService {
       include: { candidateMediaAsset: true, sourceMediaAsset: true },
     });
     const asset =
-      job?.status === "READY" ? job.candidateMediaAsset : job?.sourceMediaAsset;
+      job?.status === "READY" && !source
+        ? job.candidateMediaAsset
+        : job?.sourceMediaAsset;
     if (!asset) throw new AvatarNotAvailableError();
     return {
       bytes: await this.storage.get(asset.storageKey),

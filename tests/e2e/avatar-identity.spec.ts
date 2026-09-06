@@ -133,8 +133,15 @@ test("头像上传、本人确认、Partner 授权、登出再登录持久与双
     );
     expect((await page.request.get(asset!)).status()).toBe(200);
     expect((await request.get(asset!)).status()).toBe(401);
+    await page.getByText("查看生成原图（规范化前）", { exact: true }).click();
+    const beforeImage = page.getByAltText("查看生成原图（规范化前）");
+    await expect(beforeImage).toBeVisible();
+    const beforeUrl = await beforeImage.getAttribute("src");
+    expect((await page.request.get(beforeUrl!)).status()).toBe(200);
+    expect((await request.get(beforeUrl!)).status()).toBe(401);
     await login(other, partner.email);
     expect((await other.request.get(asset!)).status()).toBe(404);
+    expect((await other.request.get(beforeUrl!)).status()).toBe(404);
     await expect(other.locator(".resident-pixel-avatar")).toHaveCount(0);
     await page
       .getByRole("checkbox", { name: "我选择这个形象作为我的角色" })
@@ -332,6 +339,7 @@ test("规范化失败保留真实持久测试源图：本人双语预览，不�
       page.getByRole("button", { name: "Use this character" }),
     ).toHaveCount(0);
     await page.getByRole("button", { name: "Cancel and return Home" }).click();
+    await expect(page).toHaveURL(/\/home/);
     expect((await page.request.get(job.candidateUrl!)).status()).toBe(404);
     expect(
       await db.mediaAsset.count({ where: { uploadedByUserId: owner.id } }),

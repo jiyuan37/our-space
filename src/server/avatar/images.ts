@@ -1,4 +1,5 @@
 import sharp from "sharp";
+import { removeUniformBackground } from "./background";
 import { AvatarPipelineError } from "./pipeline-error";
 import { AVATAR } from "@/lib/avatar/config";
 import { AvatarInvalidPhotoError } from "@/server/errors/domain-error";
@@ -59,60 +60,17 @@ export async function normalizeCandidate(bytes: Buffer): Promise<Buffer> {
     )
       throw new Error();
     const { data, info } = await decoder
-      .resize(AVATAR.logicalSize, AVATAR.logicalSize, { kernel: "nearest" })
       .ensureAlpha()
       .raw()
       .toBuffer({ resolveWithObject: true });
-    const queue: number[] = [];
-    const seen = new Set<number>();
-    const edge = AVATAR.logicalSize;
-    for (let i = 0; i < edge; i++)
-      queue.push(i, (edge - 1) * edge + i, i * edge, i * edge + edge - 1);
-    while (queue.length) {
-      const p = queue.pop()!;
-      if (seen.has(p)) continue;
-      seen.add(p);
-      const i = p * 4;
-      if (
-        !(
-          data[i + 3] < 128 ||
-          (data[i] > 170 &&
-            data[i + 2] > 140 &&
-            data[i + 1] < 135 &&
-            data[i] - data[i + 1] > 75 &&
-            data[i + 2] - data[i + 1] > 65)
-        )
-      )
-        continue;
-      data[i + 3] = 0;
-      const x = p % edge,
-        y = Math.floor(p / edge);
-      if (x > 0) queue.push(p - 1);
-      if (x < edge - 1) queue.push(p + 1);
-      if (y > 0) queue.push(p - edge);
-      if (y < edge - 1) queue.push(p + edge);
-    }
-    let visible = 0,
-      borderClear = 0,
-      border = 0;
-    for (let y = 0; y < info.height; y++)
-      for (let x = 0; x < info.width; x++) {
-        const i = (y * info.width + x) * 4 + 3;
-        data[i] = data[i] < 128 ? 0 : 255;
-        if (data[i]) visible++;
-        if (x < 2 || y < 2 || x >= info.width - 2 || y >= info.height - 2) {
-          border++;
-          if (!data[i]) borderClear++;
-        }
-      }
-    if (visible < 400 || visible > 3700 || borderClear / border < 0.8)
-      throw new Error();
-    // 透明阶梯轮廓与 64px 逻辑栅格；不声称可自动分层或绑定骨骼。
-    return await sharp(data, { raw: info })
-      .resize(AVATAR.outputSize, AVATAR.outputSize, { kernel: "nearest" })
-      .png({ palette: true, colours: 64, dither: 0 })
+    const matte = removeUniformBackground(data, info.width, info.height);
+    // 去背景后再缩至显示尺寸，保留细发丝/眼镜/表情；不靠64px重采样伪造画风。
+    return await sharp(matte.data, { raw: info })
+      .resize(AVATAR.outputSize, AVATAR.outputSize, { kernel: "lanczos3" })
+      .png()
       .toBuffer();
-  } catch {
+  } catch (error) {
+    if (error instanceof AvatarPipelineError) throw error;
     throw new AvatarPipelineError("AVATAR_IMAGE_NORMALIZE_FAILED");
   }
 }
@@ -134,7 +92,8 @@ export async function normalizeGeneratedSource(bytes: Buffer): Promise<Buffer> {
     )
       throw new Error();
     return await decoder.png().toBuffer();
-  } catch {
+  } catch (error) {
+    if (error instanceof AvatarPipelineError) throw error;
     throw new AvatarPipelineError("AVATAR_IMAGE_NORMALIZE_FAILED");
   }
 }

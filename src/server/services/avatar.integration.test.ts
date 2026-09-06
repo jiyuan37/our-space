@@ -91,6 +91,79 @@ suite.sequential("头像真实 PostgreSQL 授权与持久性", () => {
   });
   const generate = (id = randomUUID()) =>
     service.generateOwn(own, id, AVATAR.policyVersion, source, "image/jpeg");
+  it("离线恢复source，不调用provider、不改final/期限，Partner不可读before", async () => {
+    const ready = await generate();
+    const original = await db.avatarGeneration.findUniqueOrThrow({
+      where: { id: ready.id },
+      include: { sourceMediaAsset: true },
+    });
+    await db.avatarGeneration.update({
+      where: { id: ready.id },
+      data: {
+        status: "FAILED",
+        candidateMediaAssetId: null,
+        failureStage: "AVATAR_IMAGE_NORMALIZE_FAILED",
+      },
+    });
+    await db.mediaAsset.delete({
+      where: { id: original.candidateMediaAssetId! },
+    });
+    await expect(service.renormalizeOwn(partner, ready.id)).rejects.toThrow();
+    const recovered = await service.renormalizeOwn(own, ready.id);
+    expect(recovered.status).toBe("READY");
+    expect(recovered.sourceUrl).toBeTruthy();
+    const firstDisplay = await db.avatarGeneration.findUniqueOrThrow({
+      where: { id: ready.id },
+      include: { candidateMediaAsset: true },
+    });
+    await service.renormalizeOwn(own, ready.id);
+    await expect(
+      storage.get(firstDisplay.candidateMediaAsset!.storageKey),
+    ).rejects.toThrow();
+    const job = await db.avatarGeneration.findUniqueOrThrow({
+      where: { id: ready.id },
+    });
+    expect(job.sourceMediaAssetId).toBe(original.sourceMediaAssetId);
+    expect(job.expiresAt).toEqual(original.expiresAt);
+    expect(job.dispatchedAt).toEqual(original.dispatchedAt);
+    expect(job.confirmedMediaAssetId).toBeNull();
+    expect(provider.generate).toHaveBeenCalledTimes(1);
+    expect(
+      (await db.resident.findUniqueOrThrow({ where: { id: ownResident } }))
+        .avatarVersion,
+    ).toBe(0);
+    await expect(
+      service.readCandidateImage(partner, ready.id, true),
+    ).rejects.toThrow();
+    expect(
+      (await service.readCandidateImage(own, ready.id, true)).bytes,
+    ).toEqual(await storage.get(original.sourceMediaAsset!.storageKey));
+  });
+  it("离线恢复显示写入失败保留source和旧final", async () => {
+    const ready = await generate();
+    const original = await db.avatarGeneration.findUniqueOrThrow({
+      where: { id: ready.id },
+    });
+    await db.avatarGeneration.update({
+      where: { id: ready.id },
+      data: { status: "FAILED", candidateMediaAssetId: null },
+    });
+    await db.mediaAsset.delete({
+      where: { id: original.candidateMediaAssetId! },
+    });
+    const put = vi
+      .spyOn(storage, "put")
+      .mockRejectedValueOnce(new Error("controlled storage failure"));
+    await expect(service.renormalizeOwn(own, ready.id)).rejects.toThrow();
+    put.mockRestore();
+    const job = await db.avatarGeneration.findUniqueOrThrow({
+      where: { id: ready.id },
+    });
+    expect(job.status).toBe("FAILED");
+    expect(job.sourceMediaAssetId).toBe(original.sourceMediaAssetId);
+    expect(job.confirmedMediaAssetId).toBeNull();
+    expect(provider.generate).toHaveBeenCalledTimes(1);
+  });
   it("没有 ACTIVE Resident 或未同意不能生成", async () => {
     await expect(
       service.generateOwn(

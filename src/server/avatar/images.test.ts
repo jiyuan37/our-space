@@ -51,7 +51,7 @@ describe("头像图片边界", () => {
       ),
     ).rejects.toThrow();
   });
-  it("候选具有固定像素栅格、透明背景且拒绝无效输出", async () => {
+  it("候选具有固定显示尺寸、透明背景且拒绝无效输出", async () => {
     const bytes = await new FixtureAvatarProvider().generate();
     const image = await normalizeCandidate(bytes);
     const meta = await sharp(image).metadata();

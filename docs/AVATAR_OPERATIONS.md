@@ -1,5 +1,7 @@
 # AVATAR-01 运行与验证
 
+> 2026-09-06 最新：当前已保存真实source离线规范化成功，仍未确认/未验收画风；本轮0真实请求。下一次payload为原创style0 + selfie1，均<512，尚未发送。此前固定紫红背景、64px/64色显示规范由DEC-063替代。详情见 [离线恢复记录](./AVATAR_OFFLINE_NORMALIZATION_2026-09-06.md)。
+
 最后更新：2026-09-06
 
 ## 当前完成程度
@@ -38,7 +40,7 @@
 
 2026-09-05 已核对的官方依据（本轮没有为诊断追加模型请求）：
 
-- [FLUX.2 klein 4B](https://developers.cloudflare.com/workers-ai/models/flux-2-klein-4b/) 与 [图像编辑示例](https://developers.cloudflare.com/changelog/post/2026-01-28-flux-2-klein-9b-workers-ai/)：multipart `input_image_0`；现有 adapter 发送 480px 本人照片、固定 prompt、1024px width/height，无额外参考图。
+- [FLUX.2 klein 4B](https://developers.cloudflare.com/workers-ai/models/flux-2-klein-4b/) 与 [图像编辑示例](https://developers.cloudflare.com/changelog/post/2026-01-28-flux-2-klein-9b-workers-ai/)：multipart `input_image_0`；此前 adapter 只发送480px本人照片；本轮按明确要求改为480×320原创风格图0 + <=480px自拍图1、固定prompt及1024px width/height，尚未发出。
 - [SDXL-Lightning](https://developers.cloudflare.com/workers-ai/models/stable-diffusion-xl-lightning/)：现有静态实现使用 img2img 参数；上轮 400/3030 未确诊，不能称可用。
 - [Workers AI 价格](https://developers.cloudflare.com/workers-ai/platform/pricing/)：Free 额度共享于账户其他使用；Free 用完停止，不自动转 Paid。代码不核实实际账户账单，付费计划不在授权范围。
 - [数据规则](https://developers.cloudflare.com/workers-ai/platform/data-usage/)：服务方声明未经同意不用于训练/改进；具体处理地域及逐项删除时限未确认，不承诺零保留或服务侧即时删除。
@@ -69,7 +71,7 @@
 
 - 上传在服务端真实解码，JPEG/PNG/WebP、MIME 一致、最多 5 MB、单帧、最少 128px、最多 2000 万像素；按方向旋转，去 EXIF，最长边不超过 1024px。FLUX 进一步缩至 480px。
 - 原自拍仅浏览器预览和服务端请求内存，不写应用磁盘或数据库。仅本人处理后照片＋固定头像提示，不发送姓名、位置、Presence、Partner、生活记录或其他 Space 内容。不接 AI Gateway/R2/KV 缓存。
-- 模型输出必须有效 1024px 单帧图。保留真实编码的 JPEG/PNG **生成源图**（目标1024px），同时按现有去背景/64px 逻辑像素规范化产生 256px 透明 PNG 显示图。source不是原自拍，也不是60px sprite；规范化失败时通过本人受权候选预览读取，不是公开下载。
+- 模型输出必须有效 1024px 单帧图。保留真实编码的 JPEG/PNG **生成源图**（目标1024px），同时按全分辨率自适应纯色去背景处理产生256px透明PNG显示图；不强制64px/64色。source不是原自拍，也不是60px sprite；规范化失败时通过本人受权候选预览读取，不是公开下载。
 - 不合格尺寸/透明边缘/可见区域拒绝，不保证每张 AI 输出像本人、符合风格、天然可拆层或骨骼动画。保留 model/style/version 及真实 source 是后续处理基础，不是 ANIMATION-01 实现。
 - 私密目录 0700、文件 0600、不在 public。候选取消/过期两份同删；替换删除旧 final 和 source；确认后不无限保留 candidate 引用。
 - `AvatarService.cleanup(now, residentId?)` 可独立调用/测试。读取本人任务、恢复候选和预览时 lazy cleanup，过期即拒绝读取/确认。现有常驻 Node 启动及每 60 秒批量扫描；超过 1 小时且无数据库引用的孤儿文件补删。

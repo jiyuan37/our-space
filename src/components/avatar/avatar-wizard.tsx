@@ -227,6 +227,20 @@ export function AvatarWizard({
               />
             </div>
           </div>
+          {job.status === "READY" && job.sourceUrl && (
+            <details className="avatar-policy">
+              <summary>{t("avatar.sourceBefore")}</summary>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={job.sourceUrl}
+                alt={t("avatar.sourceBefore")}
+                width="256"
+                height="256"
+                className="avatar-candidate"
+              />
+              <p>{t("avatar.normalizedNote")}</p>
+            </details>
+          )}
           {job.status === "READY" && (
             <label className="avatar-consent">
               <input
