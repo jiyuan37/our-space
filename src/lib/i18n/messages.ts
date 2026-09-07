@@ -18,6 +18,12 @@ const zhCN = {
     "只有你能看到这张候选。确认后，同一 Space 的另一位 Resident 才能看到。",
   "avatar.savedSourceNote":
     "生成图片已私密保留，但暂未整理成可用的像素头像。只有你能查看；当前不能设为正式形象，可以取消。24 小时后清理。",
+  "avatar.rejectedTitle": "身份不符，候选已拒绝",
+  "avatar.identityCheck":
+    "确认前请核对自拍：凭空新增的眼镜、帽子、耳环、胡子或发饰属于身份不符，不能当作风格变化。请拒绝这张候选。",
+  "avatar.rejectIdentity": "身份不符，拒绝这张",
+  "avatar.identityRejected":
+    "这张候选已因身份不符被拒绝，不能确认为正式形象。仅你可预览；可以取消，或到原24小时期限后清理。",
   "avatar.candidateAlt": "待本人确认的像素角色候选",
   "avatar.sourceBefore": "查看生成原图（规范化前）",
   "avatar.normalizedNote":
@@ -172,6 +178,12 @@ const enUS: Messages = {
     "Only you can see this candidate. The other Resident in your Space sees it only after confirmation.",
   "avatar.savedSourceNote":
     "Your generated image was saved privately, but could not be prepared as a pixel avatar. Only you can preview it. It cannot be used as your character yet; you can cancel. It expires in 24 hours.",
+  "avatar.rejectedTitle": "Identity mismatch — candidate rejected",
+  "avatar.identityCheck":
+    "Compare with your selfie before confirming: invented glasses, hats, earrings, facial hair or hair accessories are an identity mismatch, not a style change. Reject the candidate.",
+  "avatar.rejectIdentity": "Reject identity mismatch",
+  "avatar.identityRejected":
+    "This candidate was rejected for an identity mismatch and cannot become your character. Only you can preview it. Cancel to delete it, or it will be cleared at its original 24-hour deadline.",
   "avatar.candidateAlt": "Pixel character candidate awaiting your confirmation",
   "avatar.sourceBefore": "View generated source (before processing)",
   "avatar.normalizedNote":

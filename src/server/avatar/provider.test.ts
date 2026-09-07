@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import sharp from "sharp";
+import { readFile } from "node:fs/promises";
 import { AVATAR } from "@/lib/avatar/config";
 import { approvedStyleReference } from "./style-reference";
 import { CloudflareAvatarProvider, FLUX_AVATAR_PROMPT } from "./provider";
@@ -107,6 +108,20 @@ describe("可替换 Cloudflare provider", () => {
       message: "AVATAR_GENERATION_FAILED",
     });
     expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+  it("身份事实仅来自自拍，无眼镜必须无眼镜，参考副本无发夹/道具", async () => {
+    for (const requirement of [
+      "If image 1 has no glasses, the output MUST have no glasses",
+      "Never add glasses, hats, earrings, a beard, hair accessories",
+      "hair colour, hair length, hair parting or bangs, face shape",
+      "accessories, face, hairstyle or identity from image 0",
+      "Identity facts from image 1 always override",
+    ])
+      expect(FLUX_AVATAR_PROMPT).toContain(requirement);
+    const svg = await readFile("src/server/avatar/style-reference.svg", "utf8");
+    expect(svg).not.toContain("M37 18h4v2h-4Z");
+    expect(svg).not.toContain("data-prop=");
+    expect(svg).toContain("no props or accessories");
   });
   it("FLUX 图0仅原创风格、图1仅本人身份，两图严格小于512px且不自动重试", async () => {
     configure();

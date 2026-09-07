@@ -244,6 +244,7 @@ model AvatarGeneration {
   sourceMediaAssetId    String?                @unique
   styleVersion          String                 @default("pixel-big-head-b6fe15a-v1")
   failureStage          String?
+  rejectionReason       String?
   baseAvatarVersion     Int
   model                 String
   policyVersion         String

@@ -79,6 +79,34 @@ describe("头像交互的网络恢复", () => {
     expect(screen.getByRole("button", { name: "avatar.cancel" })).toBeEnabled();
     expect(screen.getByAltText("avatar.candidateAlt")).toBeVisible();
   });
+  it("本人拒绝身份不符后立即移除确认入口，不自动重生成", async () => {
+    vi.mocked(avatarAction).mockResolvedValue({ ok: true });
+    render(<AvatarWizard currentUrl={null} initialJob={job} enabled={false} />);
+    expect(screen.getByText("avatar.identityCheck")).toBeVisible();
+    fireEvent.click(
+      screen.getByRole("button", { name: "avatar.rejectIdentity" }),
+    );
+    await waitFor(() =>
+      expect(screen.getByText("avatar.identityRejected")).toBeVisible(),
+    );
+    expect(screen.queryByRole("button", { name: "avatar.confirm" })).toBeNull();
+    expect(screen.queryByRole("checkbox")).toBeNull();
+    expect(avatarAction).toHaveBeenCalledExactlyOnceWith(
+      "reject-identity",
+      job.id,
+    );
+  });
+  it("刷新恢复身份拒绝状态，即使错误READY标记也不能在UI确认", () => {
+    render(
+      <AvatarWizard
+        currentUrl={null}
+        initialJob={{ ...job, rejectionReason: "IDENTITY_MISMATCH" }}
+        enabled
+      />,
+    );
+    expect(screen.getByText("avatar.identityRejected")).toBeVisible();
+    expect(screen.queryByRole("button", { name: "avatar.confirm" })).toBeNull();
+  });
   it("规范化失败的私密源图可看可取消，不能假装确认可用头像", () => {
     render(
       <AvatarWizard

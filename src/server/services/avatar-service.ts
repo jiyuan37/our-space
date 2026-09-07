@@ -56,8 +56,12 @@ export class AvatarService {
         (status === "READY" || status === "FAILED") && job.sourceMediaAssetId
           ? `/api/avatar/candidates/${job.id}?variant=source`
           : null,
+      rejectionReason:
+        job.rejectionReason === "IDENTITY_MISMATCH"
+          ? "IDENTITY_MISMATCH"
+          : null,
       previewKind:
-        status === "READY"
+        (status === "READY" || status === "FAILED") && job.candidateMediaAssetId
           ? "display"
           : status === "FAILED" && job.sourceMediaAssetId
             ? "source"
@@ -273,6 +277,28 @@ export class AvatarService {
       }
     }
   }
+  // 本人明确拒绝身份不符；与provider技术错误分开，不冒充自动人脸识别。
+  async rejectIdentityOwn(userId: string, id: string) {
+    z.string().uuid().parse(id);
+    return this.locked(async (tx) => {
+      const resident = await new ResidentService(tx).requireActive(userId);
+      const job = await tx.avatarGeneration.findFirst({
+        where: { id, residentId: resident.id },
+      });
+      if (
+        !job ||
+        !["READY", "FAILED"].includes(job.status) ||
+        job.expiresAt <= new Date()
+      )
+        throw new AvatarNotAvailableError();
+      return this.view(
+        await tx.avatarGeneration.update({
+          where: { id },
+          data: { status: "FAILED", rejectionReason: "IDENTITY_MISMATCH" },
+        }),
+      );
+    });
+  }
   async confirmOwn(userId: string, id: string) {
     z.string().uuid().parse(id);
     const oldKeys = await this.locked(async (tx) => {
@@ -290,6 +316,7 @@ export class AvatarService {
         !job ||
         this.view(job).status !== "READY" ||
         !job.candidateMediaAsset ||
+        job.rejectionReason !== null ||
         job.baseAvatarVersion !== identity.avatarVersion
       )
         throw new AvatarNotAvailableError();
@@ -382,6 +409,7 @@ export class AvatarService {
         id,
         residentId: resident.id,
         status: { in: ["FAILED", "READY"] },
+        rejectionReason: null,
         expiresAt: { gt: new Date() },
       },
       include: { sourceMediaAsset: true, candidateMediaAsset: true },
@@ -401,6 +429,7 @@ export class AvatarService {
         if (
           active.id !== job.residentId ||
           !["FAILED", "READY"].includes(current.status) ||
+          current.rejectionReason !== null ||
           current.sourceMediaAssetId !== job.sourceMediaAssetId ||
           current.candidateMediaAssetId !== job.candidateMediaAssetId ||
           current.expiresAt <= new Date()
@@ -450,7 +479,7 @@ export class AvatarService {
       include: { candidateMediaAsset: true, sourceMediaAsset: true },
     });
     const asset =
-      job?.status === "READY" && !source
+      job?.candidateMediaAsset && !source
         ? job.candidateMediaAsset
         : job?.sourceMediaAsset;
     if (!asset) throw new AvatarNotAvailableError();

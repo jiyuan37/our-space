@@ -5,14 +5,22 @@
 ## 当前 Phase
 
 - 当前工作包：AVATAR-01 — 自拍生成、用户确认与持久卡通身份；用户已明确批准正式实现，Phase 1–3 基础保留。
-- 当前状态：**AVATAR-01 当前真实source已离线恢复为透明display候选；未确认，画风尚未验收。本轮0次外部请求，已修复纯色背景处理及style0/identity1双参考payload，未进行新真实生成。**
+- 当前状态：**本次真实候选按用户反馈已标记IDENTITY_MISMATCH并禁止确认；画风/身份均未验收。身份专属prompt v3、无配饰参考和持久拒绝流程已实现，本轮0次真实请求。**
 - Phase 3 implementation 已完成并通过 Final Review；本轮不重做历史验收。
 - 实际项目根目录：`/Users/yuan/Desktop/our-space`。
 - 最新授权仅执行 AVATAR-01；允许相关 Schema、正式 Home、配置、测试与文档改动，并在检查后正常提交/push。地图生产接入、定位和 ANIMATION-01 不在本轮范围。
 - Phase 2 已完成并通过最终 Review；Phase 3 前置 UI/UX Review、Design Decision Closure、implementation、Independent Final Review 与 Final Polish Patch 均已完成。
 - **Phase 4 尚未开始，也未获得批准。**
 
-## AVATAR-01 当前真实source离线恢复（本轮）
+## AVATAR-01 身份拒绝与约束（本轮）
+
+- 起点1d4c6a2a2847701df73d1f17b7a254c9e3bdbce4，main、干净、0/0；原始自拍无眼镜由用户明确指出，不额外发模型核验。
+- 当前候选FAILED + IDENTITY_MISMATCH，保留本人预览和原24h清理，禁止确认/通过离线恢复撤销拒绝。正式头像未改。
+- prompt升级flux-style0-identity1-v3；图1唯一决定身份事实，图0不提供任何人物身份/配饰；原创参考副本移除发夹。原型本体不变。
+- 新增可空rejectionReason支撑字段，6/6 migrations；证据与检查见AVATAR_IDENTITY_GUARD_2026-09-06.md。
+- 提交信息 `fix: reject avatar identity mismatches`；包含本节的完整hash以Git定位，正常push后目标main、干净、0/0。本轮不申请新的真实生成。
+
+## AVATAR-01 当前真实source离线恢复（上一轮）
 
 - 起点 f80b3e2bea0b36a180a81ef5e8976a4d9fa5eb51，main、干净、0/0。上一轮新批准1次已耗尽，HTTP200后保存source但规范化失败。
 - 已准确定位为旧固定色相阈值未识别实际背景；本轮用边缘自适应本地处理，从同一source恢复256px透明PNG，source字节/期限及final引用不变。

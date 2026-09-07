@@ -348,3 +348,44 @@ test("规范化失败保留真实持久测试源图：本人双语预览，不�
     await db.$disconnect();
   }
 });
+
+test("身份不符必须拒绝：键盘操作、刷新持久、英文提示与取消", async ({
+  page,
+}) => {
+  const db = database();
+  try {
+    const { owner } = await setup(db);
+    await login(page, owner.email);
+    await page.getByRole("link", { name: "创建我的像素形象" }).click();
+    await choose(page);
+    await page.getByRole("button", { name: "生成一张候选" }).click();
+    await expect(
+      page.getByText("确认前请核对自拍", { exact: false }),
+    ).toBeVisible();
+    const reject = page.getByRole("button", { name: "身份不符，拒绝这张" });
+    await reject.focus();
+    await page.keyboard.press("Enter");
+    await expect(
+      page.getByRole("heading", { name: "身份不符，候选已拒绝" }),
+    ).toBeVisible();
+    await expect(page.getByRole("button", { name: "就用这个" })).toHaveCount(0);
+    await page.reload();
+    await expect(
+      page.getByRole("heading", { name: "身份不符，候选已拒绝" }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "EN English", exact: true }).click();
+    await expect(
+      page.getByText("This candidate was rejected for an identity mismatch", {
+        exact: false,
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Use this character", exact: true }),
+    ).toHaveCount(0);
+    await page.getByRole("button", { name: "Cancel and return Home" }).click();
+    await expect(page).toHaveURL(/\/home/);
+    await expect(page.locator(".resident-pixel-avatar")).toHaveCount(0);
+  } finally {
+    await db.$disconnect();
+  }
+});

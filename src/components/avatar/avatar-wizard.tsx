@@ -35,6 +35,7 @@ export function AvatarWizard({
   const activeId = useRef(initialJob?.id ?? null);
   const submitting = useRef(false);
   const candidateHeading = useRef<HTMLHeadingElement>(null);
+  const identityRejected = job?.rejectionReason === "IDENTITY_MISMATCH";
   const pending = job?.status === "PENDING";
   const pendingId = pending ? job.id : null;
   useEffect(() => {
@@ -143,8 +144,38 @@ export function AvatarWizard({
       setSaving(false);
     }
   }
+  async function rejectIdentity() {
+    if (!job || saving || identityRejected) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const result = await avatarAction("reject-identity", job.id);
+      if (!result.ok) {
+        setError(result.errorCode ?? "UNEXPECTED_ERROR");
+        return;
+      }
+      setSelected(false);
+      setJob({
+        ...job,
+        status: "FAILED",
+        rejectionReason: "IDENTITY_MISMATCH",
+      });
+      router.refresh();
+    } catch {
+      setError("UNEXPECTED_ERROR");
+    } finally {
+      setSaving(false);
+    }
+  }
   async function confirm() {
-    if (!job || job.status !== "READY" || !selected || saving) return;
+    if (
+      !job ||
+      job.status !== "READY" ||
+      identityRejected ||
+      !selected ||
+      saving
+    )
+      return;
     setSaving(true);
     setError(null);
     try {
@@ -197,13 +228,15 @@ export function AvatarWizard({
         (job.status === "READY" || job.status === "FAILED") ? (
         <section className="avatar-stage" aria-labelledby="candidate-title">
           <h2 id="candidate-title" ref={candidateHeading} tabIndex={-1}>
-            {t("avatar.candidate")}
+            {t(identityRejected ? "avatar.rejectedTitle" : "avatar.candidate")}
           </h2>
           <p>
             {t(
-              job.previewKind === "source"
-                ? "avatar.savedSourceNote"
-                : "avatar.candidateNote",
+              identityRejected
+                ? "avatar.identityRejected"
+                : job.previewKind === "source"
+                  ? "avatar.savedSourceNote"
+                  : "avatar.candidateNote",
             )}
           </p>
           <div className="avatar-candidate-preview">
@@ -227,7 +260,7 @@ export function AvatarWizard({
               />
             </div>
           </div>
-          {job.status === "READY" && job.sourceUrl && (
+          {job.sourceUrl && (
             <details className="avatar-policy">
               <summary>{t("avatar.sourceBefore")}</summary>
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -241,7 +274,7 @@ export function AvatarWizard({
               <p>{t("avatar.normalizedNote")}</p>
             </details>
           )}
-          {job.status === "READY" && (
+          {job.status === "READY" && !identityRejected && (
             <label className="avatar-consent">
               <input
                 type="checkbox"
@@ -252,8 +285,11 @@ export function AvatarWizard({
               <span>{t("avatar.select")}</span>
             </label>
           )}
+          {!identityRejected && job.status === "READY" && (
+            <Notice>{t("avatar.identityCheck")}</Notice>
+          )}
           <div className="avatar-actions">
-            {job.status === "READY" && (
+            {job.status === "READY" && !identityRejected && (
               <PrimaryButton
                 type="button"
                 pending={saving}
@@ -262,6 +298,15 @@ export function AvatarWizard({
               >
                 {t("avatar.confirm")}
               </PrimaryButton>
+            )}
+            {!identityRejected && (
+              <SecondaryButton
+                type="button"
+                disabled={saving}
+                onClick={() => void rejectIdentity()}
+              >
+                {t("avatar.rejectIdentity")}
+              </SecondaryButton>
             )}
             <SecondaryButton
               type="button"

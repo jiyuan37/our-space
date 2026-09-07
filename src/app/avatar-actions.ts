@@ -11,7 +11,7 @@ import {
   privateBucket,
 } from "@/server/rate-limit/rate-limiter";
 export async function avatarAction(
-  intent: "confirm" | "cancel",
+  intent: "confirm" | "cancel" | "reject-identity",
   id: string,
 ): Promise<{ ok?: true; errorCode?: UiErrorCode }> {
   try {
@@ -23,6 +23,8 @@ export async function avatarAction(
     });
     if (intent === "confirm")
       await avatarService().confirmOwn(session.user.userId, id);
+    else if (intent === "reject-identity")
+      await avatarService().rejectIdentityOwn(session.user.userId, id);
     else if (intent === "cancel")
       await avatarService().cancelOwn(session.user.userId, id);
     else return { errorCode: "INVALID_INPUT" };

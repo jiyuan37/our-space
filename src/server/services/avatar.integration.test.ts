@@ -164,6 +164,42 @@ suite.sequential("头像真实 PostgreSQL 授权与持久性", () => {
     expect(job.confirmedMediaAssetId).toBeNull();
     expect(provider.generate).toHaveBeenCalledTimes(1);
   });
+  it("身份拒绝仅本人可操作，持久保存并禁止确认/离线洗成READY", async () => {
+    const first = await generate();
+    await service.confirmOwn(own, first.id);
+    const before = await db.resident.findUniqueOrThrow({
+      where: { id: ownResident },
+    });
+    const job = await generate();
+    await expect(service.rejectIdentityOwn(partner, job.id)).rejects.toThrow();
+    await expect(service.rejectIdentityOwn(outsider, job.id)).rejects.toThrow();
+    const rejected = await service.rejectIdentityOwn(own, job.id);
+    expect(rejected.status).toBe("FAILED");
+    expect(rejected.rejectionReason).toBe("IDENTITY_MISMATCH");
+    expect((await service.latestOwn(own))?.rejectionReason).toBe(
+      "IDENTITY_MISMATCH",
+    );
+    await service.rejectIdentityOwn(own, job.id);
+    await expect(service.confirmOwn(own, job.id)).rejects.toThrow();
+    await expect(service.renormalizeOwn(own, job.id)).rejects.toThrow();
+    await expect(service.readCandidateImage(partner, job.id)).rejects.toThrow();
+    expect((await service.readCandidateImage(own, job.id)).mimeType).toBe(
+      "image/png",
+    );
+    const after = await db.resident.findUniqueOrThrow({
+      where: { id: ownResident },
+    });
+    expect(after.avatarMediaAssetId).toBe(before.avatarMediaAssetId);
+    expect(after.avatarVersion).toBe(before.avatarVersion);
+    // 即使数据库状态错误回到READY，拒绝原因也独立阻止确认。
+    await db.avatarGeneration.update({
+      where: { id: job.id },
+      data: { status: "READY" },
+    });
+    await expect(service.confirmOwn(own, job.id)).rejects.toThrow();
+    await service.cancelOwn(own, job.id);
+    await expect(service.readCandidateImage(own, job.id)).rejects.toThrow();
+  });
   it("没有 ACTIVE Resident 或未同意不能生成", async () => {
     await expect(
       service.generateOwn(
