@@ -2,6 +2,23 @@ import type { Locale } from "@/lib/i18n/config";
 import { formatNumber } from "@/lib/i18n/format";
 
 const zhCN = {
+  "map.notConfigured": "地图数据接入尚未启用。你仍可使用头像与此刻。",
+  "map.canvas": "像素地图：浏览真实地理，不表示人物位置",
+  "map.keyboard":
+    "可拖动地图。键盘方向键移动，加减键缩放，Home 键回到原始视野。",
+  "map.controls": "地图视野",
+  "map.zoomIn": "放大地图",
+  "map.zoomOut": "缩小地图",
+  "map.recenter": "回到原始地图视野",
+  "map.residentShortcuts": "家里的人",
+  "map.unlocated": "人物快捷入口 · 未分享位置",
+  "map.close": "收起",
+  "map.chooseArea": "选择浏览区域",
+  "map.areaNote": "这里只是你想看的地图，不是任何人的当前位置。",
+  "map.loading": "正在铺开地图…",
+  "map.error": "地图暂时没能展开。家里的人和此刻仍在这里。",
+  "map.retry": "重新加载地图",
+
   "avatar.eyebrow": "一个小小的你",
   "avatar.create": "创建我的像素形象",
   "avatar.replace": "更换形象",
@@ -160,6 +177,25 @@ export type MessageKey = keyof typeof zhCN;
 export type Messages = Readonly<Record<MessageKey, string>>;
 
 const enUS: Messages = {
+  "map.notConfigured":
+    "Map data access is not enabled yet. Your avatar and Presence are still available.",
+  "map.canvas": "Pixel map: real geography, not Resident locations",
+  "map.keyboard":
+    "Drag to pan. Use arrow keys to move, plus or minus to zoom, and Home to reset the view.",
+  "map.controls": "Map view",
+  "map.zoomIn": "Zoom in",
+  "map.zoomOut": "Zoom out",
+  "map.recenter": "Reset map view",
+  "map.residentShortcuts": "People at Home",
+  "map.unlocated": "Resident shortcuts · No locations shared",
+  "map.close": "Close",
+  "map.chooseArea": "Choose an area to browse",
+  "map.areaNote": "An area you want to see, not anyone’s current location.",
+  "map.loading": "Unfolding the map…",
+  "map.error":
+    "The map could not load. Your people and their Presence are still here.",
+  "map.retry": "Reload map",
+
   "avatar.eyebrow": "A LITTLE YOU",
   "avatar.create": "Create my pixel character",
   "avatar.replace": "Change my character",

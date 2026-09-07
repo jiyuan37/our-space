@@ -3,6 +3,9 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { AuthService } from "@/server/services/auth-service";
 import { InvitationService } from "@/server/services/invitation-service";
+import { MapService } from "@/server/map/service";
+import { MemoryRateLimiter } from "@/server/rate-limit/rate-limiter";
+
 import { HomeService } from "@/server/services/home-service";
 import { PresenceService } from "@/server/services/presence-service";
 import { SpaceService } from "@/server/services/space-service";
@@ -503,5 +506,42 @@ suite.sequential("Phase 2/3 PostgreSQL integration", () => {
     await expect(
       new PresenceService(db).updateOwn(pair.owner.id, "不应写入"),
     ).rejects.toBeInstanceOf(NotSpaceResidentError);
+  });
+  it("地图服务只允许真实 ACTIVE Resident 读取公共地理，退出后拒绝", async () => {
+    const ownerHome = await createOwner("map-access");
+    const stranger = await register("map-stranger@example.com");
+    let requests = 0;
+    const geography = {
+      bounds: [2.326, 48.848, 2.354, 48.866] as const,
+      features: [],
+      attribution: "OpenStreetMap contributors" as const,
+      fetchedAt: new Date().toISOString(),
+    };
+    const service = new MapService(
+      db,
+      {
+        read: async () => {
+          requests++;
+          return geography;
+        },
+      },
+      { read: async () => null, write: async () => {} },
+      new MemoryRateLimiter(),
+    );
+    await expect(
+      service.read(stranger.id, "paris-seine"),
+    ).rejects.toBeInstanceOf(NotSpaceResidentError);
+    expect(requests).toBe(0);
+    expect(await service.read(ownerHome.owner.id, "paris-seine")).toEqual(
+      geography,
+    );
+    await db.resident.updateMany({
+      where: { userId: ownerHome.owner.id },
+      data: { status: "LEFT", leftAt: new Date() },
+    });
+    await expect(
+      service.read(ownerHome.owner.id, "paris-seine"),
+    ).rejects.toBeInstanceOf(NotSpaceResidentError);
+    expect(requests).toBe(1);
   });
 });

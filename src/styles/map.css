@@ -1,0 +1,314 @@
+/* 原创地图视觉集中维护；业务表单与账户菜单沿用既有组件。 */
+.app-shell-home {
+  background: #e4ddc7;
+}
+.app-shell-home .shell-header {
+  position: relative;
+  z-index: 6;
+  height: 64px;
+  min-height: 64px;
+  width: calc(100% - 40px);
+}
+.app-shell-home .shell-main-home {
+  display: block;
+  width: 100%;
+  padding: 0;
+  min-height: calc(100svh - 64px);
+}
+.map-home {
+  width: 100%;
+  position: relative;
+  min-height: calc(100svh - 64px);
+  isolation: isolate;
+  animation: none;
+}
+.map-canvas {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: -1;
+}
+.map-svg {
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: grab;
+}
+.map-svg:active {
+  cursor: grabbing;
+}
+.map-svg:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: -4px;
+}
+.map-home .home-intro {
+  position: relative;
+  width: fit-content;
+  max-width: calc(100% - 100px);
+  padding: 22px 28px;
+  border: none;
+  pointer-events: none;
+}
+.map-home h1 {
+  font-size: clamp(1.5rem, 4vw, 2.4rem);
+  max-width: 22ch;
+  line-height: 1.2;
+}
+.map-home .home-private-note {
+  margin: 5px 0 0;
+  font-size: 12px;
+}
+.map-home .home-welcome {
+  margin: 0 24px;
+}
+.map-controls {
+  position: absolute;
+  right: 20px;
+  top: 24px;
+  display: grid;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #fff5df;
+  box-shadow: 0 3px 0 #b6a48c;
+}
+.map-controls button {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 23px;
+  color: #675744;
+  cursor: pointer;
+}
+.map-controls button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.map-attribution {
+  position: absolute;
+  right: 10px;
+  bottom: 6px;
+  font-size: 10px;
+  padding: 2px 5px;
+  background: #fff9e7e6;
+  border-radius: 3px;
+}
+.map-home .residents {
+  position: relative;
+  margin: clamp(220px, 40svh, 480px) auto 0;
+  width: min(590px, calc(100% - 32px));
+  padding: 16px 20px;
+  border-radius: 22px;
+  background: #fff8e8ed;
+  box-shadow:
+    0 4px 0 #b7a78e80,
+    0 15px 38px #4b443019;
+}
+.map-home .residents > h2 {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+.resident-location-note {
+  margin: 0 0 8px;
+  font-size: 11px;
+  color: #74654e;
+}
+.map-home .resident-list {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+}
+.map-home .resident {
+  display: block;
+  border: none;
+  padding: 0;
+  flex: 1 1 0;
+  min-width: 0;
+  text-align: center;
+}
+.resident-marker {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 100%;
+  min-width: 88px;
+  min-height: 104px;
+  padding: 0 6px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.resident-marker > span:last-child {
+  font-size: 14px;
+  font-weight: 600;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.resident-marker .resident-avatar {
+  width: 76px;
+  height: 76px;
+  border-radius: 24px;
+  background: #e3cda9;
+  border: 3px solid #f7e9d0;
+  color: #745b43;
+  font-size: 22px;
+}
+.resident-marker .resident-pixel-avatar {
+  width: 88px;
+  height: 88px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+.resident-marker[aria-expanded="true"] {
+  background: #eddcc15c;
+  border-radius: 14px;
+}
+.map-home .presence-line {
+  min-height: 0;
+  padding: 3px 0;
+  font-size: 14px;
+}
+.map-home .presence-edit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  font-size: 12px;
+}
+.map-home .avatar-create {
+  display: flex;
+  text-decoration: none;
+  border: 1px solid #c7ae8c;
+  border-radius: 12px;
+  padding: 6px;
+  background: #f2e1c6;
+}
+.resident-details p {
+  margin: 4px 0;
+  font-size: 11px;
+  color: #74654e;
+}
+.map-home .presence-editor {
+  position: relative;
+  margin: 8px 0 0;
+  text-align: left;
+}
+.map-home .quiet-state {
+  margin: 0 auto;
+  padding: 16px 24px 34px;
+  border: none;
+  min-height: 0;
+  text-align: center;
+}
+.map-home .quiet-state p {
+  max-width: none;
+  font-size: 12px;
+}
+.map-home .quiet-state .quiet-title {
+  font-family: inherit;
+  font-size: 13px;
+  margin: 0;
+}
+.map-region {
+  position: relative;
+  margin: 0 24px;
+  width: fit-content;
+  max-width: calc(100% - 90px);
+}
+@media (max-width: 600px) {
+  .app-shell-home .shell-header {
+    width: calc(100% - 24px);
+  }
+  .map-home .home-intro {
+    padding: 16px;
+  }
+  .map-home .residents {
+    margin-top: max(190px, calc(100svh - 575px));
+    width: calc(100% - 24px);
+    padding: 12px;
+  }
+  .map-home .resident-list {
+    gap: 14px;
+  }
+  .map-home .resident + .resident {
+    border: none;
+  }
+  .map-home .presence-editor {
+    width: calc(100vw - 48px);
+    margin-left: calc(-50vw + 24px);
+    z-index: 2;
+  }
+  .map-home .resident:only-child .presence-editor {
+    margin-left: 0;
+  }
+  .map-controls {
+    right: 12px;
+    top: 16px;
+  }
+  .map-home .quiet-state {
+    padding-bottom: 36px;
+  }
+}
+.map-region {
+  z-index: 3;
+  min-height: 44px;
+  font-size: 12px;
+}
+.map-region summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  cursor: pointer;
+  background: #fff6e3ed;
+  border-radius: 12px;
+  padding: 6px 12px;
+}
+.map-region summary::after {
+  content: "⌄";
+  margin-left: 12px;
+}
+.map-area-picker {
+  position: absolute;
+  top: 48px;
+  left: 0;
+  padding: 16px;
+  border: 1px solid #c9b695;
+  border-radius: 16px;
+  background: #fff8e8;
+  width: min(290px, calc(100vw - 48px));
+  box-shadow: 0 8px 20px #64574020;
+}
+.map-area-picker p {
+  margin: 0 0 10px;
+}
+.map-area-picker button,
+.map-region [role="status"] button {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  border: 0;
+  border-radius: 8px;
+  padding: 8px;
+  background: #ede0c6;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  margin-top: 6px;
+}
+.map-area-picker button[aria-pressed="true"] {
+  background: #d4debc;
+}
+.map-region [role="status"]:not(:empty) {
+  max-width: 260px;
+  padding: 10px;
+  margin-top: 8px;
+  background: #fff8e8ed;
+  border-radius: 12px;
+}
+.map-region [role="status"] p {
+  margin: 0;
+}

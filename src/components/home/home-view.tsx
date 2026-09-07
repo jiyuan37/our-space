@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ResidentAvatar } from "@/components/avatar/resident-avatar";
+import { ResidentMarker } from "@/components/map/resident-marker";
+import type { ReactNode } from "react";
 
 import {
   useActionState,
@@ -115,10 +116,12 @@ function PresenceEditor({
 export function HomeView({
   home,
   showWelcome = false,
-}: Readonly<{ home: HomeViewModel; showWelcome?: boolean }>) {
+  map,
+}: Readonly<{ home: HomeViewModel; showWelcome?: boolean; map?: ReactNode }>) {
   const { locale, t } = useI18n();
   const now = useViewerNow();
   const [editing, setEditing] = useState(false);
+  const [selectedResident, setSelectedResident] = useState<string | null>(null);
   const [welcomeVisible, setWelcomeVisible] = useState(showWelcome);
   const [announcement, setAnnouncement] = useState<NonNullable<
     PresenceActionState["status"]
@@ -182,12 +185,12 @@ export function HomeView({
     : false;
 
   return (
-    <article className="home" aria-labelledby="home-title">
+    <article className="home map-home" aria-labelledby="home-title">
       <header className="home-intro">
-        <p className="eyebrow">{t("home.eyebrow")}</p>
         <h1 id="home-title">{home.space.name}</h1>
         <p className="home-private-note">{t("home.private")}</p>
       </header>
+      {map}
 
       {welcomeVisible && (
         <p className="home-welcome" role="status">
@@ -195,34 +198,48 @@ export function HomeView({
         </p>
       )}
 
-      {home.residents.some((r) => r.isViewer && !r.avatarUrl) && (
-        <div className="avatar-invitation">
-          <p>{t("avatar.homeInvite")}</p>
-          <Link className="button" href="/avatar">
-            {t("avatar.create")}
-          </Link>
-        </div>
-      )}
       <section className="residents" aria-labelledby="residents-title">
-        <h2 id="residents-title">{t("home.residentsHeading")}</h2>
+        <h2 id="residents-title">{t("map.residentShortcuts")}</h2>
+        <p className="resident-location-note">{t("map.unlocated")}</p>
         <ul className="resident-list">
           {orderedResidents.map((resident) => {
             const text = currentText(resident);
             return (
               <li className="resident" key={resident.id}>
-                <ResidentAvatar
-                  key={resident.avatarUrl}
-                  url={resident.avatarUrl}
+                <ResidentMarker
+                  id={resident.id}
                   name={resident.displayName}
+                  avatarUrl={resident.avatarUrl}
+                  selected={selectedResident === resident.id}
+                  onSelect={() =>
+                    setSelectedResident(
+                      selectedResident === resident.id ? null : resident.id,
+                    )
+                  }
                 />
                 <div className="resident-presence">
-                  <h3>{resident.displayName}</h3>
+                  <h3 className="sr-only">{resident.displayName}</h3>
+                  <div
+                    id={`resident-details-${resident.id}`}
+                    hidden={selectedResident !== resident.id}
+                    className="resident-details"
+                  >
+                    <p>{t("map.unlocated")}</p>
+                  </div>
                   {resident.isViewer && resident.avatarUrl && (
                     <Link
                       className="presence-edit avatar-change"
                       href="/avatar"
                     >
                       {t("avatar.replace")}
+                    </Link>
+                  )}
+                  {resident.isViewer && !resident.avatarUrl && (
+                    <Link
+                      className="presence-edit avatar-create"
+                      href="/avatar"
+                    >
+                      {t("avatar.create")}
                     </Link>
                   )}
                   <div className="presence-line" aria-live="polite">

@@ -55,6 +55,7 @@ async function setup(db: PrismaClient) {
   return { owner, partner };
 }
 async function choose(page: Page) {
+  await expect(page.getByLabel("选择自己的照片")).toBeEnabled();
   const buffer = await sharp({
     create: { width: 256, height: 256, channels: 3, background: "#bea890" },
   })

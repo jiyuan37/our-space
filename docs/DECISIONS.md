@@ -708,3 +708,11 @@
 用户明确指出无眼镜自拍被生成眼镜属于identity mismatch，不是风格变化。图1唯一决定可见身份事实，图0只供画风/比例/轮廓/色彩，不新增配饰、不复制图0身份。参考副本移除发夹，原型不变。采用prompt v3但不声称经过真实验证。
 
 人工拒绝以独立rejectionReason持久化，与技术failureStage分开；当前真实候选已经拒绝。本人可预览至原24h/取消清理，Partner不可读；确认与离线恢复均在服务端拒绝。不实现或宣称自动人脸/身份判断。本轮0真实调用。见AVATAR_IDENTITY_GUARD_2026-09-06.md。
+
+## DEC-065 — 头像风格基线与MAP-01A授权（2026-09-06）
+
+用户批准真实v3成功样本所体现的Our Space Avatar Style Baseline，适用于后续所有Resident，但不是把该candidate确认为当前个人final。维持图0风格/图1身份、无新增配饰、无永久状态道具、透明display与高质量source；当前candidate保持本人选择与24h生命周期。不得复制其个人脸作为他人的身份。
+
+用户明确批准MAP-01A生产Home接入；Quiet Home转为体验原则。地图地理数据与业务模型分离，无位置Resident使用标注的非地理快捷入口，不能伪造地理pin或轨迹。不得实施定位、movement replay、ANIMATION-01或LifePoint新行为。
+
+本轮地图provider具体外部确认已提出且仍待回复：建议服务端向OSM Overpass仅发送主动选择的公共浏览范围，缓存公共地理，不发送Resident/头像/Presence/位置。政策开关默认关闭。当前实现只经过离线验证，不能声称真实地图数据接入已通过。官方依据：[Overpass范围/geometry](https://dev.overpass-api.de/overpass-doc/en/full_data/bbox.html)、[公共实例使用边界](https://wiki.openstreetmap.org/wiki/Overpass_API)、[OSM版权与署名](https://www.openstreetmap.org/copyright)。

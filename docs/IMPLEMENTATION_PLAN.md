@@ -1,20 +1,31 @@
 # Our Space — 实施计划
 
-> 身份验收更新：当前真实候选已因凭空新增眼镜被明确拒绝，不能确认。prompt v3强化自拍身份事实优先，风格参考已去配饰；本轮0真实请求。详见 [身份约束记录](./AVATAR_IDENTITY_GUARD_2026-09-06.md)。
-
-> 2026-09-06 最新：当前已保存真实source离线规范化成功，仍未确认/未验收画风；本轮0真实请求。下一次payload为原创style0 + selfie1，均<512，尚未发送。此前固定紫红背景、64px/64色显示规范由DEC-063替代。详情见 [离线恢复记录](./AVATAR_OFFLINE_NORMALIZATION_2026-09-06.md)。
+> 最新状态（2026-09-06）：**Avatar generation style: APPROVED；AVATAR-01 product pipeline: IMPLEMENTED；当前真实 candidate: NOT CONFIRMED AS USER AVATAR。** 用户批准后续所有 Resident 沿用 Our Space Avatar Style Baseline；当前图仅用于风格验收，不自动成为任何人的正式头像。以下旧候选拒绝/待验收描述属于历史记录。
 
 最后更新：2026-09-06
 
 ## 状态
 
-**当前工作包：AVATAR-01 已保存source离线恢复与style0/identity1请求修复；未追加真实请求，当前候选未确认/画风未验收。**
+**当前工作包：MAP-01A 正式 Map-first Home 实施中；头像风格已批准，个人候选未确认。**
 
 Phase 3 implementation 已完成并通过 Final Review。
 
 阶段 0、Phase 1 已完成，Phase 1 已通过最终 Review。Phase 2 已实施，在首次 Final Review 后完成 Repair，并通过 Closure Review。Phase 3 前置 UI/UX Review、Design Decision Closure、implementation、Independent Final Review 与 Final Polish Patch 已完成，设计基线记录于 [`PHASE_3_DESIGN.md`](./PHASE_3_DESIGN.md)，实施与 Review 证据记录于 [`PHASE_3_REVIEW.md`](./PHASE_3_REVIEW.md)。Phase 4 尚未开始，也未获得批准。
 
-## AVATAR-01 当前实施 checklist
+## MAP-01A 实施 checklist
+
+- [x] 用户批准Our Space Avatar Style Baseline，与个人candidate确认分开。
+- [x] 生产renderer/provider/相机/Resident入口分离；真实业务读取复用HomeService。
+- [x] final/fallback与真实Presence接入，无定位权限/坐标推断/模拟轨迹。
+- [ ] 地图provider公共区域外部处理确认和真实地理加载。
+- [x] 离线双端截图、178项自动测试、24项E2E与最后地图2项回归通过；见MAP_01A_IMPLEMENTATION.md。
+- [ ] 真实地图数据截图与在线接入验收；不得用fixture替代。
+- [ ] MAP-01剩余能力：真实位置采集、地理marker语义及相关授权。
+- [ ] ANIMATION-01与LifePoint集成保留在后续，不由本轮静默取消。
+
+## AVATAR-01 实施 checklist（历史步骤与当前分界）
+
+当前pipeline已实现，头像生成风格已通过本次真实v3样本验收。下面旧步骤中的待验收描述已被此状态替代；个人候选确认继续由用户自行选择，不阻塞MAP-01A。
 
 - [x] 独立response parser、严格Base64、JPEG/PNG magic与全图解码、FLUX双边<512预处理。
 - [x] 规范化前保存source，失败恢复本人预览与阶段码，失败结果不可确认且按24h/取消清理。

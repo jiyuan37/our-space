@@ -1,8 +1,6 @@
 # Our Space — 已知限制
 
-> 身份验收更新：当前真实候选已因凭空新增眼镜被明确拒绝，不能确认。prompt v3强化自拍身份事实优先，风格参考已去配饰；本轮0真实请求。详见 [身份约束记录](./AVATAR_IDENTITY_GUARD_2026-09-06.md)。
-
-> 2026-09-06 最新：当前已保存真实source离线规范化成功，仍未确认/未验收画风；本轮0真实请求。下一次payload为原创style0 + selfie1，均<512，尚未发送。此前固定紫红背景、64px/64色显示规范由DEC-063替代。详情见 [离线恢复记录](./AVATAR_OFFLINE_NORMALIZATION_2026-09-06.md)。
+> 最新状态（2026-09-06）：**Avatar generation style: APPROVED；AVATAR-01 product pipeline: IMPLEMENTED；当前真实 candidate: NOT CONFIRMED AS USER AVATAR。** 用户批准后续所有 Resident 沿用 Our Space Avatar Style Baseline；当前图仅用于风格验收，不自动成为任何人的正式头像。以下旧候选拒绝/待验收描述属于历史记录。
 
 最后更新：2026-09-06
 
@@ -11,9 +9,9 @@
 ## 当前仓库限制
 
 - Phase 3 implementation 已完成并通过 Final Review；Phase 4 尚未开始，也未获得批准。
-- `/home` 已承载 Quiet Home 与 Presence；`/space` 继续作为次级 Invitation/account management 边界。
+- `/home` 正在改为Map-first Home，Quiet Home保留为无压力原则；`/space`继续提供Invitation/account management。真实地图接入尚待确认，不能把fixture截图当成生产真实数据验收。
 - 尚未实现 Life Point、Response、Shared Moment、Visit、Memory 或 Phase 4 media workflow。
-- AVATAR-01 账户、私密生成/确认、持久身份及正式 Home 集成已写入；产品流程自动验证已完成，相似度/画风及真实候选确认仍待验收。ANIMATION-01 和 MAP-01 生产未实现；三者保持必交付。
+- AVATAR-01 pipeline已实现、头像视觉语言获批；每次个人候选仍须本人确认。MAP-01A实施中，ANIMATION-01、真实位置采集、movement replay及LifePoint地图集成尚未实现。
 - locale preference 使用浏览器 HttpOnly cookie 持久化，不跨浏览器或设备同步；Phase 3 不为此增加数据库字段。
 - 尚无 seed data 或 demo account；这两项属于后续阶段。
 - Playwright 已配置 desktop Google Chrome 与 Pixel 7；本轮在独立 PostgreSQL 16.15 测试数据库 20/20 通过，头像为受控 provider，另覆盖 375px 视口。Safari 与 Firefox 尚未纳入当前自动化矩阵。

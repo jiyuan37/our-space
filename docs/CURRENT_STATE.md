@@ -4,13 +4,22 @@
 
 ## 当前 Phase
 
-- 当前工作包：AVATAR-01 — 自拍生成、用户确认与持久卡通身份；用户已明确批准正式实现，Phase 1–3 基础保留。
-- 当前状态：**本次真实候选按用户反馈已标记IDENTITY_MISMATCH并禁止确认；画风/身份均未验收。身份专属prompt v3、无配饰参考和持久拒绝流程已实现，本轮0次真实请求。**
+- 当前工作包：MAP-01A — Production Map-first Home；用户已明确批准正式 `/home` 接入，Phase 1–3 与头像闭环保留。
+- 当前状态：**头像生成风格已批准，产品 pipeline 已实现，当前真实 candidate 未确认为个人头像。MAP-01A 正在实施，真实地图 provider 接入确认仍待用户回复；不能声明生产地图已完成。**
 - Phase 3 implementation 已完成并通过 Final Review；本轮不重做历史验收。
 - 实际项目根目录：`/Users/yuan/Desktop/our-space`。
-- 最新授权仅执行 AVATAR-01；允许相关 Schema、正式 Home、配置、测试与文档改动，并在检查后正常提交/push。地图生产接入、定位和 ANIMATION-01 不在本轮范围。
+- 最新授权为 MAP-01A 正式地图 Home。定位采集、movement replay、ANIMATION-01 和 LifePoint 产品行为不在本轮范围，不自动开始后续工作包。
 - Phase 2 已完成并通过最终 Review；Phase 3 前置 UI/UX Review、Design Decision Closure、implementation、Independent Final Review 与 Final Polish Patch 均已完成。
 - **Phase 4 尚未开始，也未获得批准。**
+
+## MAP-01A（本轮进行中）
+
+- 起点 `19651200c475ffe92461cbbef0331bb6fe009218`；main、干净、origin 同步0/0，remote未改。
+- 生产SVG renderer与地理 provider、人物 marker、浏览控制器分开；复用原型原创配色/纹理，不携带示例人物、固定伦敦场景、轨迹或LifePoint。
+- HomeService仍读取真实ACTIVE Space/Resident、final引用和Presence；无位置者为明确标注的非地理快捷入口，不推断或写入坐标。没有头像时继续fallback。
+- OSM Overpass范围专用接入尚待用户确认，默认不外发；当前只用离线fixture验证。不新增AI调用，不确认/延长当前candidate。
+- 离线验证178/178（31 files、40项真实PostgreSQL）、双端24/24与最后地图2/2、静态/格式/diff检查和production audit 0通过；真实数据截图与地图接入仍待确认。记录见 [MAP-01A实施记录](./MAP_01A_IMPLEMENTATION.md)。
+- 本轮提交信息 `feat: prepare production map-first home`，包含本节的完整hash以Git定位；正常push后目标main、干净、0/0，以交付实际命令核对。提交只代表已验证代码，不把部分实现写成MAP-01 complete。
 
 ## AVATAR-01 身份拒绝与约束（本轮）
 

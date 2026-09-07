@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 
+import { MapBrowser } from "@/components/map/map-browser";
+
 import { HomeHeader } from "@/components/home/home-header";
 import { HomeView } from "@/components/home/home-view";
 import { AppShell } from "@/components/layout/app-shell";
@@ -33,6 +35,7 @@ export default async function HomePage({
     <AppShell home header={<HomeHeader viewerName={viewerName} />}>
       <HomeView
         home={home}
+        map={<MapBrowser spaceId={home.space.id} />}
         showWelcome={params.created === "1" || params.joined === "1"}
       />
     </AppShell>

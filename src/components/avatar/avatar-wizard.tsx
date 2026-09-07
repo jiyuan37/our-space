@@ -25,6 +25,10 @@ export function AvatarWizard({
 }) {
   const { t } = useI18n();
   const router = useRouter();
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    setReady(true);
+  }, []);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [consent, setConsent] = useState(false);
@@ -330,6 +334,7 @@ export function AvatarWizard({
           </label>
           <input
             id="avatar-photo"
+            disabled={!ready}
             type="file"
             accept="image/jpeg,image/png,image/webp"
             aria-describedby={`avatar-photo-hint${error ? " avatar-error" : ""}`}
