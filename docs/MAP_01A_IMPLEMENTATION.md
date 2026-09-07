@@ -1,6 +1,6 @@
 # MAP-01A — 正式 Home 实施记录
 
-日期：2026-09-06。状态：功能代码与离线验证完成；**公共地图服务接入确认及真实数据验收仍待完成，不能声明 MAP-01A 或 MAP-01 全部完成。**
+日期：2026-09-06（纽约）。状态：正式功能代码与公共服务保护已实现；**接入授权已获批，但真实读取未形成地图缓存，不能声明MAP-01A或MAP-01全部完成。**
 
 ## 已完成的正式代码
 
@@ -12,19 +12,37 @@
 - 地理 provider、业务授权、缓存与 renderer 分离。无 schema/migration 变更，无新的核心实体。
 - 修复首次加载早于 hydration 的可操作状态：区域选择与头像文件选择在组件就绪后启用；未改头像生成、候选确认或资源生命周期。
 
-## 尚待确认的地图数据边界
+## 已批准的地图数据边界与实现
 
-建议使用公共 OSM Overpass：服务端只发送用户主动选中的公共浏览区域，不发送 User/Resident、Space、头像、Presence 或任何定位。固定端点、范围白名单、不自动重试、限制响应大小、校验官方 geometry schema；公共地理本地缓存，无后台刷新。
+服务端只发送用户主动选择/查看区域的bbox与道路、建筑、公园、水体必需查询。**bbox本身是外发的地理区域数据**；不发送User/Resident ID、姓名、头像、Presence、Space、LifePoint、伴侣资料、后台或实时定位。服务器不转发Cookie、Referer或浏览器请求头。
 
-目前提供纽约中央公园南侧、巴黎塞纳河畔、京都鸭川河畔三个可主动选择的范围，没有默认城市，不将选择当作人物位置。它是限定范围浏览，尚不是全球连续瓦片地图。视野偏好只保存当前浏览器，不写入 Resident。
+目前可主动选择纽约中央公园南侧、巴黎塞纳河畔、京都鸭川河畔；没有默认城市，不将浏览选择当作人物位置。它是有限区域浏览，尚不是全球连续瓦片地图。巴黎范围本轮缩至`[2.334,48.852,2.350,48.862]`，未改变任何Resident坐标。
 
-- `MAP_EXTERNAL_PROCESSING_APPROVED` 空值默认关闭。只有具体方案获准后才能设为 `osm-overpass-area-only-v1`。
-- `MAP_CACHE_DIR` 可指定本地地理缓存目录；默认 `.data/map-cache`，与私密头像存储独立。缓存没有用户信息或浏览历史，当前不自动失效；更新由维护者受控执行。
-- 每用户每分钟最多30次应用读取，全进程每天最多10次缓存未命中的provider请求，相同区域并发合并。复用现有单进程 limiter，多实例部署仍需共享限流/缓存。
-- 公共服务无本产品的可用性保证；未批准、失败或无数据时明确说明，不补入伦敦demo。尚未验证真实 Overpass 响应、目标区域可用性或生产外部部署。
-- 图上显示 `© OpenStreetMap contributors · ODbL` 与版权链接。资料：[官方范围/geometry](https://dev.overpass-api.de/overpass-doc/en/full_data/bbox.html)、[公共实例](https://wiki.openstreetmap.org/wiki/Overpass_API)、[版权](https://www.openstreetmap.org/copyright)。
+- `MAP_EXTERNAL_PROCESSING_APPROVED=osm-overpass-area-only-v1`为明确政策开关，空值不外发；本机按本轮批准开启。头像真实生成开关仍关闭。
+- `MAP_OVERPASS_ENDPOINT`支持可替换HTTPS后端，默认公共实例；客户端不能指定端点、凭据或原始查询。`User-Agent`为`OurSpace/0.1 MAP-01A (+https://github.com/jiyuan37/our-space)`。
+- `MAP_CACHE_DIR`默认`.data/map-cache`，与头像私密资源分离。成功地理缓存按区域复用、不后台刷新/自动过期；完整原始响应以查询摘要命名，在解析前原子保存，支持离线修复。没有用户浏览历史；保留的bbox查询及地理响应不等于“无地理数据”。
+- 每人每分钟最多30次应用读取；同区域进程内Promise合并。所有同主机worker使用同一磁盘锁，公共上游只串行访问；锁覆盖请求至完成，不排队轰炸。
+- 正常应用预算持久化为UTC每日最多10次/10MiB，单次响应5MiB；发送前预留，成功按实际读取字节结算，失败保守不退还，不能通过重启规避。每次结束至少间隔30秒；429/406/504及其他HTTP错误采用更长Retry-After，没有自动重试。
+- 客户端收到安全retryAt与Retry-After后显示双语平静提示，期间禁用重试。拖动/缩放只操作相机，不产生外部请求。已有缓存先读缓存，无缓存则降级，Auth/Resident/Presence服务不依赖Overpass成功。
+- 共享磁盘适用于当前单主机早期环境，多主机需共享限流/缓存后端；崩溃留锁会安全阻断。维护者确认没有活跃请求后才能清除遗留锁，不能无条件定期删锁。
+- **仅批准开发、测试和早期低流量**。正式规模化/商业发布前必须重新评估自托管、专用或付费地图后端，不能把公共Overpass当成无限免费基础设施或生产SLA。
+- 图上保持`© OpenStreetMap contributors · ODbL`。依据：[官方bbox/geometry](https://dev.overpass-api.de/overpass-doc/en/full_data/bbox.html)、[公共实例政策](https://wiki.openstreetmap.org/wiki/Overpass_API)、[429/504说明](https://dev.overpass-api.de/command_line.html)、[版权](https://www.openstreetmap.org/copyright)。
 
-## 测试证据
+## 本轮有限真实读取与未完成项
+
+所有请求由本地服务器/同一provider发出，仅主动选中的巴黎区域；无并行、无自动重试、未换实例。实际计数 **3次Overpass、0次Cloudflare**。
+
+1. 第一次从真实登录用户Home主动选择巴黎触发，未形成缓存；当时诊断不足，不能确认具体失败层。
+2. 第二次经退避后单次受控读取，记录`LOCAL_PROCESSING_ERROR`，仍无完整源响应；不能倒推它一定与第三次同因。
+3. 第三次缩小巴黎bbox，记录`MAP_PROVIDER_TOO_LARGE`。读取循环在累计响应超过5MiB时中止，尚未到JSON解析/地理规范化；没有完整源文件可恢复。第三次使用一次性15MiB保守总预算以保留前两次各5MiB失败预留；此临时注入已移除，应用默认仍是10MiB/日。所有3次计数与15MiB预留保留，未重置配额；当天后续未缓存读取由默认闸门拒绝。
+
+已确认的根因层是**响应读取体积限制**。静态查询检查发现选择bbox后仍`out geom`输出完整相交对象，长河流关系可能很大；缺少完整响应，不能确认具体哪个OSM对象造成超限。缩小选择bbox没有解决这次失败。不能用提高预算、不完整JSON或固定伦敦fixture掩盖。
+
+还需解决“大范围相交几何的有界提取且保持正确闭合/内环”并进行真实加载验收。官方`out geom(bbox)`会裁剪坐标，但不能未经处理就将缺失多边形用直线补齐；本轮未将此未验证方案塞入生产。没有真实地图成功截图，只有离线测试截图及真实降级状态，不能写`MAP-01A production Map-first Home implemented`作为已验收结论。
+
+本轮到此停止真实上游读取。当前正式candidate未确认，Avatar Style Baseline不变；不开始定位/动画/LifePoint。
+
+## 上轮测试证据（254d4f8）
 
 使用 Node 22 与独立 PostgreSQL 测试库，单元/数据库测试和 E2E 严格顺序运行。正式账户数据库不导入测试用户。
 
@@ -40,6 +58,14 @@ Our Space Avatar Style Baseline 已由用户批准，AVATAR-01 pipeline 已实�
 
 真实位置采集、地理Resident marker授权语义、movement replay、ANIMATION-01与LifePoint集成仍未实现。LifePoint不强制location。不自动开始后续工作包。
 
+## 本轮验证
+
+- `npm test`：32 files，190/190 tests，包括40项真实PostgreSQL集成；新增持久串行/退避/预算、HTTPS端点替换、响应超限、解析失败源保留、缓存降级与中英退避UI。
+- 自动测试仅受控transport/fixture；正式`.data`不写测试地理素材，源保留测试使用独立临时目录。地图测试与头像测试都不外发。
+- `npm run test:e2e`：Desktop Chrome + Pixel 7，共24/24通过；顺序运行独立测试库，没有与Vitest并发。
+- `npm run build`、`npm run typecheck`、`npm run lint`通过；`npm audit --omit=dev`为0 vulnerabilities；format/diff检查见最终交付。正式production服务已恢复。
+- 末次浏览器截图工具两次返回`Sky Computer Use service startup request failed`（浏览器控制服务无法启动），未取得本轮真实降级截图。已有双端fixture截图仍只作为离线renderer证据，不当作真实巴黎地图验收。
+
 ## Git交付
 
-起点 `19651200c475ffe92461cbbef0331bb6fe009218`，main、干净、origin同步0/0。已验证的代码与上述未完成状态一起提交，提交信息 `feat: prepare production map-first home`，完整hash由包含本记录的Git提交定位；正常push后目标main、干净、0/0，以最终实际命令核对。提交不等于尚未获准的真实地图接入已完成。
+本轮起点`254d4f8372ab58d61ff4534bd7b8deadc9c64fe0`，main、干净、origin同步0/0。提交信息`fix: guard public Overpass access and record live limits`，完整hash由包含本记录的Git提交定位；正常push后目标main、干净、0/0，以最终命令核对。提交代表接入保护与已验证代码，不代表真实地图验收已完成。

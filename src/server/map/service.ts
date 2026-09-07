@@ -1,3 +1,4 @@
+import { OverpassBackoffError, OverpassHttpError } from "./request-gate";
 import { mkdir, readFile, writeFile, rename } from "node:fs/promises";
 import path from "node:path";
 import type { Geography, GeographyProvider } from "@/lib/map/model";
@@ -15,7 +16,9 @@ export class MapReadError extends Error {
     readonly code:
       | "MAP_INVALID_AREA"
       | "MAP_UNAVAILABLE"
-      | "MAP_NOT_CONFIGURED",
+      | "MAP_NOT_CONFIGURED"
+      | "MAP_BACKOFF",
+    readonly retryAt?: number,
   ) {
     super(code);
   }
@@ -80,6 +83,13 @@ export class MapService {
         await this.cache.write(area.id, geography);
         return geography;
       } catch (error) {
+        if (error instanceof OverpassBackoffError)
+          throw new MapReadError("MAP_BACKOFF", error.retryAt);
+        if (error instanceof OverpassHttpError)
+          throw new MapReadError(
+            "MAP_BACKOFF",
+            Date.now() + error.retryAfterMs,
+          );
         if (
           error instanceof Error &&
           error.message === "MAP_PROVIDER_NOT_APPROVED"

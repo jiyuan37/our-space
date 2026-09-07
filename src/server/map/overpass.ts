@@ -1,3 +1,12 @@
+import { createHash } from "node:crypto";
+import { mkdir, writeFile, rename } from "node:fs/promises";
+import path from "node:path";
+import {
+  FileOverpassGate,
+  OverpassHttpError,
+  retryAfterMilliseconds,
+  type RequestGate,
+} from "./request-gate";
 import { z } from "zod";
 import type {
   Bounds,
@@ -142,41 +151,88 @@ export class OverpassProvider implements GeographyProvider {
     private readonly approved = () =>
       process.env.MAP_EXTERNAL_PROCESSING_APPROVED ===
       "osm-overpass-area-only-v1",
+    private readonly options: {
+      endpoint?: string;
+      gate?: RequestGate;
+      retainSource?: boolean;
+    } = {},
   ) {}
   async read(bounds: Bounds): Promise<Geography> {
     if (!this.approved()) throw new Error("MAP_PROVIDER_NOT_APPROVED");
     const query = overpassQuery(bounds);
-    // 固定端点、不携带 Cookie/身份、不自动重试；仅公共地理范围。
-    const response = await this.transport(
-      "https://overpass-api.de/api/interpreter",
-      {
+    const endpoint = new URL(
+      this.options.endpoint ||
+        process.env.MAP_OVERPASS_ENDPOINT ||
+        "https://overpass-api.de/api/interpreter",
+    );
+    if (
+      endpoint.protocol !== "https:" ||
+      endpoint.username ||
+      endpoint.password ||
+      endpoint.search ||
+      endpoint.hash
+    )
+      throw new Error("MAP_PROVIDER_NOT_APPROVED");
+    const gate =
+      this.options.gate ??
+      new FileOverpassGate(
+        process.env.MAP_CACHE_DIR ||
+          path.join(process.cwd(), ".data", "map-cache"),
+      );
+    return gate.run(async (byteLimit) => {
+      // 端点仅由服务端配置，客户端不能指定；不转发 Cookie、Referer 或任何业务字段。
+      const response = await this.transport(endpoint.toString(), {
         method: "POST",
         body: new URLSearchParams({ data: query }),
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "User-Agent":
+            "OurSpace/0.1 MAP-01A (+https://github.com/jiyuan37/our-space)",
+          Accept: "application/json",
+        },
         signal: AbortSignal.timeout(25000),
         redirect: "error",
         cache: "no-store",
-      },
-    );
-    if (!response.ok || !response.body)
-      throw new Error("MAP_PROVIDER_UNAVAILABLE");
-    const reader = response.body.getReader();
-    const chunks: Uint8Array[] = [];
-    let size = 0;
-    try {
-      while (true) {
-        const part = await reader.read();
-        if (part.done) break;
-        size += part.value.length;
-        if (size > 5 * 1024 * 1024) throw new Error("MAP_PROVIDER_TOO_LARGE");
-        chunks.push(part.value);
+      });
+      if (!response.ok || !response.body) {
+        await response.body?.cancel();
+        throw new OverpassHttpError(
+          response.status,
+          retryAfterMilliseconds(response.headers.get("retry-after")),
+        );
       }
-    } finally {
-      await reader.cancel();
-    }
-    return parseOverpass(
-      JSON.parse(Buffer.concat(chunks).toString("utf8")),
-      bounds,
-    );
+      const reader = response.body.getReader();
+      const chunks: Uint8Array[] = [];
+      let size = 0;
+      try {
+        while (true) {
+          const part = await reader.read();
+          if (part.done) break;
+          size += part.value.length;
+          if (size > byteLimit) throw new Error("MAP_PROVIDER_TOO_LARGE");
+          chunks.push(part.value);
+        }
+      } finally {
+        await reader.cancel();
+      }
+      const raw = Buffer.concat(chunks);
+      if (this.options.retainSource !== false) {
+        const root =
+          process.env.MAP_CACHE_DIR ||
+          path.join(process.cwd(), ".data", "map-cache");
+        await mkdir(root, { recursive: true, mode: 0o700 });
+        const name = path.join(
+          root,
+          `source-${createHash("sha256").update(query).digest("hex").slice(0, 20)}.json`,
+        );
+        const temporary = `${name}.tmp`;
+        await writeFile(temporary, raw, { mode: 0o600 });
+        await rename(temporary, name);
+      }
+      return {
+        value: parseOverpass(JSON.parse(raw.toString("utf8")), bounds),
+        bytes: size,
+      };
+    });
   }
 }

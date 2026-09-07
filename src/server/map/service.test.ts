@@ -1,3 +1,4 @@
+import { OverpassBackoffError } from "./request-gate";
 import { describe, expect, it, vi } from "vitest";
 import { MapService, type GeographyCache } from "./service";
 import type { DatabaseClient } from "@/server/services/service-context";
@@ -65,7 +66,7 @@ describe("MapService", () => {
     expect(results).toEqual([data, data]);
     expect(provider.read).toHaveBeenCalledTimes(1);
     expect(cache.write).toHaveBeenCalledTimes(1);
-    expect(provider.read).toHaveBeenCalledWith([2.326, 48.848, 2.354, 48.866]);
+    expect(provider.read).toHaveBeenCalledWith([2.334, 48.852, 2.35, 48.862]);
   });
   it("失败不写坏缓存，也不自动重试", async () => {
     const { service, provider, cache } = setup();
@@ -82,5 +83,16 @@ describe("MapService", () => {
     await expect(service.read("own", "paris-seine")).rejects.toMatchObject({
       code: "MAP_NOT_CONFIGURED",
     });
+  });
+  it("共享退避转换为安全业务错误，仍可使用已有缓存", async () => {
+    const { service, provider, cache } = setup();
+    provider.read.mockRejectedValue(new OverpassBackoffError(999999999));
+    await expect(service.read("own", "paris-seine")).rejects.toMatchObject({
+      code: "MAP_BACKOFF",
+      retryAt: 999999999,
+    });
+    vi.mocked(cache.read).mockResolvedValue(data);
+    expect(await service.read("own", "paris-seine")).toEqual(data);
+    expect(provider.read).toHaveBeenCalledTimes(1);
   });
 });

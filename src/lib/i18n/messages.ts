@@ -2,6 +2,7 @@ import type { Locale } from "@/lib/i18n/config";
 import { formatNumber } from "@/lib/i18n/format";
 
 const zhCN = {
+  "map.backoff": "地图服务暂时忙碌，稍后再试。家里的人和此刻仍在这里。",
   "map.notConfigured": "地图数据接入尚未启用。你仍可使用头像与此刻。",
   "map.canvas": "像素地图：浏览真实地理，不表示人物位置",
   "map.keyboard":
@@ -177,6 +178,8 @@ export type MessageKey = keyof typeof zhCN;
 export type Messages = Readonly<Record<MessageKey, string>>;
 
 const enUS: Messages = {
+  "map.backoff":
+    "The map service is busy. Please try again later. Your people and their Presence are still here.",
   "map.notConfigured":
     "Map data access is not enabled yet. Your avatar and Presence are still available.",
   "map.canvas": "Pixel map: real geography, not Resident locations",

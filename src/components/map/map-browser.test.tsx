@@ -1,6 +1,7 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { I18nProvider } from "@/components/i18n/i18n-provider";
 import { MapBrowser } from "./map-browser";
 afterEach(() => {
   cleanup();
@@ -46,4 +47,36 @@ describe("MapBrowser", () => {
       screen.queryByRole("button", { name: "重新加载地图" }),
     ).not.toBeInTheDocument();
   });
+  it.each(["zh-CN", "en-US"] as const)(
+    "%s 退避期间禁用重试，无后台自动请求",
+    async (locale) => {
+      const transport = vi.fn().mockResolvedValue(
+        Response.json(
+          {
+            errorCode: "MAP_BACKOFF",
+            retryAt: Date.now() + 60000,
+          },
+          { status: 503 },
+        ),
+      );
+      vi.stubGlobal("fetch", transport);
+      render(
+        <I18nProvider locale={locale}>
+          <MapBrowser spaceId="backoff" />
+        </I18nProvider>,
+      );
+      await userEvent.click(
+        screen.getByRole("button", {
+          name:
+            locale === "zh-CN" ? "巴黎 · 塞纳河畔" : "Paris · Seine riverside",
+        }),
+      );
+      const button = await screen.findByRole("button", {
+        name: locale === "zh-CN" ? "重新加载地图" : "Reload map",
+      });
+      expect(button).toBeDisabled();
+      await userEvent.click(button);
+      expect(transport).toHaveBeenCalledTimes(1);
+    },
+  );
 });

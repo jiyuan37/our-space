@@ -5,7 +5,7 @@
 ## 当前 Phase
 
 - 当前工作包：MAP-01A — Production Map-first Home；用户已明确批准正式 `/home` 接入，Phase 1–3 与头像闭环保留。
-- 当前状态：**头像生成风格已批准，产品 pipeline 已实现，当前真实 candidate 未确认为个人头像。MAP-01A 正在实施，真实地图 provider 接入确认仍待用户回复；不能声明生产地图已完成。**
+- 当前状态：**头像生成风格已批准，产品 pipeline 已实现，当前真实 candidate 未确认为个人头像。MAP-01A 正在实施，公共 Overpass 浏览区域接入已获批准；本轮3次真实读取未形成可用地理缓存，第三次明确为响应读取超限，尚未通过真实地图验收。**
 - Phase 3 implementation 已完成并通过 Final Review；本轮不重做历史验收。
 - 实际项目根目录：`/Users/yuan/Desktop/our-space`。
 - 最新授权为 MAP-01A 正式地图 Home。定位采集、movement replay、ANIMATION-01 和 LifePoint 产品行为不在本轮范围，不自动开始后续工作包。
@@ -14,12 +14,12 @@
 
 ## MAP-01A（本轮进行中）
 
-- 起点 `19651200c475ffe92461cbbef0331bb6fe009218`；main、干净、origin 同步0/0，remote未改。
-- 生产SVG renderer与地理 provider、人物 marker、浏览控制器分开；复用原型原创配色/纹理，不携带示例人物、固定伦敦场景、轨迹或LifePoint。
-- HomeService仍读取真实ACTIVE Space/Resident、final引用和Presence；无位置者为明确标注的非地理快捷入口，不推断或写入坐标。没有头像时继续fallback。
-- OSM Overpass范围专用接入尚待用户确认，默认不外发；当前只用离线fixture验证。不新增AI调用，不确认/延长当前candidate。
-- 离线验证178/178（31 files、40项真实PostgreSQL）、双端24/24与最后地图2/2、静态/格式/diff检查和production audit 0通过；真实数据截图与地图接入仍待确认。记录见 [MAP-01A实施记录](./MAP_01A_IMPLEMENTATION.md)。
-- 本轮提交信息 `feat: prepare production map-first home`，包含本节的完整hash以Git定位；正常push后目标main、干净、0/0，以交付实际命令核对。提交只代表已验证代码，不把部分实现写成MAP-01 complete。
+- 本轮实际起点 `254d4f8372ab58d61ff4534bd7b8deadc9c64fe0`，main、干净、origin同步0/0，remote未变。上一轮正式Home代码及离线验证已提交，本轮继续公共服务接入。
+- 用户批准服务端向公共Overpass发送主动查看区域bbox及必需OSM查询；bbox是外发地理数据，不发送业务字段或Resident定位。开发/测试/早期低流量限定，规模化/商业发布前必须重新评估后端。
+- 新增OurSpace User-Agent、可配置HTTPS端点、跨进程磁盘串行闸门、持久预算、至少30秒退避和Retry-After；有缓存时直接读取，不自动重试。
+- 本轮真实Overpass请求3次，Cloudflare 0次。前两次失败层证据不足；第三次确认响应读取超过5MiB，`MAP_PROVIDER_TOO_LARGE`。没有真实生产地图缓存或合格真实地图截图，未声明MAP-01A完成；具体证据与剩余问题见 [MAP-01A实施记录](./MAP_01A_IMPLEMENTATION.md)。
+- 真实ACTIVE Space/Resident、final或fallback与Presence接入保持；没有坐标者使用明确标注的非地理入口。当前头像candidate未自动确认/取消/延长。
+- 本轮提交信息 `fix: guard public Overpass access and record live limits`；包含本节的完整hash以Git定位，正常push后目标main、干净、0/0，最终以实际命令核对。新验证结果见实施记录。
 
 ## AVATAR-01 身份拒绝与约束（本轮）
 

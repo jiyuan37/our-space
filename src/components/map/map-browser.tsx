@@ -13,6 +13,15 @@ export function MapBrowser({ spaceId }: { spaceId: string }) {
   const [loading, setLoading] = useState(false);
   const [notConfigured, setNotConfigured] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [retryAt, setRetryAt] = useState<number | null>(null);
+  useEffect(() => {
+    if (!retryAt) return;
+    const timer = setTimeout(
+      () => setRetryAt(null),
+      Math.min(2147483647, Math.max(0, retryAt - Date.now())),
+    );
+    return () => clearTimeout(timer);
+  }, [retryAt]);
   const [attempt, setAttempt] = useState(0);
   const lastLoaded = useRef<MapAreaId | null>(null);
   const storageKey = `our-space-map-view:${spaceId}`;
@@ -32,6 +41,7 @@ export function MapBrowser({ spaceId }: { spaceId: string }) {
     setLoading(true);
     setFailed(false);
     setNotConfigured(false);
+    setRetryAt(null);
     void fetch(`/api/map?area=${encodeURIComponent(chosen)}`, {
       credentials: "same-origin",
       signal: controller.signal,
@@ -40,6 +50,12 @@ export function MapBrowser({ spaceId }: { spaceId: string }) {
       .then(async (response) => {
         if (!response.ok) {
           const body = await response.json();
+          if (
+            !controller.signal.aborted &&
+            typeof body.retryAt === "number" &&
+            Number.isFinite(body.retryAt)
+          )
+            setRetryAt(body.retryAt);
           if (
             !controller.signal.aborted &&
             body.errorCode === "MAP_NOT_CONFIGURED"
@@ -105,9 +121,21 @@ export function MapBrowser({ spaceId }: { spaceId: string }) {
             t("map.loading")
           ) : failed ? (
             <>
-              <p>{t(notConfigured ? "map.notConfigured" : "map.error")}</p>
+              <p>
+                {t(
+                  notConfigured
+                    ? "map.notConfigured"
+                    : retryAt
+                      ? "map.backoff"
+                      : "map.error",
+                )}
+              </p>
               {!notConfigured && (
-                <button type="button" onClick={() => setAttempt((n) => n + 1)}>
+                <button
+                  type="button"
+                  disabled={Boolean(retryAt)}
+                  onClick={() => setAttempt((n) => n + 1)}
+                >
                   {t("map.retry")}
                 </button>
               )}

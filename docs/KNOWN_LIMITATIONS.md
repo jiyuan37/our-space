@@ -9,7 +9,8 @@
 ## 当前仓库限制
 
 - Phase 3 implementation 已完成并通过 Final Review；Phase 4 尚未开始，也未获得批准。
-- `/home` 正在改为Map-first Home，Quiet Home保留为无压力原则；`/space`继续提供Invitation/account management。真实地图接入尚待确认，不能把fixture截图当成生产真实数据验收。
+- `/home` 正在改为Map-first Home，Quiet Home保留为无压力原则；`/space`继续提供Invitation/account management。公共Overpass范围专用授权已获批，但本轮真实读取仍未成功；第三次响应超过5MiB，不能把fixture截图当成生产真实数据验收。
+- 公共地图后端仅限开发/测试/早期低流量，无生产SLA。默认持久日预算10请求/10MiB、单次5MiB、至少30秒间隔；失败保守预留预算。多主机部署需要共享限流/缓存后端，商业发布前重评。崩溃遗留磁盘锁将安全阻断外发，维护者须确认没有活跃请求后手动恢复，不能定时强制删锁。
 - 尚未实现 Life Point、Response、Shared Moment、Visit、Memory 或 Phase 4 media workflow。
 - AVATAR-01 pipeline已实现、头像视觉语言获批；每次个人候选仍须本人确认。MAP-01A实施中，ANIMATION-01、真实位置采集、movement replay及LifePoint地图集成尚未实现。
 - locale preference 使用浏览器 HttpOnly cookie 持久化，不跨浏览器或设备同步；Phase 3 不为此增加数据库字段。

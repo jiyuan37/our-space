@@ -715,4 +715,12 @@
 
 用户明确批准MAP-01A生产Home接入；Quiet Home转为体验原则。地图地理数据与业务模型分离，无位置Resident使用标注的非地理快捷入口，不能伪造地理pin或轨迹。不得实施定位、movement replay、ANIMATION-01或LifePoint新行为。
 
-本轮地图provider具体外部确认已提出且仍待回复：建议服务端向OSM Overpass仅发送主动选择的公共浏览范围，缓存公共地理，不发送Resident/头像/Presence/位置。政策开关默认关闭。当前实现只经过离线验证，不能声称真实地图数据接入已通过。官方依据：[Overpass范围/geometry](https://dev.overpass-api.de/overpass-doc/en/full_data/bbox.html)、[公共实例使用边界](https://wiki.openstreetmap.org/wiki/Overpass_API)、[OSM版权与署名](https://www.openstreetmap.org/copyright)。
+此处原待确认已由用户批准：服务端向公共OSM Overpass发送主动选择的bbox和必要地理查询；bbox是外发的地理数据，不发送Resident/头像/Presence/Space内容或后台实时定位。政策开关默认关闭，本机本轮按授权开启。实际3次读取未形成可用地图，不能声称真实接入已通过。官方依据：[Overpass范围/geometry](https://dev.overpass-api.de/overpass-doc/en/full_data/bbox.html)、[公共实例使用边界](https://wiki.openstreetmap.org/wiki/Overpass_API)、[OSM版权与署名](https://www.openstreetmap.org/copyright)。
+
+## DEC-066 — 公共Overpass早期运行保护（2026-09-06）
+
+用户批准有限真实地图浏览请求，仅限开发、测试及早期低流量。服务器明确使用OurSpace User-Agent，可配置HTTPS端点；客户端只能选择白名单区域，不能指定后端或插入查询。正式商业或规模化发布前重新评估自托管、专用或付费后端，不承诺公共服务SLA。
+
+缓存不后台刷新；同区域进程内合并，跨worker共享磁盘锁和日预算，不并行发上游请求。所有完成后的请求至少间隔30秒；429/406/504尊重更长Retry-After，不自动重试。失败时有缓存用缓存，无缓存平静降级，核心产品服务独立。
+
+浏览区域bbox本身属于地理数据，不能声称没有地理数据离开服务器。不得外发业务字段、头像、Presence、Space内容或Resident位置。地图授权不扩大头像AI或定位授权。

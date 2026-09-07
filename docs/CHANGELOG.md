@@ -4,10 +4,17 @@
 
 ## [未发布]
 
+### 公共Overpass接入保护与真实读取限制（2026-09-06）
+
+- 按专项授权启用服务端地图浏览bbox查询，明确地理外发边界和早期低流量限制；OurSpace标识、可替换端点、持久串行/预算/退避、缓存降级。
+- 完整地理源响应在解析前保留，安全阶段码不记录业务字段；双语UI在退避期间禁用重试。
+- 本轮3次真实读取未完成；第三次为`MAP_PROVIDER_TOO_LARGE`（响应读取层），没有用fixture冒充真实地图。Cloudflare调用0次，头像candidate和final未修改。
+- 本轮测试与未解决问题见MAP_01A_IMPLEMENTATION.md；不声明MAP-01A/MAP-01全部完成。
+
 ### MAP-01A开发与头像风格基线（2026-09-06，进行中）
 
 - 用户批准Our Space Avatar Style Baseline，继续v3的style0/identity1分离；当前候选不是用户正式头像，没有自动确认或新AI调用。
-- 正式Home接入独立像素地理renderer、浏览控制、真实Resident快捷入口与Presence；地图数据接入确认仍待回复，尚未完成最终交付。
+- 正式Home接入独立像素地理renderer、浏览控制、真实Resident快捷入口与Presence；当时地图数据接入确认待回复；后续授权与真实结果见上方新记录。
 - 自动测试用隔离PostgreSQL/离线地理fixture，生产不导入原型示例角色或固定伦敦数据。
 
 ### 身份事实约束与明确拒绝（2026-09-06）

@@ -11,7 +11,7 @@ export const MAP_AREAS = [
     id: "paris-seine",
     zh: "巴黎 · 塞纳河畔",
     en: "Paris · Seine riverside",
-    bounds: [2.326, 48.848, 2.354, 48.866],
+    bounds: [2.334, 48.852, 2.35, 48.862],
   },
   {
     id: "kyoto-kamogawa",

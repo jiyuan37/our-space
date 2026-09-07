@@ -21,13 +21,25 @@ export async function GET(request: Request) {
   } catch (error) {
     return Response.json(
       {
+        ...(error instanceof MapReadError && error.retryAt
+          ? { retryAt: error.retryAt }
+          : {}),
         errorCode:
           error instanceof DomainError || error instanceof MapReadError
             ? error.code
             : "MAP_UNAVAILABLE",
       },
       {
-        headers,
+        headers: {
+          ...headers,
+          ...(error instanceof MapReadError && error.retryAt
+            ? {
+                "Retry-After": String(
+                  Math.max(1, Math.ceil((error.retryAt - Date.now()) / 1000)),
+                ),
+              }
+            : {}),
+        },
         status:
           error instanceof DomainError
             ? error.statusCode

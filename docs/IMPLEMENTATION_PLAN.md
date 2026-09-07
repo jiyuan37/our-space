@@ -17,8 +17,9 @@ Phase 3 implementation 已完成并通过 Final Review。
 - [x] 用户批准Our Space Avatar Style Baseline，与个人candidate确认分开。
 - [x] 生产renderer/provider/相机/Resident入口分离；真实业务读取复用HomeService。
 - [x] final/fallback与真实Presence接入，无定位权限/坐标推断/模拟轨迹。
-- [ ] 地图provider公共区域外部处理确认和真实地理加载。
-- [x] 离线双端截图、178项自动测试、24项E2E与最后地图2项回归通过；见MAP_01A_IMPLEMENTATION.md。
+- [x] 公共Overpass地图浏览专用授权、服务端标识、可替换端点、持久限流/串行/退避。
+- [ ] 真实地理加载：本轮3次请求未完成，第三次响应读取超出5MiB；需解决输出范围与体积问题，不能直接截断多边形补造河岸。
+- [x] 上轮离线双端截图、178项自动测试和24项E2E通过；本轮新增验证数字见MAP_01A_IMPLEMENTATION.md。
 - [ ] 真实地图数据截图与在线接入验收；不得用fixture替代。
 - [ ] MAP-01剩余能力：真实位置采集、地理marker语义及相关授权。
 - [ ] ANIMATION-01与LifePoint集成保留在后续，不由本轮静默取消。
