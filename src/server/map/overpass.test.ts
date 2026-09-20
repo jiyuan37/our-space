@@ -12,7 +12,7 @@ import {
   overpassQuery,
   parseOverpass,
 } from "./overpass";
-const bounds = [10, 50, 10.02, 50.02] as const;
+const bounds = [10, 50, 10.005, 50.005] as const;
 const square = [
   { lon: 10, lat: 50 },
   { lon: 10.01, lat: 50 },
@@ -28,6 +28,18 @@ const fixture = {
       tags: { highway: "footway" },
       geometry: square.slice(0, 2),
     },
+  ],
+};
+const batchFixture = {
+  elements: [
+    fixture.elements[1],
+    { type: "count", tags: { total: "1" } },
+    fixture.elements[0],
+    { type: "count", tags: { total: "1" } },
+    ...Array.from({ length: 5 }, () => ({
+      type: "count",
+      tags: { total: "0" },
+    })),
   ],
 };
 describe("Overpass 适配层（仅离线 fixture）", () => {
@@ -83,12 +95,12 @@ describe("Overpass 适配层（仅离线 fixture）", () => {
       },
       bounds,
     );
-    expect(data.features).toHaveLength(2);
+    expect(data.features).toHaveLength(3);
+    expect(data.features[2].rings).toHaveLength(0);
+    expect(data.features[2].outlines).toBeDefined();
   });
   it("拒绝无数据、无效 geometry 和服务端部分失败", () => {
-    expect(() => parseOverpass({ elements: [] }, bounds)).toThrow(
-      "MAP_NO_GEOGRAPHY",
-    );
+    expect(parseOverpass({ elements: [] }, bounds).features).toEqual([]);
     expect(() =>
       parseOverpass(
         {
@@ -106,7 +118,7 @@ describe("Overpass 适配层（仅离线 fixture）", () => {
   it("校验范围并固定查询字段，不接受查询注入", () => {
     expect(boundsSchema.safeParse([0, 0, 10, 10]).success).toBe(false);
     expect(boundsSchema.safeParse([10, 50, 9, 49]).success).toBe(false);
-    expect(overpassQuery(bounds)).toContain("(50,10,50.02,10.02)");
+    expect(overpassQuery(bounds)).toContain("(50,10,50.005,10.005)");
     expect(() => overpassQuery([NaN, 0, 1, 1])).toThrow();
   });
   it("未批准时绝不发请求", async () => {
@@ -140,7 +152,7 @@ describe("Overpass 适配层（仅离线 fixture）", () => {
   it("离线 HTTP200 fixture 经适配返回地图", async () => {
     const transport = vi
       .fn()
-      .mockResolvedValue(new Response(JSON.stringify(fixture)));
+      .mockResolvedValue(new Response(JSON.stringify(batchFixture)));
     const data = await new OverpassProvider(transport, () => true, {
       gate,
       retainSource: false,
@@ -152,7 +164,7 @@ describe("Overpass 适配层（仅离线 fixture）", () => {
     );
   });
   it("可替换 HTTPS 后端，凭据和动态查询端点被拒绝", async () => {
-    const transport = vi.fn().mockResolvedValue(Response.json(fixture));
+    const transport = vi.fn().mockResolvedValue(Response.json(batchFixture));
     await new OverpassProvider(transport, () => true, {
       gate,
       retainSource: false,
@@ -175,7 +187,7 @@ describe("Overpass 适配层（仅离线 fixture）", () => {
     expect(transport).toHaveBeenCalledTimes(1);
   });
   it("响应超过字节预算时中止，不解析或再次调用", async () => {
-    const transport = vi.fn().mockResolvedValue(Response.json(fixture));
+    const transport = vi.fn().mockResolvedValue(Response.json(batchFixture));
     const tinyGate: RequestGate = {
       run: async (work) => (await work(8)).value,
     };

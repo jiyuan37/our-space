@@ -9,7 +9,7 @@
 ## 当前仓库限制
 
 - Phase 3 implementation 已完成并通过 Final Review；Phase 4 尚未开始，也未获得批准。
-- `/home` 正在改为Map-first Home，Quiet Home保留为无压力原则；`/space`继续提供Invitation/account management。公共Overpass范围专用授权已获批，但本轮真实读取仍未成功；第三次响应超过5MiB，不能把fixture截图当成生产真实数据验收。
+- `/home` 正在改为Map-first Home，Quiet Home保留为无压力原则；`/space`继续提供Invitation/account management。公共Overpass范围专用授权已获批，但本轮真实读取仍未成功；前轮第三次响应超过5MiB；最新有界请求响应678954 bytes，但道路/建筑元素超预算。0.005° cell与relation输出的后续离线修正尚未真实验证，不能把fixture截图当成真实验收。
 - 公共地图后端仅限开发/测试/早期低流量，无生产SLA。默认持久日预算10请求/10MiB、单次5MiB、至少30秒间隔；失败保守预留预算。多主机部署需要共享限流/缓存后端，商业发布前重评。崩溃遗留磁盘锁将安全阻断外发，维护者须确认没有活跃请求后手动恢复，不能定时强制删锁。
 - 尚未实现 Life Point、Response、Shared Moment、Visit、Memory 或 Phase 4 media workflow。
 - AVATAR-01 pipeline已实现、头像视觉语言获批；每次个人候选仍须本人确认。MAP-01A实施中，ANIMATION-01、真实位置采集、movement replay及LifePoint地图集成尚未实现。
@@ -152,3 +152,5 @@ Phase 3 Independent Final Review 结论与 Final Polish closure 记录于 `PHASE
 - 当前 Web/PWA 隐藏/锁屏/关闭后的持续采样技术上不可保证；前台共享也尚未实现；完整后台定位需要额外原生范围、隐私和采集授权。三种情况不混写为“以后再说”。
 - 本轮 Chrome 双端验证不覆盖 Safari/Firefox/真机电量、后台或 OS 授权矩阵；未重跑上一轮 76/15/12 应用矩阵。
 - 地图颜色、角色资源技术、provider、AI/自拍 lifecycle、身份是否阻断 Home/照片替代，以及定位精度/频率/保存仍有明确批准门槛；见 AVATAR_AND_MAP_SPEC.md。
+
+- 有界crop可能不提供完整multipolygon拓扑，此时只绘已知轮廓，不补填色面。没有完整源拓扑时，不能保证所有大型水体/公园都铺满；本轮失败与后续验证条件见MAP_01A_BOUNDED_GEOMETRY.md。

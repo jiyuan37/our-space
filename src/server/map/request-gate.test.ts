@@ -95,4 +95,33 @@ describe("Overpass 持久请求闸门（无外部调用）", () => {
     );
     expect(retryAfterMilliseconds("invalid", 0)).toBe(30000);
   });
+  it("新批准的两次验收额度保留旧计数、共享锁和单次5MiB上限，第三次被拒绝", async () => {
+    const dir = await root();
+    let now = Date.parse("2026-09-07T00:00:00Z");
+    const normal = new FileOverpassGate(dir, () => now);
+    for (let i = 0; i < 2; i++) {
+      await normal.run(async (limit) => ({ value: true, bytes: limit }));
+      now += 30001;
+    }
+    const grant = { id: "test-only-two", maxRequests: 2 } as const;
+    for (let i = 0; i < 2; i++) {
+      await new FileOverpassGate(dir, () => now, grant).run(async (limit) => {
+        expect(limit).toBe(5 * 1024 * 1024);
+        return { value: true, bytes: 10, httpStatus: 200 };
+      });
+      now += 30001;
+    }
+    const work = vi.fn();
+    await expect(
+      new FileOverpassGate(dir, () => now, grant).run(work),
+    ).rejects.toThrow("MAP_ACCEPTANCE_BUDGET_EXHAUSTED");
+    await expect(normal.run(work)).rejects.toThrow("MAP_PROVIDER_BACKOFF");
+    expect(work).not.toHaveBeenCalled();
+    const state = JSON.parse(
+      await readFile(path.join(dir, "overpass-budget.json"), "utf8"),
+    );
+    expect(state.requests).toBe(4);
+    expect(state.bytes).toBe(10 * 1024 * 1024 + 20);
+    expect(state.lastHttpStatus).toBe(200);
+  });
 });

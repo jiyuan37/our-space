@@ -16,21 +16,22 @@ import type {
   Point,
 } from "@/lib/map/model";
 
-export const boundsSchema = z
-  .tuple([
-    z.number().min(-180).max(180),
-    z.number().min(-80).max(80),
-    z.number().min(-180).max(180),
-    z.number().min(-80).max(80),
-  ])
-  .refine(
-    ([w, s, e, n]) => e > w && n > s && e - w <= 0.04 && n - s <= 0.03,
-    "MAP_INVALID_AREA",
-  );
-const coordinate = z.object({
-  lon: z.number().min(-180).max(180),
-  lat: z.number().min(-90).max(90),
-});
+export { boundsSchema, overpassQuery } from "./layers";
+import { MAX_VIEW_CELLS } from "@/lib/map/cells";
+import { MAP_LAYERS, overpassCellsQuery } from "./layers";
+import {
+  same,
+  stitch,
+  splitGeometry,
+  clipLines,
+  clipRing,
+} from "./cropped-geometry";
+const coordinate = z
+  .object({
+    lon: z.number().min(-180).max(180),
+    lat: z.number().min(-90).max(90),
+  })
+  .nullable();
 const geometry = z.array(coordinate).max(20000);
 const element = z.object({
   type: z.enum(["way", "relation"]),
@@ -46,38 +47,13 @@ const element = z.object({
         geometry: geometry.optional(),
       }),
     )
-    .max(5000)
+    .max(1500)
     .optional(),
 });
 const responseSchema = z.object({
   elements: z.array(element).max(12000),
   remark: z.string().optional(),
 });
-function same(a: Point, b: Point) {
-  return a[0] === b[0] && a[1] === b[1];
-}
-// 关系的连续 way 段拼成闭环；不以直线补出缺失的河岸或建筑。
-function stitch(segments: Point[][]): Point[][] {
-  const pool = segments.map((s) => [...s]);
-  const rings: Point[][] = [];
-  while (pool.length) {
-    const ring = pool.pop()!;
-    while (ring.length && !same(ring[0], ring[ring.length - 1])) {
-      const i = pool.findIndex(
-        (s) =>
-          same(s[0], ring[ring.length - 1]) ||
-          same(s[s.length - 1], ring[ring.length - 1]),
-      );
-      if (i < 0) break;
-      const next = pool.splice(i, 1)[0];
-      if (!same(next[0], ring[ring.length - 1])) next.reverse();
-      ring.push(...next.slice(1));
-    }
-    if (ring.length >= 4 && same(ring[0], ring[ring.length - 1]))
-      rings.push(ring);
-  }
-  return rings;
-}
 export function parseOverpass(
   value: unknown,
   bounds: Bounds,
@@ -86,53 +62,113 @@ export function parseOverpass(
   const parsed = responseSchema.parse(value);
   if (parsed.remark) throw new Error("MAP_PROVIDER_INCOMPLETE");
   const features: MapFeature[] = [];
-  let points = 0;
+  let rawPoints = 0;
+  let geometryEntries = 0;
+  const seen = new Set<string>();
+  const counts = new Map<string, { elements: number; points: number }>();
   for (const item of parsed.elements) {
     const tags = item.tags ?? {};
     const kind = tags.highway
       ? "road"
       : tags.building
         ? "building"
-        : tags.natural === "water" || tags.waterway === "riverbank"
+        : tags.natural === "water" ||
+            tags.natural === "coastline" ||
+            ["riverbank", "river", "stream", "canal"].includes(tags.waterway)
           ? "water"
           : ["park", "garden", "recreation_ground"].includes(tags.leisure) ||
               ["grass", "forest", "meadow"].includes(tags.landuse)
             ? "park"
             : null;
     if (!kind) continue;
-    const toPoints = (coords: z.infer<typeof geometry>): Point[] =>
-      coords.map((c) => [c.lon, c.lat]);
-    const rings: Point[][] =
-      item.type === "way" && item.geometry
-        ? [toPoints(item.geometry)]
+    const identity = `${item.type}/${item.id}`;
+    if (seen.has(identity)) continue;
+    seen.add(identity);
+    const arrays = [
+      item.geometry ?? [],
+      ...(item.members ?? []).map((m) => m.geometry ?? []),
+    ];
+    geometryEntries += arrays.reduce((n, a) => n + a.length, 0);
+    if (geometryEntries > 150000)
+      throw new Error("MAP_PROVIDER_TOO_LARGE", {
+        cause: { stage: "GEOMETRY_ENTRY_LIMIT" },
+      });
+    const pointCount = arrays.reduce(
+      (n, a) => n + a.filter((c) => c !== null).length,
+      0,
+    );
+    rawPoints += pointCount;
+    if (rawPoints > 50000)
+      throw new Error("MAP_PROVIDER_TOO_LARGE", {
+        cause: { stage: "GEOMETRY_POINT_LIMIT" },
+      });
+    const budget = MAP_LAYERS.find(
+      (l) => l.kind === kind && l.elementType === item.type,
+    );
+    if (!budget) throw new Error("MAP_PROVIDER_INCOMPLETE");
+    if (item.type === "relation" && !item.members)
+      throw new Error("MAP_PROVIDER_INCOMPLETE");
+    const budgetKey = `${kind}:${item.type}`;
+    const usage = counts.get(budgetKey) ?? { elements: 0, points: 0 };
+    usage.elements++;
+    usage.points += pointCount;
+    counts.set(budgetKey, usage);
+    if (usage.elements > budget.maxElements || usage.points > budget.maxPoints)
+      throw new Error("MAP_PROVIDER_TOO_LARGE", {
+        cause: {
+          stage:
+            usage.elements > budget.maxElements
+              ? "LAYER_ELEMENT_LIMIT"
+              : "LAYER_POINT_LIMIT",
+        },
+      });
+    const chains: Point[][] =
+      item.type === "way"
+        ? splitGeometry(item.geometry ?? [])
         : ["outer", "inner"].flatMap((role) =>
             stitch(
               (item.members ?? [])
                 .filter(
                   (m) =>
                     m.type === "way" &&
-                    (m.role === role || (role === "outer" && m.role === "")) &&
-                    m.geometry?.length,
+                    (m.role === role || (role === "outer" && m.role === "")),
                 )
-                .map((m) => toPoints(m.geometry!)),
+                .flatMap((m) => splitGeometry(m.geometry ?? [])),
             ),
           );
-    const valid = rings.filter((r) =>
-      kind === "road"
-        ? r.length >= 2
-        : r.length >= 4 && same(r[0], r[r.length - 1]),
-    );
-    points += valid.reduce((sum, r) => sum + r.length, 0);
-    if (points > 100000) throw new Error("MAP_PROVIDER_TOO_LARGE");
-    if (valid.length)
+    const polygon =
+      kind !== "road" &&
+      tags.natural !== "coastline" &&
+      !["river", "stream", "canal"].includes(tags.waterway);
+    const complete =
+      polygon &&
+      !item.geometry?.includes(null) &&
+      chains.length > 0 &&
+      chains.every((r) => r.length >= 4 && same(r[0], r[r.length - 1])) &&
+      !(item.members ?? []).some(
+        (m) =>
+          m.type === "relation" ||
+          (m.type === "way" &&
+            ["outer", "inner", ""].includes(m.role) &&
+            (!m.geometry?.some((c) => c !== null) ||
+              m.geometry.includes(null))),
+      );
+    const rings = complete
+      ? chains.map((r) => clipRing(r, bounds)).filter((r) => r.length >= 4)
+      : kind === "road"
+        ? clipLines(chains, bounds)
+        : [];
+    const outlines = kind !== "road" ? clipLines(chains, bounds) : [];
+    if (rings.length || outlines.length)
       features.push({
         id: `${item.type}/${item.id}`,
         kind,
-        rings: valid,
+        rings,
+        ...(outlines.length ? { outlines } : {}),
         ...(kind === "road" ? { roadClass: tags.highway } : {}),
+        ...(tags.name ? { name: tags.name.slice(0, 80) } : {}),
       });
   }
-  if (!features.length) throw new Error("MAP_NO_GEOGRAPHY");
   return {
     bounds,
     features,
@@ -140,10 +176,53 @@ export function parseOverpass(
     fetchedAt: now.toISOString(),
   };
 }
-export function overpassQuery(bounds: Bounds): string {
-  const [w, s, e, n] = boundsSchema.parse(bounds);
-  const bbox = `(${s},${w},${n},${e})`;
-  return `[out:json][timeout:20][maxsize:33554432];(way[highway]${bbox};way[building]${bbox};relation[building]${bbox};way[natural=water]${bbox};relation[natural=water]${bbox};way[waterway=riverbank]${bbox};way[leisure~"^(park|garden|recreation_ground)$"]${bbox};relation[leisure~"^(park|garden|recreation_ground)$"]${bbox};way[landuse~"^(grass|forest|meadow)$"]${bbox};);out geom;`;
+export function parseCellResponse(
+  value: unknown,
+  cells: readonly Bounds[],
+): Geography[] {
+  const envelope = z
+    .object({
+      elements: z
+        .array(z.unknown())
+        .max(12000 + MAX_VIEW_CELLS * MAP_LAYERS.length),
+      remark: z.string().optional(),
+    })
+    .parse(value);
+  if (envelope.remark) throw new Error("MAP_PROVIDER_INCOMPLETE");
+  const groups: unknown[][] = [];
+  let current: unknown[] = [];
+  for (const raw of envelope.elements) {
+    if (
+      raw &&
+      typeof raw === "object" &&
+      "type" in raw &&
+      raw.type === "count"
+    ) {
+      const count = z
+        .object({ tags: z.object({ total: z.string().regex(/^\d+$/) }) })
+        .parse(raw);
+      if (groups.length >= cells.length * MAP_LAYERS.length)
+        throw new Error("MAP_PROVIDER_INCOMPLETE");
+      const budget = MAP_LAYERS[groups.length % MAP_LAYERS.length];
+      const total = Number(count.tags.total);
+      if (total > budget.maxElements) throw new Error("MAP_PROVIDER_TOO_LARGE");
+      if (total !== current.length) throw new Error("MAP_PROVIDER_INCOMPLETE");
+      groups.push(current);
+      current = [];
+    } else current.push(raw);
+  }
+  if (current.length || groups.length !== cells.length * MAP_LAYERS.length)
+    throw new Error("MAP_PROVIDER_INCOMPLETE");
+  return cells.map((bounds, i) =>
+    parseOverpass(
+      {
+        elements: groups
+          .slice(i * MAP_LAYERS.length, (i + 1) * MAP_LAYERS.length)
+          .flat(),
+      },
+      bounds,
+    ),
+  );
 }
 export class OverpassProvider implements GeographyProvider {
   constructor(
@@ -158,8 +237,11 @@ export class OverpassProvider implements GeographyProvider {
     } = {},
   ) {}
   async read(bounds: Bounds): Promise<Geography> {
+    return (await this.readCells([bounds]))[0];
+  }
+  async readCells(cells: readonly Bounds[]): Promise<Geography[]> {
     if (!this.approved()) throw new Error("MAP_PROVIDER_NOT_APPROVED");
-    const query = overpassQuery(bounds);
+    const query = overpassCellsQuery(cells);
     const endpoint = new URL(
       this.options.endpoint ||
         process.env.MAP_OVERPASS_ENDPOINT ||
@@ -209,7 +291,10 @@ export class OverpassProvider implements GeographyProvider {
           const part = await reader.read();
           if (part.done) break;
           size += part.value.length;
-          if (size > byteLimit) throw new Error("MAP_PROVIDER_TOO_LARGE");
+          if (size > byteLimit)
+            throw new Error("MAP_PROVIDER_TOO_LARGE", {
+              cause: { stage: "RESPONSE_BYTE_LIMIT" },
+            });
           chunks.push(part.value);
         }
       } finally {
@@ -230,8 +315,9 @@ export class OverpassProvider implements GeographyProvider {
         await rename(temporary, name);
       }
       return {
-        value: parseOverpass(JSON.parse(raw.toString("utf8")), bounds),
+        value: parseCellResponse(JSON.parse(raw.toString("utf8")), cells),
         bytes: size,
+        httpStatus: response.status,
       };
     });
   }

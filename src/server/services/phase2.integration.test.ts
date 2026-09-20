@@ -512,7 +512,7 @@ suite.sequential("Phase 2/3 PostgreSQL integration", () => {
     const stranger = await register("map-stranger@example.com");
     let requests = 0;
     const geography = {
-      bounds: [2.326, 48.848, 2.354, 48.866] as const,
+      bounds: [2.334, 48.852, 2.35, 48.862] as const,
       features: [],
       attribution: "OpenStreetMap contributors" as const,
       fetchedAt: new Date().toISOString(),
@@ -520,9 +520,10 @@ suite.sequential("Phase 2/3 PostgreSQL integration", () => {
     const service = new MapService(
       db,
       {
-        read: async () => {
+        read: async () => geography,
+        readCells: async (bounds) => {
           requests++;
-          return geography;
+          return bounds.map((b) => ({ ...geography, bounds: b }));
         },
       },
       { read: async () => null, write: async () => {} },

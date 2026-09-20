@@ -76,10 +76,14 @@ test("正式地图 Home：主动浏览、真实成员、无位置入口、双语
       await page.setViewportSize({ width: 375, height: 812 });
     else await page.setViewportSize({ width: 1280, height: 850 });
     let mapRequests = 0;
-    await page.route("**/api/map?*", async (route) => {
-      mapRequests++;
-      await route.fulfill({ json: await geographyFixture() });
+    page.on("request", (request) => {
+      if (request.url().includes("/api/map?")) mapRequests++;
     });
+    if (process.env.MAP_REAL_CACHE_EVIDENCE !== "true") {
+      await page.route("**/api/map?*", async (route) => {
+        await route.fulfill({ json: await geographyFixture() });
+      });
+    }
     await page.goto("/login");
     await page.getByLabel("邮箱").fill(owner.email);
     await page.getByLabel("密码").fill(password);
@@ -100,6 +104,17 @@ test("正式地图 Home：主动浏览、真实成员、无位置入口、双语
     ).toBeGreaterThan((page.viewportSize()?.width ?? 375) * 0.95);
     const map = page.getByRole("img", { name: /像素地图/ });
     await expect(map).toBeVisible();
+    if (process.env.MAP_REAL_CACHE_EVIDENCE === "true") {
+      const loaded = await page.request.get("/api/map?area=paris-seine");
+      expect(loaded.status()).toBe(200);
+      const geography: Geography = await loaded.json();
+      expect(geography.bounds).toEqual([2.334, 48.852, 2.35, 48.862]);
+      for (const kind of ["road", "building", "park", "water"])
+        expect(geography.features.some((f) => f.kind === kind)).toBe(true);
+      expect(
+        geography.features.every((f) => /^(way|relation)\/\d+$/.test(f.id)),
+      ).toBe(true);
+    }
     await expect(page.locator(".resident-avatar")).toHaveCount(2);
     await expect(page.locator(".resident-pixel-avatar")).toHaveCount(0);
     await expect(page.locator("[data-latitude], [data-longitude]")).toHaveCount(
@@ -132,7 +147,7 @@ test("正式地图 Home：主动浏览、真实成员、无位置入口、双语
     if (process.env.MAP_EVIDENCE_DIR) {
       await mkdir(process.env.MAP_EVIDENCE_DIR, { recursive: true });
       await page.screenshot({
-        path: `${process.env.MAP_EVIDENCE_DIR}/${test.info().project.name}-map-offline-fixture.png`,
+        path: `${process.env.MAP_EVIDENCE_DIR}/${test.info().project.name}-map-${process.env.MAP_REAL_CACHE_EVIDENCE === "true" ? "real-cache" : "offline-fixture"}.png`,
         fullPage: true,
       });
     }

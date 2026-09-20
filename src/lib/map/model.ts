@@ -11,6 +11,8 @@ export type MapFeature = Readonly<{
   kind: "water" | "park" | "building" | "road";
   rings: ReadonlyArray<ReadonlyArray<Point>>;
   roadClass?: string;
+  name?: string;
+  outlines?: ReadonlyArray<ReadonlyArray<Point>>;
 }>;
 export type Geography = Readonly<{
   bounds: Bounds;
@@ -20,6 +22,7 @@ export type Geography = Readonly<{
 }>;
 export interface GeographyProvider {
   read(bounds: Bounds): Promise<Geography>;
+  readCells?(bounds: readonly Bounds[]): Promise<Geography[]>;
 }
 export function project(point: Point, bounds: Bounds): [number, number] {
   const width = bounds[2] - bounds[0];

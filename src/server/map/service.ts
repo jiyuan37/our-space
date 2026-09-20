@@ -1,8 +1,9 @@
+import { cellsForBounds, mergeCellGeography } from "@/lib/map/cells";
 import { OverpassBackoffError, OverpassHttpError } from "./request-gate";
 import { mkdir, readFile, writeFile, rename } from "node:fs/promises";
 import path from "node:path";
 import type { Geography, GeographyProvider } from "@/lib/map/model";
-import { findMapArea, type MapAreaId } from "@/lib/map/areas";
+import { findMapArea } from "@/lib/map/areas";
 import type { DatabaseClient } from "@/server/services/service-context";
 import { NotSpaceResidentError } from "@/server/errors/domain-error";
 import {
@@ -24,12 +25,14 @@ export class MapReadError extends Error {
   }
 }
 export interface GeographyCache {
-  read(id: MapAreaId): Promise<Geography | null>;
-  write(id: MapAreaId, data: Geography): Promise<void>;
+  read(id: string): Promise<Geography | null>;
+  write(id: string, data: Geography): Promise<void>;
 }
 export class FileGeographyCache implements GeographyCache {
   constructor(private readonly root: string) {}
-  async read(id: MapAreaId) {
+  async read(id: string) {
+    if (!/^cell-v3--?\d+--?\d+-z16$/.test(id))
+      throw new MapReadError("MAP_INVALID_AREA");
     try {
       return JSON.parse(
         await readFile(path.join(this.root, `${id}.json`), "utf8"),
@@ -39,7 +42,9 @@ export class FileGeographyCache implements GeographyCache {
       throw error;
     }
   }
-  async write(id: MapAreaId, data: Geography) {
+  async write(id: string, data: Geography) {
+    if (!/^cell-v3--?\d+--?\d+-z16$/.test(id))
+      throw new MapReadError("MAP_INVALID_AREA");
     await mkdir(this.root, { recursive: true, mode: 0o700 });
     const temporary = path.join(this.root, `${id}.${crypto.randomUUID()}.tmp`);
     await writeFile(temporary, JSON.stringify(data), { mode: 0o600 });
@@ -67,21 +72,34 @@ export class MapService {
       limit: 30,
       windowMs: 60_000,
     });
-    // 公共地理缓存不含用户、Space 或最近浏览记录。无后台刷新/跟踪。
-    const cached = await this.cache.read(area.id);
-    if (cached) return cached;
-    const pending = this.inflight.get(area.id);
+    const cells = cellsForBounds(area.bounds);
+    const cached = await Promise.all(cells.map((c) => this.cache.read(c.key)));
+    if (cached.every((c) => c !== null))
+      return mergeCellGeography(area.bounds, cached);
+    const key = cells.map((c) => c.key).join("|");
+    const pending = this.inflight.get(key);
     if (pending) return pending;
     const job = (async () => {
-      await enforceRateLimit(this.limiter, {
-        key: "map-provider-global",
-        limit: 10,
-        windowMs: 86400000,
-      });
       try {
-        const geography = await this.provider.read(area.bounds);
-        await this.cache.write(area.id, geography);
-        return geography;
+        // 同一HTTP内顺序输出有限的未缓存cell；不为每个layer并行请求公共实例。
+        const missing = cells.filter((_, i) => !cached[i]);
+        const fresh = this.provider.readCells
+          ? await this.provider.readCells(missing.map((c) => c.bounds))
+          : await (async () => {
+              const result: Geography[] = [];
+              for (const c of missing)
+                result.push(await this.provider.read(c.bounds));
+              return result;
+            })();
+        if (fresh.length !== missing.length)
+          throw new Error("MAP_PROVIDER_INCOMPLETE");
+        for (let i = 0; i < missing.length; i++)
+          await this.cache.write(missing[i].key, fresh[i]);
+        const data = cells.map(
+          (c, i) =>
+            cached[i] ?? fresh[missing.findIndex((m) => m.key === c.key)],
+        );
+        return mergeCellGeography(area.bounds, data);
       } catch (error) {
         if (error instanceof OverpassBackoffError)
           throw new MapReadError("MAP_BACKOFF", error.retryAt);
@@ -98,11 +116,11 @@ export class MapService {
         throw new MapReadError("MAP_UNAVAILABLE");
       }
     })();
-    this.inflight.set(area.id, job);
+    this.inflight.set(key, job);
     try {
       return await job;
     } finally {
-      this.inflight.delete(area.id);
+      this.inflight.delete(key);
     }
   }
 }

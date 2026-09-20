@@ -24,7 +24,8 @@ export default defineConfig({
       AVATAR_E2E_FIXTURE: "true",
       AVATAR_EXTERNAL_REQUESTS_ENABLED: "false",
       MAP_EXTERNAL_PROCESSING_APPROVED: "",
-      MAP_CACHE_DIR: "/tmp/our-space-map-e2e-cache",
+      MAP_CACHE_DIR:
+        process.env.MAP_TEST_CACHE_DIR ?? "/tmp/our-space-map-e2e-cache",
       AVATAR_STORAGE_DIR:
         process.env.AVATAR_TEST_STORAGE_DIR ??
         "/tmp/our-space-avatar-e2e-storage",

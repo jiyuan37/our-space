@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { memo, useId } from "react";
 import {
   featurePath,
   parkDecorations,
@@ -7,7 +7,11 @@ import {
 } from "@/lib/map/model";
 
 // 原创像素纹理继承已批准原型；无原型人物、固定城市或模拟事件。
-export function PixelGeography({ geography }: { geography: Geography }) {
+export const PixelGeography = memo(function PixelGeography({
+  geography,
+}: {
+  geography: Geography;
+}) {
   const prefix = useId().replaceAll(":", "");
   const grass = `${prefix}-grass`,
     water = `${prefix}-water`;
@@ -104,7 +108,7 @@ export function PixelGeography({ geography }: { geography: Geography }) {
                         ? foot
                           ? "#dfcfab"
                           : "#f5e8cc"
-                        : kind === "building"
+                        : kind === "building" && !feature.outlines?.length
                           ? "#b8a58e"
                           : "none"
                     }
@@ -117,6 +121,43 @@ export function PixelGeography({ geography }: { geography: Geography }) {
               })}
           </g>
         ))}
+        <g fill="none" strokeWidth="3" strokeLinejoin="round">
+          {geography.features
+            .filter((f) => f.outlines?.length)
+            .map((f) => (
+              <path
+                key={f.id}
+                strokeWidth={f.kind === "building" ? 1.2 : 2}
+                d={featurePath(
+                  { ...f, kind: "road", rings: f.outlines! },
+                  geography.bounds,
+                )}
+                stroke={
+                  f.kind === "water"
+                    ? "#91bacd"
+                    : f.kind === "park"
+                      ? "#9fbd8b"
+                      : "#b8a58e"
+                }
+              />
+            ))}
+        </g>
+        <g fill="#676b59" fontSize="12" textAnchor="middle" aria-hidden="true">
+          {geography.features
+            .filter(
+              (f) =>
+                f.name && ["water", "park"].includes(f.kind) && f.rings[0]?.[0],
+            )
+            .slice(0, 4)
+            .map((f) => {
+              const [x, y] = project(f.rings[0][0], geography.bounds);
+              return (
+                <text key={f.id} x={x} y={y - 6}>
+                  {f.name}
+                </text>
+              );
+            })}
+        </g>
         <g aria-hidden="true">
           {parkDecorations(geography).map(([x, y]) => (
             <use
@@ -132,4 +173,4 @@ export function PixelGeography({ geography }: { geography: Geography }) {
       </g>
     </>
   );
-}
+});

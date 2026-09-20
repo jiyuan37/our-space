@@ -1,25 +1,27 @@
 # Our Space — 当前状态
 
-最后更新：2026-09-06
+最后更新：2026-09-20
 
 ## 当前 Phase
 
 - 当前工作包：MAP-01A — Production Map-first Home；用户已明确批准正式 `/home` 接入，Phase 1–3 与头像闭环保留。
-- 当前状态：**头像生成风格已批准，产品 pipeline 已实现，当前真实 candidate 未确认为个人头像。MAP-01A 正在实施，公共 Overpass 浏览区域接入已获批准；本轮3次真实读取未形成可用地理缓存，第三次明确为响应读取超限，尚未通过真实地图验收。**
+- 当前状态：**头像生成风格已批准，产品 pipeline 已实现，当前真实 candidate 未确认为个人头像。MAP-01A 正在实施，公共Overpass接入已批准；最新有界请求响应678954 bytes，分层元素预算拒绝了截断结果，随后0.005° cell/relation修正尚未真实验收。**
 - Phase 3 implementation 已完成并通过 Final Review；本轮不重做历史验收。
 - 实际项目根目录：`/Users/yuan/Desktop/our-space`。
 - 最新授权为 MAP-01A 正式地图 Home。定位采集、movement replay、ANIMATION-01 和 LifePoint 产品行为不在本轮范围，不自动开始后续工作包。
 - Phase 2 已完成并通过最终 Review；Phase 3 前置 UI/UX Review、Design Decision Closure、implementation、Independent Final Review 与 Final Polish Patch 均已完成。
 - **Phase 4 尚未开始，也未获得批准。**
 
-## MAP-01A（本轮进行中）
+## MAP-01A（本轮离线修复，真实验收未通过）
 
-- 本轮实际起点 `254d4f8372ab58d61ff4534bd7b8deadc9c64fe0`，main、干净、origin同步0/0，remote未变。上一轮正式Home代码及离线验证已提交，本轮继续公共服务接入。
-- 用户批准服务端向公共Overpass发送主动查看区域bbox及必需OSM查询；bbox是外发地理数据，不发送业务字段或Resident定位。开发/测试/早期低流量限定，规模化/商业发布前必须重新评估后端。
-- 新增OurSpace User-Agent、可配置HTTPS端点、跨进程磁盘串行闸门、持久预算、至少30秒退避和Retry-After；有缓存时直接读取，不自动重试。
-- 本轮真实Overpass请求3次，Cloudflare 0次。前两次失败层证据不足；第三次确认响应读取超过5MiB，`MAP_PROVIDER_TOO_LARGE`。没有真实生产地图缓存或合格真实地图截图，未声明MAP-01A完成；具体证据与剩余问题见 [MAP-01A实施记录](./MAP_01A_IMPLEMENTATION.md)。
-- 真实ACTIVE Space/Resident、final或fallback与Presence接入保持；没有坐标者使用明确标注的非地理入口。当前头像candidate未自动确认/取消/延长。
-- 本轮提交信息 `fix: guard public Overpass access and record live limits`；包含本节的完整hash以Git定位，正常push后目标main、干净、0/0，最终以实际命令核对。新验证结果见实施记录。
+- 本轮起点`be66c323822ac2350b6e439a23f7d0e1dfc7341f`，main、干净、origin/main 0/0，remote未改。
+- 完成固定cell-v3、分层selection/output同bbox、way/relation必要输出、预算/count、裁剪缺口、接缝去重与持久cell缓存；5MiB响应上限未提高。
+- 本轮Overpass **1次**、Cloudflare **0次**。真实响应678954 bytes已完整保存，实际道路1371/建筑1557超过层预算，未写成正式地图缓存；第2次按停止条件未执行。
+- 实测后仅离线修正0.005°格与relation body geom，最新版本尚未真实验证。**MAP-01A未完成**；证据、测试数字和未决条件见[有界地理提取记录](./MAP_01A_BOUNDED_GEOMETRY.md)。前轮3次读取失败记录保留在MAP_01A_IMPLEMENTATION.md。
+- 09-20收尾发现新披露的生产依赖漏洞，已升级Next.js/eslint-config-next 15.5.25与sharp 0.35.4；生产audit恢复0，业务范围未扩展。
+- 用户的头像candidate未确认/取消/延长；真实Resident、final/fallback、Presence与无位置表示保持，不开始定位、动画或LifePoint。
+- 最终检查：33 files / 203 tests（40项真实PostgreSQL）、24/24双端E2E、build/typecheck/lint/format/diff通过、production audit 0。本地恢复服务进程关闭地图外发与真实头像生成，.env.local不变。
+- 提交信息`fix: bound map geometry by cells and layer budgets`；完整hash以包含本节的Git提交定位，正常push后目标main、干净、0/0，以最终实际命令为准。
 
 ## AVATAR-01 身份拒绝与约束（本轮）
 

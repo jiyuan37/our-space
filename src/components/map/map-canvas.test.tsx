@@ -1,3 +1,4 @@
+import { parseOverpass } from "@/server/map/overpass";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
@@ -45,5 +46,48 @@ describe("MapCanvas", () => {
       "href",
       "https://www.openstreetmap.org/copyright",
     );
+  });
+  it("裁剪道路与未闭合水岸在renderer中保持分段，不画NaN或伪造闭合", () => {
+    const clipped = parseOverpass(
+      {
+        elements: [
+          {
+            type: "way",
+            id: 1,
+            tags: { highway: "primary" },
+            geometry: [
+              null,
+              { lon: 9, lat: 50.005 },
+              { lon: 11, lat: 50.005 },
+              null,
+            ],
+          },
+          {
+            type: "relation",
+            id: 2,
+            tags: { natural: "water" },
+            members: [
+              {
+                type: "way",
+                ref: 3,
+                role: "outer",
+                geometry: [
+                  null,
+                  { lon: 10.003, lat: 49 },
+                  { lon: 10.003, lat: 51 },
+                  null,
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      [10, 50, 10.01, 50.01],
+    );
+    const { container } = render(<MapCanvas geography={clipped} />);
+    const outline = container.querySelector('path[stroke="#91bacd"]');
+    expect(outline).toBeInTheDocument();
+    expect(outline?.getAttribute("d")).not.toMatch(/Z|NaN|Infinity/);
+    expect(container.querySelector('g[fill="none"]')).toBeInTheDocument();
   });
 });

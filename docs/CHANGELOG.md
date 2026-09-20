@@ -4,6 +4,13 @@
 
 ## [未发布]
 
+### MAP-01A有界geometry与cell预算（2026-09-07；09-20收尾）
+
+- 09-20生产审计发现新披露漏洞，升级Next.js/eslint-config-next至15.5.25、sharp至0.35.4；不改头像功能或外部调用。
+- 查询同时限制selection与output bbox，分层way/relation预算、count完整性检测、固定cell-v3缓存与OSM身份去重；裁剪缺口不补假线/填色。
+- 单次5MiB不变，查询内存参数不变；真实第1次仅678954 bytes，但道路1371/建筑1557超预算，未缓存截断结果，第2次停止。
+- 根据保留源响应离线改为0.005°格与relation必要body geom输出，未再访问Overpass。MAP-01A仍未完成，不用fixture冒充验收；详见MAP_01A_BOUNDED_GEOMETRY.md。
+
 ### 公共Overpass接入保护与真实读取限制（2026-09-06）
 
 - 按专项授权启用服务端地图浏览bbox查询，明确地理外发边界和早期低流量限制；OurSpace标识、可替换端点、持久串行/预算/退避、缓存降级。

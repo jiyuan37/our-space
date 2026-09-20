@@ -23,7 +23,9 @@ export class OverpassHttpError extends Error {
 }
 export interface RequestGate {
   run<T>(
-    work: (byteLimit: number) => Promise<{ value: T; bytes: number }>,
+    work: (
+      byteLimit: number,
+    ) => Promise<{ value: T; bytes: number; httpStatus?: number }>,
   ): Promise<T>;
 }
 type GateState = {
@@ -34,7 +36,9 @@ type GateState = {
   lastOutcome?: "success" | "failed";
   lastHttpStatus?: number;
   lastFailure?: string;
+  lastFailureStage?: string;
   lastTransportCode?: string;
+  acceptance?: Record<string, { requests: number; bytes: number }>;
 };
 const MAX_DAILY_BYTES = 10 * 1024 * 1024;
 // 单主机早期运行：所有 Node worker 共用磁盘锁与预算，不依赖各自进程内计数。
@@ -42,9 +46,13 @@ export class FileOverpassGate implements RequestGate {
   constructor(
     private readonly root: string,
     private readonly now: () => number = Date.now,
+    // 仅维护者在用户新授权后显式注入；不由环境开关或客户端激活。共享原锁、间隔和5MiB单次上限。
+    private readonly acceptanceGrant?: { id: string; maxRequests: 2 },
   ) {}
   async run<T>(
-    work: (byteLimit: number) => Promise<{ value: T; bytes: number }>,
+    work: (
+      byteLimit: number,
+    ) => Promise<{ value: T; bytes: number; httpStatus?: number }>,
   ): Promise<T> {
     await mkdir(this.root, { recursive: true, mode: 0o700 });
     const lockPath = path.join(this.root, "overpass.lock");
@@ -79,15 +87,34 @@ export class FileOverpassGate implements RequestGate {
           requests: 0,
           bytes: 0,
           nextAllowedAt: state.nextAllowedAt,
+          acceptance: state.acceptance,
         };
-      if (state.requests >= 10 || state.bytes >= MAX_DAILY_BYTES)
+      let allowance: { requests: number; bytes: number } | undefined;
+      if (this.acceptanceGrant) {
+        if (!/^[a-z0-9-]{1,80}$/.test(this.acceptanceGrant.id))
+          throw new Error("MAP_INVALID_ACCEPTANCE_GRANT");
+        state.acceptance ??= {};
+        allowance = state.acceptance[this.acceptanceGrant.id] ??= {
+          requests: 0,
+          bytes: 0,
+        };
+        if (allowance.requests >= this.acceptanceGrant.maxRequests)
+          throw new Error("MAP_ACCEPTANCE_BUDGET_EXHAUSTED");
+      } else if (state.requests >= 10 || state.bytes >= MAX_DAILY_BYTES)
         throw new OverpassBackoffError(
           Date.parse(`${day}T00:00:00Z`) + 86400000,
         );
-      const limit = Math.min(5 * 1024 * 1024, MAX_DAILY_BYTES - state.bytes);
+      const limit = allowance
+        ? 5 * 1024 * 1024
+        : Math.min(5 * 1024 * 1024, MAX_DAILY_BYTES - state.bytes);
+      if (allowance) {
+        allowance.requests++;
+        allowance.bytes += limit;
+      }
       delete state.lastHttpStatus;
       delete state.lastTransportCode;
       delete state.lastFailure;
+      delete state.lastFailureStage;
       // 发送前持久预留请求及字节预算；崩溃/失败也不能通过重启规避预算。
       state.requests++;
       state.bytes += limit;
@@ -97,8 +124,10 @@ export class FileOverpassGate implements RequestGate {
         const result = await work(limit);
         state.lastOutcome = "success";
         delete state.lastFailure;
-        delete state.lastHttpStatus;
+        if (result.httpStatus) state.lastHttpStatus = result.httpStatus;
+        else delete state.lastHttpStatus;
         state.bytes -= limit - result.bytes;
+        if (allowance) allowance.bytes -= limit - result.bytes;
         state.nextAllowedAt = this.now() + 30000;
         await save(state);
         return result.value;
@@ -125,8 +154,19 @@ export class FileOverpassGate implements RequestGate {
                   : "LOCAL_PROCESSING_ERROR";
         const cause =
           error instanceof Error
-            ? (error.cause as { code?: unknown } | undefined)
+            ? (error.cause as { code?: unknown; stage?: unknown } | undefined)
             : undefined;
+        if (
+          typeof cause?.stage === "string" &&
+          [
+            "GEOMETRY_ENTRY_LIMIT",
+            "GEOMETRY_POINT_LIMIT",
+            "LAYER_ELEMENT_LIMIT",
+            "LAYER_POINT_LIMIT",
+            "RESPONSE_BYTE_LIMIT",
+          ].includes(cause.stage)
+        )
+          state.lastFailureStage = cause.stage;
         if (
           typeof cause?.code === "string" &&
           [

@@ -104,7 +104,7 @@ export function MapBrowser({ spaceId }: { spaceId: string }) {
                 aria-pressed={chosen === area.id}
                 disabled={!ready || loading}
                 onClick={(event) => {
-                  setGeography(null);
+                  if (chosen !== area.id) setGeography(null);
                   setChosen(area.id);
                   event.currentTarget
                     .closest("details")

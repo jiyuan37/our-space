@@ -1,0 +1,19 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`有界cell几何与查询 > 每层选择和输出使用相同bbox、qt/预算/count，无无限输出或recurse 1`] = `
+"[out:json][timeout:20][maxsize:33554432];
+(way[highway~"^(primary|secondary|tertiary|residential|unclassified|living_street|service|pedestrian|primary_link|secondary_link|tertiary_link)$"][area!=yes][indoor!=yes](50,10,50.005,10.005););
+out tags geom(50,10,50.005,10.005) qt 351;out count;
+(way[building][building!=no](50,10,50.005,10.005););
+out tags geom(50,10,50.005,10.005) qt 451;out count;
+(relation[type=multipolygon][building][building!=no](50,10,50.005,10.005););
+out body geom(50,10,50.005,10.005) qt 33;out count;
+(way[leisure~"^(park|garden|recreation_ground)$"](50,10,50.005,10.005);way[landuse~"^(grass|forest|meadow)$"](50,10,50.005,10.005););
+out tags geom(50,10,50.005,10.005) qt 101;out count;
+(relation[type=multipolygon][leisure~"^(park|garden|recreation_ground)$"](50,10,50.005,10.005);relation[type=multipolygon][landuse~"^(grass|forest|meadow)$"](50,10,50.005,10.005););
+out body geom(50,10,50.005,10.005) qt 33;out count;
+(way[natural~"^(water|coastline)$"](50,10,50.005,10.005);way[waterway~"^(river|stream|canal|riverbank)$"](50,10,50.005,10.005););
+out tags geom(50,10,50.005,10.005) qt 101;out count;
+(relation[type=multipolygon][natural=water](50,10,50.005,10.005););
+out body geom(50,10,50.005,10.005) qt 33;out count;"
+`;

@@ -18,7 +18,8 @@ Phase 3 implementation 已完成并通过 Final Review。
 - [x] 生产renderer/provider/相机/Resident入口分离；真实业务读取复用HomeService。
 - [x] final/fallback与真实Presence接入，无定位权限/坐标推断/模拟轨迹。
 - [x] 公共Overpass地图浏览专用授权、服务端标识、可替换端点、持久限流/串行/退避。
-- [ ] 真实地理加载：本轮3次请求未完成，第三次响应读取超出5MiB；需解决输出范围与体积问题，不能直接截断多边形补造河岸。
+- [x] 固定cell、分层有界输出、count预算、裁剪缺口与接缝去重的离线实现和测试。
+- [ ] 真实地理加载：最新1次有界响应678954 bytes，但元素预算拒绝截断结果；0.005° cell/relation输出离线修正尚未真实验证，第2次未执行。见MAP_01A_BOUNDED_GEOMETRY.md。
 - [x] 上轮离线双端截图、178项自动测试和24项E2E通过；本轮新增验证数字见MAP_01A_IMPLEMENTATION.md。
 - [ ] 真实地图数据截图与在线接入验收；不得用fixture替代。
 - [ ] MAP-01剩余能力：真实位置采集、地理marker语义及相关授权。

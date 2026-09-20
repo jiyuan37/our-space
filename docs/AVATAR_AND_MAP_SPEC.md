@@ -16,7 +16,7 @@
 | 头像风格已确认 | Our Space Avatar Style Baseline；以真实成功v3候选的视觉语言为基线    |
 | 头像pipeline   | 已实现；个人candidate确认仍是用户选择，当前候选未确认为用户头像      |
 | 本轮实施       | MAP-01A：真实Space/Resident/final或fallback/Presence进入地图Home     |
-| 地图验证       | 外部边界已批准；真实读取超限尚未验收，不等于MAP-01完成               |
+| 地图验证       | 外部边界已批准；有界响应通过字节限制但元素超预算，仍未验收           |
 
 ### Our Space Avatar Style Baseline
 
@@ -28,7 +28,7 @@
 
 真实地理数据 → 独立Geography模型 → 原创像素规则 → 生产SVG地图。Quiet Home是无压力体验原则，不再限制为文字主页面。无坐标Resident通过标明“未分享位置”的人物快捷入口存在，不能把浏览区域或profile地址当作当前位置。现有Schema没有经授权的位置字段，本轮不新增定位采集或伪造坐标；未来地理marker必须来自明确授权的数据契约。
 
-保留Auth/Invitation/Space/Presence、viewer-local-day freshness、头像权限与双语。地图浏览区域只影响相机，不改变Resident；保留缩放/回中与键盘，人物详情不重置地图。地图供应商可替换；公共Overpass已获地图浏览专用授权，未配置政策开关时仍不外发。服务端只发用户主动选择的bbox与必需OSM查询，bbox本身属于外发地理数据，不含业务字段或后台/实时Resident定位。使用OurSpace User-Agent、缓存、去重、串行限流与退避；只适用开发、测试与早期低流量，商业/规模化前重新评估后端。当前真实读取超限，不能以离线fixture替代验收。
+保留Auth/Invitation/Space/Presence、viewer-local-day freshness、头像权限与双语。地图浏览区域只影响相机，不改变Resident；保留缩放/回中与键盘，人物详情不重置地图。地图供应商可替换；公共Overpass已获地图浏览专用授权，未配置政策开关时仍不外发。服务端只发用户主动选择的bbox与必需OSM查询，bbox本身属于外发地理数据，不含业务字段或后台/实时Resident定位。使用OurSpace User-Agent、缓存、去重、串行限流与退避；只适用开发、测试与早期低流量，商业/规模化前重新评估后端。最新真实响应通过字节限制但元素超预算；0.005° cell和分层必要输出已离线修正，不能以fixture替代真实验收。详见MAP_01A_BOUNDED_GEOMETRY.md。
 
 下文保留地图/移动的已确认规格与历史原型证据；不据此声称位置采集、movement replay或MAP-01全部完成。
 
