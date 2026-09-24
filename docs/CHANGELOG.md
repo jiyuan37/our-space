@@ -4,6 +4,12 @@
 
 ## [未发布]
 
+### MAP-01A provider health investigation（2026-09-24）
+
+- 保留bounded query、layer/cell预算、5MiB上限和`MAP_PROVIDER_INCOMPLETE`拒绝；新增endpoint health outcome/latency、指数backoff、跨读取fallback和circuit breaker，一次逻辑读取仍只有一个上游请求。
+- 新增无用户数据的三endpoint极小live probe；本环境三者各一次均`fetch failed`，无HTTP body/remark/elements且无retry。结合独立机器主endpoint 33秒empty response，public Overpass不作为MAP-01A生产验收SLA。
+- 记录cache-first regional dataset与可靠自托管/付费/vector provider选项；未自动迁移provider，MAP-01A仍未完成。
+
 ### MAP-01A 有界批量查询修复（2026-09-24）
 
 - 在既有0.005°固定cell与geometry裁剪基础上，将同layer多cell selection组成Overpass集合并只输出一次固定cell包络geometry，避免长way/relation在同一响应跨cell重复；缓存版本升至cell-v4。

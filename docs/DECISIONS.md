@@ -736,3 +736,9 @@ MAP-01A使用固定0.005°整数格网、分层筛选与geometry输出同bbox；
 MAP-01A仍以0.005°固定cell决定查询与cell-v4缓存，不使用任意像素viewport作为缓存键。同一layer需要多个cell时，所有cell bbox selection先组成一个Overpass集合，利用OSM type/id集合语义去重；随后只对固定cell包络执行一次有界`out tags/body geom(bbox)`。解析完成后按每个cell再次裁剪并独立缓存，跨cell拼接仍按OSM type/id去重且不改真实geometry。
 
 该方式取代DEC-067中“每个cell在同一HTTP内分别输出geometry”的实现细节，因为后者会让跨cell长way/relation在响应内重复多次并触发5MiB上限。七个生产layer、zoom门槛、relation不递归、count完整性、分层元素/点预算和5MiB响应上限不变。2026-09-24首个真实小街区验收因执行环境`ENETUNREACH`未得到HTTP响应；无自动重试，第二次未执行，MAP-01A仍未完成。
+
+## DEC-069 — Public Overpass仅作受控诊断来源，不作为MAP-01A生产SLA
+
+- 日期：2026-09-24。状态：已决定并实施health abstraction；可靠provider尚未选型。
+
+保留bounded fixed-cell query、分层预算、5MiB上限与partial/incomplete拒绝。Provider health持久记录无用户信息的endpoint outcome/latency，失败指数backoff，circuit打开期间不请求；fallback只在后续独立读取选择，一次逻辑读取最多一个upstream request。公共endpoint的一次成功不能满足MAP-01A验收。MVP推荐cache-first regional dataset，并在自托管Overpass、有SLA的兼容backend或单独适配的vector/tile provider中经批准选择可靠来源；本轮不自动迁移。

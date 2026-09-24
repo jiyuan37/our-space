@@ -9,7 +9,7 @@
 ## 当前仓库限制
 
 - Phase 3 implementation 已完成并通过 Final Review；Phase 4 尚未开始，也未获得批准。
-- `/home` 正在改为Map-first Home，Quiet Home保留为无压力原则；`/space`继续提供Invitation/account management。固定cell集合查询现已避免跨cell重复输出同一OSM geometry并使用cell-v4缓存，5MiB上限未提高；2026-09-24首个真实小街区请求因当前执行环境IPv4/IPv6均`ENETUNREACH`而没有HTTP响应，未重试或执行第2次。不能把fixture截图当成真实验收。
+- `/home` 正在改为Map-first Home，Quiet Home保留为无压力原则；`/space`继续提供Invitation/account management。固定cell集合查询、cell-v4缓存、5MiB上限与incomplete拒绝保留；provider health已避免同次retry并支持后续请求fallback/circuit。三个public Overpass endpoint的极小probe均transport failure，独立机器对主endpoint亦曾33秒empty response，因此公共实例不构成生产SLA；尚未接入cache-first regional dataset或可靠自托管/付费来源，不能把fixture或偶发一次成功当成真实验收。
 - 公共地图后端仅限开发/测试/早期低流量，无生产SLA。默认持久日预算10请求/10MiB、单次5MiB、至少30秒间隔；失败保守预留预算。多主机部署需要共享限流/缓存后端，商业发布前重评。崩溃遗留磁盘锁将安全阻断外发，维护者须确认没有活跃请求后手动恢复，不能定时强制删锁。
 - 尚未实现 Life Point、Response、Shared Moment、Visit、Memory 或 Phase 4 media workflow。
 - AVATAR-01 pipeline已实现、头像视觉语言获批；每次个人候选仍须本人确认。MAP-01A实施中，ANIMATION-01、真实位置采集、movement replay及LifePoint地图集成尚未实现。
