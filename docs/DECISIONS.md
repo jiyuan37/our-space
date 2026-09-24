@@ -742,3 +742,10 @@ MAP-01A仍以0.005°固定cell决定查询与cell-v4缓存，不使用任意像�
 - 日期：2026-09-24。状态：已决定并实施health abstraction；可靠provider尚未选型。
 
 保留bounded fixed-cell query、分层预算、5MiB上限与partial/incomplete拒绝。Provider health持久记录无用户信息的endpoint outcome/latency，失败指数backoff，circuit打开期间不请求；fallback只在后续独立读取选择，一次逻辑读取最多一个upstream request。公共endpoint的一次成功不能满足MAP-01A验收。MVP推荐cache-first regional dataset，并在自托管Overpass、有SLA的兼容backend或单独适配的vector/tile provider中经批准选择可靠来源；本轮不自动迁移。
+
+## DEC-070 — OpenFreeMap作为底图，Overpass降为可选enrichment（2026-09-24）
+
+- 状态：已接受并实施。
+- `BaseMapProvider` 使用OpenFreeMap的OpenMapTiles vector TileJSON，由MapLibre GL JS在客户端渲染；Our Space持有style layers、暖色像素视觉、相机与loading/error体验。底图注明OpenFreeMap与OpenStreetMap contributors attribution。
+- `EnrichmentProvider`继续使用既有Overpass实现；七层、layer budgets、固定cell-v4 cache、OSM identity deduplication、bounded geometry与incomplete response拒绝全部保留。它只在用户选择“更多建筑细节”时请求，失败不移除底图、不阻断Home、Resident或Presence。
+- Home Server Component不直接依赖具体地图供应商。浏览器client-only初始化MapLibre，unmount时`remove()`，并由`ResizeObserver`调用`resize()`；不新增位置、LifePoint或核心实体。

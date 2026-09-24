@@ -5,7 +5,14 @@
 ## 当前 Phase
 
 - 当前工作包：MAP-01A — Production Map-first Home；用户已明确批准正式 `/home` 接入，Phase 1–3 与头像闭环保留。
-- 当前状态：**头像生成风格已批准，产品 pipeline 已实现，当前真实 candidate 未确认为个人头像。MAP-01A 正在实施；bounded query 保留，provider health、指数 backoff、跨请求 endpoint fallback 与 circuit breaker 已实现。三个公共 endpoint 的独立极小 query 均 transport failure；public Overpass 不再作为可靠验收 SLA，真实接入仍未验收。**
+- 当前状态：**MAP-01A底图已从public Overpass迁移为OpenFreeMap vector tiles + MapLibre；Overpass保留为用户主动加载的可选enrichment。当前执行环境到OpenFreeMap的CONNECT tunnel为403，因此真实tile视觉验收仍需在可访问网络完成。**
+
+## MAP-01A OpenFreeMap迁移（2026-09-24）
+
+- `BaseMapProvider = OpenFreeMap`，客户端MapLibre渲染Our Space暖色低饱和style；底图首屏不调用`/api/map`，attribution同时覆盖OpenFreeMap与OpenStreetMap contributors。
+- `EnrichmentProvider = Overpass`；原七层、预算、cell-v4 cache、deduplication、bounded geometry、incomplete response、health/backoff/circuit代码未删除，只由用户主动选择更多细节触发。
+- MapLibre仅在Client Component effect初始化，unmount cleanup并响应容器resize；失败保留暖色fallback，Resident/fallback avatar与Presence仍在独立业务层。
+- 当前环境`curl -I https://tiles.openfreemap.org/planet`返回`CONNECT tunnel failed, response 403`，不能在此环境伪造真实provider成功证据。离线provider/component测试与build检查结果以本次提交最终记录为准。
 - Phase 3 implementation 已完成并通过 Final Review；本轮不重做历史验收。
 - 实际项目根目录：`/Users/yuan/Desktop/our-space`。
 - 最新授权为 MAP-01A 正式地图 Home。定位采集、movement replay、ANIMATION-01 和 LifePoint 产品行为不在本轮范围，不自动开始后续工作包。

@@ -28,6 +28,55 @@
   overflow: hidden;
   z-index: -1;
 }
+.map-stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: -1;
+  background: linear-gradient(
+      135deg,
+      #e8dcc4 25%,
+      #e2d5bb 25% 50%,
+      #e8dcc4 50% 75%,
+      #e2d5bb 75%
+    )
+    0 0 / 24px 24px;
+}
+.base-map-canvas {
+  position: absolute;
+  inset: 0;
+}
+.base-map-canvas .maplibregl-canvas {
+  image-rendering: pixelated;
+}
+.base-map-canvas .maplibregl-ctrl-group {
+  border-radius: 12px;
+  background: #fff5df;
+  box-shadow: 0 3px 0 #b6a48c;
+}
+.base-map-canvas .maplibregl-ctrl button {
+  width: 44px;
+  height: 44px;
+}
+.base-map-canvas .maplibregl-ctrl-attrib {
+  color: #4a4035;
+  background: #fff9e7e6;
+}
+.map-base-status {
+  position: absolute;
+  left: 24px;
+  top: 88px;
+  z-index: 3;
+  max-width: min(360px, calc(100% - 96px));
+  border-radius: 12px;
+  background: #fff8e8ed;
+  color: #564b40;
+  font-size: 12px;
+}
+.map-base-status p {
+  margin: 0;
+  padding: 8px 12px;
+}
 .map-svg {
   width: 100%;
   height: 100%;
@@ -214,8 +263,10 @@
   margin: 0;
 }
 .map-region {
-  position: relative;
-  margin: 0 24px;
+  position: absolute;
+  left: 24px;
+  top: 128px;
+  margin: 0;
   width: fit-content;
   max-width: calc(100% - 90px);
 }
@@ -257,6 +308,19 @@
   z-index: 3;
   min-height: 44px;
   font-size: 12px;
+}
+.map-region details {
+  border-radius: 12px;
+  background: #fff8e8ed;
+  padding: 8px 12px;
+}
+.map-area-picker {
+  display: grid;
+  gap: 6px;
+  padding-top: 8px;
+}
+.map-area-picker button {
+  min-height: 44px;
 }
 .map-region summary {
   display: flex;

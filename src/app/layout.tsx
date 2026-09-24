@@ -6,6 +6,7 @@ import { getServerI18n, getServerLocale } from "@/lib/i18n/server";
 import "@/styles/globals.css";
 import "@/styles/avatar.css";
 import "@/styles/map.css";
+import "maplibre-gl/dist/maplibre-gl.css";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getServerI18n();

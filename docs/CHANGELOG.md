@@ -4,6 +4,12 @@
 
 ## [未发布]
 
+### MAP-01A OpenFreeMap底图迁移（2026-09-24）
+
+- 正式`/home`底图改用OpenFreeMap vector tiles与MapLibre GL JS；Our Space自有暖色低饱和style layers、loading/error fallback及OpenFreeMap/OpenStreetMap attribution。
+- 拆分`BaseMapProvider`与`EnrichmentProvider`：Home首屏不再请求Overpass；既有Overpass七层、有界查询、预算、cell cache、去重和incomplete保护完整保留为用户主动加载的可选细节层。
+- 增加底图provider、底图失败fallback、enrichment成功/失败不阻断、双端E2E断言；未实现定位、movement replay、ANIMATION-01、LifePoint、Response、SharedMoment或Visit。
+
 ### MAP-01A provider health investigation（2026-09-24）
 
 - 保留bounded query、layer/cell预算、5MiB上限和`MAP_PROVIDER_INCOMPLETE`拒绝；新增endpoint health outcome/latency、指数backoff、跨读取fallback和circuit breaker，一次逻辑读取仍只有一个上游请求。

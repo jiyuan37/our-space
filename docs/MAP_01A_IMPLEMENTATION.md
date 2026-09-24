@@ -71,3 +71,10 @@ Our Space Avatar Style Baseline 已由用户批准，AVATAR-01 pipeline 已实�
 ## Git交付
 
 本轮起点`254d4f8372ab58d61ff4534bd7b8deadc9c64fe0`，main、干净、origin同步0/0。提交信息`fix: guard public Overpass access and record live limits`，完整hash由包含本记录的Git提交定位；正常push后目标main、干净、0/0，以最终命令核对。提交代表接入保护与已验证代码，不代表真实地图验收已完成。
+
+# OpenFreeMap provider migration（2026-09-24）
+
+- 正式底图：`OpenFreeMapProvider`返回OpenFreeMap vector TileJSON、Our Space MapLibre style layers及OpenFreeMap/OpenStreetMap attribution；`BaseMapCanvas`负责client-only初始化、loading/error、resize和unmount cleanup。
+- 可选细节：既有`OverpassProvider`现在履行`EnrichmentProvider`，只在用户主动要求更多建筑细节时走`/api/map`。七层、layer/cell budgets、cell-v4 cache、deduplication、bounded geometry及incomplete handling均保留。
+- 解耦结果：Home首屏、Resident marker/fallback和Presence不等待Overpass；enrichment失败只显示平静提示，已加载的OpenFreeMap底图不被移除。
+- 验收边界：当前执行环境到`https://tiles.openfreemap.org/planet`的CONNECT tunnel返回403。自动测试可证明provider/style wiring与解耦行为，但不能替代真实tile视觉成功；需在允许访问OpenFreeMap的网络补充真实双端截图。

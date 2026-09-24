@@ -20,10 +20,12 @@ export type Geography = Readonly<{
   attribution: "OpenStreetMap contributors";
   fetchedAt: string;
 }>;
-export interface GeographyProvider {
+export interface EnrichmentProvider {
   read(bounds: Bounds): Promise<Geography>;
   readCells?(bounds: readonly Bounds[]): Promise<Geography[]>;
 }
+// 兼容既有调用方；Overpass 的职责现在明确为可选 enrichment，而非底图。
+export type GeographyProvider = EnrichmentProvider;
 export function project(point: Point, bounds: Bounds): [number, number] {
   const width = bounds[2] - bounds[0];
   const height = bounds[3] - bounds[1];
