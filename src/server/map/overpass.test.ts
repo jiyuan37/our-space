@@ -2,8 +2,13 @@ import { mkdtemp, readFile, readdir, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import type { RequestGate } from "./request-gate";
+import type { ProviderHealth } from "./provider-health";
 const gate: RequestGate = {
   run: async (work) => (await work(5 * 1024 * 1024)).value,
+};
+const health: ProviderHealth = {
+  select: async (endpoints) => endpoints[0],
+  record: async () => undefined,
 };
 import { describe, expect, it, vi } from "vitest";
 import {
@@ -126,6 +131,7 @@ describe("Overpass 适配层（仅离线 fixture）", () => {
     await expect(
       new OverpassProvider(transport, () => false, {
         gate,
+        health,
         retainSource: false,
       }).read(bounds),
     ).rejects.toThrow("MAP_PROVIDER_NOT_APPROVED");
@@ -138,6 +144,7 @@ describe("Overpass 适配层（仅离线 fixture）", () => {
     await expect(
       new OverpassProvider(transport, () => true, {
         gate,
+        health,
         retainSource: false,
       }).read(bounds),
     ).rejects.toThrow("MAP_PROVIDER_UNAVAILABLE");
@@ -155,6 +162,7 @@ describe("Overpass 适配层（仅离线 fixture）", () => {
       .mockResolvedValue(new Response(JSON.stringify(batchFixture)));
     const data = await new OverpassProvider(transport, () => true, {
       gate,
+      health,
       retainSource: false,
     }).read(bounds);
     expect(data.features).toHaveLength(2);
@@ -167,6 +175,7 @@ describe("Overpass 适配层（仅离线 fixture）", () => {
     const transport = vi.fn().mockResolvedValue(Response.json(batchFixture));
     await new OverpassProvider(transport, () => true, {
       gate,
+      health,
       retainSource: false,
       endpoint: "https://maps.example.org/api/interpreter",
     }).read(bounds);
@@ -179,9 +188,11 @@ describe("Overpass 适配层（仅离线 fixture）", () => {
       "https://maps.example.org/?q=private",
     ]) {
       await expect(
-        new OverpassProvider(transport, () => true, { gate, endpoint }).read(
-          bounds,
-        ),
+        new OverpassProvider(transport, () => true, {
+          gate,
+          health,
+          endpoint,
+        }).read(bounds),
       ).rejects.toThrow("MAP_PROVIDER_NOT_APPROVED");
     }
     expect(transport).toHaveBeenCalledTimes(1);
@@ -194,6 +205,7 @@ describe("Overpass 适配层（仅离线 fixture）", () => {
     await expect(
       new OverpassProvider(transport, () => true, {
         gate: tinyGate,
+        health,
         retainSource: false,
       }).read(bounds),
     ).rejects.toThrow("MAP_PROVIDER_TOO_LARGE");
@@ -207,7 +219,9 @@ describe("Overpass 适配层（仅离线 fixture）", () => {
     try {
       const transport = vi.fn().mockResolvedValue(new Response(raw));
       await expect(
-        new OverpassProvider(transport, () => true, { gate }).read(bounds),
+        new OverpassProvider(transport, () => true, { gate, health }).read(
+          bounds,
+        ),
       ).rejects.toThrow("MAP_PROVIDER_INCOMPLETE");
       const names = await readdir(dir);
       expect(names).toHaveLength(1);
@@ -219,5 +233,68 @@ describe("Overpass 适配层（仅离线 fixture）", () => {
       else process.env.MAP_CACHE_DIR = previous;
       await rm(dir, { recursive: true, force: true });
     }
+  });
+  it("incomplete response 记录端点健康但不在同一次读取重试", async () => {
+    const transport = vi.fn().mockResolvedValue(
+      Response.json({
+        elements: [],
+        remark: "runtime error: Query timed out in dispatcher",
+      }),
+    );
+    const record = vi.fn();
+    await expect(
+      new OverpassProvider(transport, () => true, {
+        gate,
+        retainSource: false,
+        endpoints: [
+          { name: "one", url: "https://one.example/api/interpreter" },
+          { name: "two", url: "https://two.example/api/interpreter" },
+        ],
+        health: { select: async (endpoints) => endpoints[0], record },
+      }).read(bounds),
+    ).rejects.toThrow("MAP_PROVIDER_INCOMPLETE");
+    expect(transport).toHaveBeenCalledTimes(1);
+    expect(record).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "one" }),
+      expect.objectContaining({ outcome: "incomplete" }),
+    );
+  });
+  it("timeout 只记录一次且不会在同一次读取切换 endpoint", async () => {
+    const timeout = new Error("request timed out");
+    timeout.name = "TimeoutError";
+    const transport = vi.fn().mockRejectedValue(timeout);
+    const record = vi.fn();
+    await expect(
+      new OverpassProvider(transport, () => true, {
+        gate,
+        retainSource: false,
+        endpoints: [
+          { name: "one", url: "https://one.example/api/interpreter" },
+          { name: "two", url: "https://two.example/api/interpreter" },
+        ],
+        health: { select: async (endpoints) => endpoints[0], record },
+      }).read(bounds),
+    ).rejects.toBe(timeout);
+    expect(transport).toHaveBeenCalledTimes(1);
+    expect(record).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "one" }),
+      expect.objectContaining({ outcome: "timeout" }),
+    );
+  });
+  it("HTTP 200 empty response 作为 incomplete 拒绝而不是成功", async () => {
+    const transport = vi.fn().mockResolvedValue(new Response(""));
+    const record = vi.fn();
+    await expect(
+      new OverpassProvider(transport, () => true, {
+        gate,
+        health: { select: async (endpoints) => endpoints[0], record },
+        retainSource: false,
+      }).read(bounds),
+    ).rejects.toThrow("MAP_PROVIDER_INCOMPLETE");
+    expect(transport).toHaveBeenCalledTimes(1);
+    expect(record).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ outcome: "incomplete" }),
+    );
   });
 });

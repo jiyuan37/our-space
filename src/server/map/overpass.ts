@@ -15,6 +15,14 @@ import type {
   MapFeature,
   Point,
 } from "@/lib/map/model";
+import {
+  FileProviderHealth,
+  ProviderCircuitOpenError,
+  type ProviderEndpoint,
+  type ProviderHealth,
+  type ProviderOutcome,
+  validateProviderEndpoints,
+} from "./provider-health";
 
 export { boundsSchema, overpassQuery } from "./layers";
 import { MAP_LAYERS, overpassCellsQuery } from "./layers";
@@ -231,8 +239,11 @@ export class OverpassProvider implements GeographyProvider {
       "osm-overpass-area-only-v1",
     private readonly options: {
       endpoint?: string;
+      endpoints?: readonly ProviderEndpoint[];
       gate?: RequestGate;
+      health?: ProviderHealth;
       retainSource?: boolean;
+      timeoutMs?: number;
     } = {},
   ) {}
   async read(bounds: Bounds): Promise<Geography> {
@@ -241,19 +252,29 @@ export class OverpassProvider implements GeographyProvider {
   async readCells(cells: readonly Bounds[]): Promise<Geography[]> {
     if (!this.approved()) throw new Error("MAP_PROVIDER_NOT_APPROVED");
     const query = overpassCellsQuery(cells);
-    const endpoint = new URL(
+    const primary =
       this.options.endpoint ||
-        process.env.MAP_OVERPASS_ENDPOINT ||
-        "https://overpass-api.de/api/interpreter",
-    );
-    if (
-      endpoint.protocol !== "https:" ||
-      endpoint.username ||
-      endpoint.password ||
-      endpoint.search ||
-      endpoint.hash
-    )
-      throw new Error("MAP_PROVIDER_NOT_APPROVED");
+      process.env.MAP_OVERPASS_ENDPOINT ||
+      "https://overpass-api.de/api/interpreter";
+    const configured =
+      this.options.endpoints ??
+      [
+        primary,
+        ...(process.env.MAP_OVERPASS_FALLBACK_ENDPOINTS ?? "")
+          .split(",")
+          .map((value) => value.trim())
+          .filter(Boolean),
+      ].map((url, index) => ({
+        name: index === 0 ? "primary" : `fallback-${index}`,
+        url,
+      }));
+    if (configured.length > 3) throw new Error("MAP_PROVIDER_NOT_APPROVED");
+    const endpoints = validateProviderEndpoints(configured);
+    const root =
+      process.env.MAP_CACHE_DIR ||
+      path.join(process.cwd(), ".data", "map-cache");
+    const health = this.options.health ?? new FileProviderHealth(root);
+    const endpoint = await health.select(endpoints);
     const gate =
       this.options.gate ??
       new FileOverpassGate(
@@ -262,62 +283,98 @@ export class OverpassProvider implements GeographyProvider {
       );
     return gate.run(async (byteLimit) => {
       // 端点仅由服务端配置，客户端不能指定；不转发 Cookie、Referer 或任何业务字段。
-      const response = await this.transport(endpoint.toString(), {
-        method: "POST",
-        body: new URLSearchParams({ data: query }),
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          "User-Agent":
-            "OurSpace/0.1 MAP-01A (+https://github.com/jiyuan37/our-space)",
-          Accept: "application/json",
-        },
-        signal: AbortSignal.timeout(25000),
-        redirect: "error",
-        cache: "no-store",
-      });
-      if (!response.ok || !response.body) {
-        await response.body?.cancel();
-        throw new OverpassHttpError(
-          response.status,
-          retryAfterMilliseconds(response.headers.get("retry-after")),
-        );
-      }
-      const reader = response.body.getReader();
-      const chunks: Uint8Array[] = [];
-      let size = 0;
+      const startedAt = Date.now();
+      let outcome: ProviderOutcome = "transport_error";
       try {
-        while (true) {
-          const part = await reader.read();
-          if (part.done) break;
-          size += part.value.length;
-          if (size > byteLimit)
-            throw new Error("MAP_PROVIDER_TOO_LARGE", {
-              cause: { stage: "RESPONSE_BYTE_LIMIT" },
-            });
-          chunks.push(part.value);
+        const response = await this.transport(endpoint.url, {
+          method: "POST",
+          body: new URLSearchParams({ data: query }),
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "User-Agent":
+              "OurSpace/0.1 MAP-01A (+https://github.com/jiyuan37/our-space)",
+            Accept: "application/json",
+          },
+          signal: AbortSignal.timeout(this.options.timeoutMs ?? 25000),
+          redirect: "error",
+          cache: "no-store",
+        });
+        if (!response.ok || !response.body) {
+          outcome = "http_error";
+          await response.body?.cancel();
+          throw new OverpassHttpError(
+            response.status,
+            retryAfterMilliseconds(response.headers.get("retry-after")),
+          );
         }
+        const reader = response.body.getReader();
+        const chunks: Uint8Array[] = [];
+        let size = 0;
+        try {
+          while (true) {
+            const part = await reader.read();
+            if (part.done) break;
+            size += part.value.length;
+            if (size > byteLimit)
+              throw new Error("MAP_PROVIDER_TOO_LARGE", {
+                cause: { stage: "RESPONSE_BYTE_LIMIT" },
+              });
+            chunks.push(part.value);
+          }
+        } finally {
+          await reader.cancel();
+        }
+        const raw = Buffer.concat(chunks);
+        if (this.options.retainSource !== false) {
+          await mkdir(root, { recursive: true, mode: 0o700 });
+          const name = path.join(
+            root,
+            `source-${createHash("sha256").update(query).digest("hex").slice(0, 20)}.json`,
+          );
+          const temporary = `${name}.tmp`;
+          await writeFile(temporary, raw, { mode: 0o600 });
+          await rename(temporary, name);
+        }
+        let value: Geography[];
+        try {
+          value = parseCellResponse(JSON.parse(raw.toString("utf8")), cells);
+        } catch (error) {
+          if (
+            error instanceof Error &&
+            error.message === "MAP_PROVIDER_TOO_LARGE"
+          ) {
+            outcome = "response_rejected";
+            throw error;
+          }
+          outcome = "incomplete";
+          if (
+            error instanceof Error &&
+            error.message === "MAP_PROVIDER_INCOMPLETE"
+          )
+            throw error;
+          throw new Error("MAP_PROVIDER_INCOMPLETE", { cause: error });
+        }
+        outcome = "success";
+        return {
+          value,
+          bytes: size,
+          httpStatus: response.status,
+        };
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          ["TimeoutError", "AbortError"].includes(error.name)
+        )
+          outcome = "timeout";
+        throw error;
       } finally {
-        await reader.cancel();
+        await health.record(endpoint, {
+          outcome,
+          latencyMs: Date.now() - startedAt,
+        });
       }
-      const raw = Buffer.concat(chunks);
-      if (this.options.retainSource !== false) {
-        const root =
-          process.env.MAP_CACHE_DIR ||
-          path.join(process.cwd(), ".data", "map-cache");
-        await mkdir(root, { recursive: true, mode: 0o700 });
-        const name = path.join(
-          root,
-          `source-${createHash("sha256").update(query).digest("hex").slice(0, 20)}.json`,
-        );
-        const temporary = `${name}.tmp`;
-        await writeFile(temporary, raw, { mode: 0o600 });
-        await rename(temporary, name);
-      }
-      return {
-        value: parseCellResponse(JSON.parse(raw.toString("utf8")), cells),
-        bytes: size,
-        httpStatus: response.status,
-      };
     });
   }
 }
+
+export { ProviderCircuitOpenError };

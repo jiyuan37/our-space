@@ -1,5 +1,6 @@
 import { cellsForBounds, mergeCellGeography } from "@/lib/map/cells";
 import { OverpassBackoffError, OverpassHttpError } from "./request-gate";
+import { ProviderCircuitOpenError } from "./provider-health";
 import { mkdir, readFile, writeFile, rename } from "node:fs/promises";
 import path from "node:path";
 import type { Geography, GeographyProvider } from "@/lib/map/model";
@@ -101,7 +102,10 @@ export class MapService {
         );
         return mergeCellGeography(area.bounds, data);
       } catch (error) {
-        if (error instanceof OverpassBackoffError)
+        if (
+          error instanceof OverpassBackoffError ||
+          error instanceof ProviderCircuitOpenError
+        )
           throw new MapReadError("MAP_BACKOFF", error.retryAt);
         if (error instanceof OverpassHttpError)
           throw new MapReadError(

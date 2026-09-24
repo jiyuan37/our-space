@@ -19,7 +19,7 @@ Phase 3 implementation 已完成并通过 Final Review。
 - [x] final/fallback与真实Presence接入，无定位权限/坐标推断/模拟轨迹。
 - [x] 公共Overpass地图浏览专用授权、服务端标识、可替换端点、持久限流/串行/退避。
 - [x] 固定cell、分层有界输出、count预算、裁剪缺口与接缝去重的离线实现和测试。
-- [ ] 真实地理加载：固定cell集合去重、单次有界包络输出和cell-v4分片缓存已离线通过；2026-09-24第1次巴黎小街区请求因执行环境`ENETUNREACH`失败，无HTTP响应且未重试/未执行第2次。见MAP_01A_BOUNDED_GEOMETRY.md。
+- [ ] 真实地理加载：固定cell集合去重、单次有界包络输出和cell-v4分片缓存已离线通过；provider health、指数backoff、跨请求fallback和circuit breaker已实现且不增加单次请求数。三个公共endpoint的极小health probe均transport failure，public Overpass不能作为生产SLA；下一步为cache-first regional dataset加可靠的自托管/付费/替代provider。见MAP_01A_BOUNDED_GEOMETRY.md与MAP_01A_PROVIDER_HEALTH.md。
 - [x] 上轮离线双端截图、178项自动测试和24项E2E通过；本轮新增验证数字见MAP_01A_IMPLEMENTATION.md。
 - [ ] 真实地图数据截图与在线接入验收；不得用fixture替代。
 - [ ] MAP-01剩余能力：真实位置采集、地理marker语义及相关授权。
