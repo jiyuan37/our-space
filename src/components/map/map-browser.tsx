@@ -1,147 +1,108 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+
+import { useCallback, useEffect, useState } from "react";
+import { BaseMapCanvas, type BaseMapLoadState } from "./base-map-canvas";
 import { useI18n } from "@/components/i18n/i18n-provider";
 import { MAP_AREAS, findMapArea, type MapAreaId } from "@/lib/map/areas";
 import type { Geography } from "@/lib/map/model";
-import { MapCanvas } from "./map-canvas";
+
+const defaultArea: MapAreaId = "paris-seine";
 
 export function MapBrowser({ spaceId }: { spaceId: string }) {
   const { locale, t } = useI18n();
-  const [ready, setReady] = useState(false);
-  const [chosen, setChosen] = useState<MapAreaId | null>(null);
-  const [geography, setGeography] = useState<Geography | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [notConfigured, setNotConfigured] = useState(false);
-  const [failed, setFailed] = useState(false);
-  const [retryAt, setRetryAt] = useState<number | null>(null);
-  useEffect(() => {
-    if (!retryAt) return;
-    const timer = setTimeout(
-      () => setRetryAt(null),
-      Math.min(2147483647, Math.max(0, retryAt - Date.now())),
-    );
-    return () => clearTimeout(timer);
-  }, [retryAt]);
-  const [attempt, setAttempt] = useState(0);
-  const lastLoaded = useRef<MapAreaId | null>(null);
   const storageKey = `our-space-map-view:${spaceId}`;
+  const [chosen, setChosen] = useState<MapAreaId>(defaultArea);
+  const [baseState, setBaseState] = useState<BaseMapLoadState>("loading");
+  const [enrichment, setEnrichment] = useState<Geography | null>(null);
+  const [enrichmentState, setEnrichmentState] = useState<
+    "idle" | "loading" | "ready" | "error"
+  >("idle");
+  const area = findMapArea(chosen) ?? MAP_AREAS[1];
+
   useEffect(() => {
     try {
       const saved = findMapArea(localStorage.getItem(storageKey));
       if (saved) setChosen(saved.id);
     } catch {
-      /* 拒绝本地存储不阻断 Home。 */
-    } finally {
-      setReady(true);
+      // 本地偏好不可用不阻断底图或 Home。
     }
   }, [storageKey]);
-  useEffect(() => {
-    if (!chosen) return;
-    const controller = new AbortController();
-    setLoading(true);
-    setFailed(false);
-    setNotConfigured(false);
-    setRetryAt(null);
-    void fetch(`/api/map?area=${encodeURIComponent(chosen)}`, {
-      credentials: "same-origin",
-      signal: controller.signal,
-      cache: "no-store",
-    })
-      .then(async (response) => {
-        if (!response.ok) {
-          const body = await response.json();
-          if (
-            !controller.signal.aborted &&
-            typeof body.retryAt === "number" &&
-            Number.isFinite(body.retryAt)
-          )
-            setRetryAt(body.retryAt);
-          if (
-            !controller.signal.aborted &&
-            body.errorCode === "MAP_NOT_CONFIGURED"
-          )
-            setNotConfigured(true);
-          throw new Error("MAP_UNAVAILABLE");
-        }
-        return response.json() as Promise<Geography>;
-      })
-      .then((data) => {
-        if (controller.signal.aborted) return;
-        setGeography(data);
-        lastLoaded.current = chosen;
-        try {
-          localStorage.setItem(storageKey, chosen);
-        } catch {}
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) setFailed(true);
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
-      });
-    return () => controller.abort();
-  }, [chosen, attempt, storageKey]);
+
+  const changeArea = (id: MapAreaId) => {
+    setChosen(id);
+    setEnrichment(null);
+    setEnrichmentState("idle");
+    try {
+      localStorage.setItem(storageKey, id);
+    } catch {}
+  };
+
+  const loadEnrichment = async () => {
+    setEnrichmentState("loading");
+    try {
+      const response = await fetch(
+        `/api/map?area=${encodeURIComponent(chosen)}`,
+        {
+          credentials: "same-origin",
+          cache: "no-store",
+        },
+      );
+      if (!response.ok) throw new Error("MAP_ENRICHMENT_UNAVAILABLE");
+      setEnrichment((await response.json()) as Geography);
+      setEnrichmentState("ready");
+    } catch {
+      setEnrichmentState("error");
+    }
+  };
+
+  const handleBaseState = useCallback((state: BaseMapLoadState) => {
+    setBaseState(state);
+  }, []);
+
   return (
     <>
-      {geography && (
-        <MapCanvas key={lastLoaded.current} geography={geography} />
-      )}
+      <div
+        className="map-stage"
+        data-enrichment={enrichment ? "ready" : "none"}
+      >
+        <BaseMapCanvas
+          bounds={area.bounds}
+          enrichment={enrichment}
+          onStateChange={handleBaseState}
+        />
+        <div className="map-base-status" role="status" aria-live="polite">
+          {baseState === "loading" && <p>{t("map.loading")}</p>}
+          {baseState === "error" && <p>{t("map.baseError")}</p>}
+        </div>
+      </div>
       <div className="map-region">
-        <details open={!chosen}>
-          <summary>
-            {chosen
-              ? locale === "zh-CN"
-                ? findMapArea(chosen)?.zh
-                : findMapArea(chosen)?.en
-              : t("map.chooseArea")}
-          </summary>
+        <details>
+          <summary>{locale === "zh-CN" ? area.zh : area.en}</summary>
           <div className="map-area-picker">
             <p>{t("map.areaNote")}</p>
-            {MAP_AREAS.map((area) => (
+            {MAP_AREAS.map((candidate) => (
               <button
                 type="button"
-                key={area.id}
-                aria-pressed={chosen === area.id}
-                disabled={!ready || loading}
-                onClick={(event) => {
-                  if (chosen !== area.id) setGeography(null);
-                  setChosen(area.id);
-                  event.currentTarget
-                    .closest("details")
-                    ?.removeAttribute("open");
-                }}
+                key={candidate.id}
+                aria-pressed={chosen === candidate.id}
+                onClick={() => changeArea(candidate.id)}
               >
-                {locale === "zh-CN" ? area.zh : area.en}
+                {locale === "zh-CN" ? candidate.zh : candidate.en}
               </button>
             ))}
+            <button
+              type="button"
+              disabled={enrichmentState === "loading"}
+              onClick={() => void loadEnrichment()}
+            >
+              {enrichmentState === "loading"
+                ? t("map.enrichmentLoading")
+                : t("map.enrichmentLoad")}
+            </button>
+            {enrichmentState === "ready" && <p>{t("map.enrichmentReady")}</p>}
+            {enrichmentState === "error" && <p>{t("map.enrichmentError")}</p>}
           </div>
         </details>
-        <div role="status">
-          {loading ? (
-            t("map.loading")
-          ) : failed ? (
-            <>
-              <p>
-                {t(
-                  notConfigured
-                    ? "map.notConfigured"
-                    : retryAt
-                      ? "map.backoff"
-                      : "map.error",
-                )}
-              </p>
-              {!notConfigured && (
-                <button
-                  type="button"
-                  disabled={Boolean(retryAt)}
-                  onClick={() => setAttempt((n) => n + 1)}
-                >
-                  {t("map.retry")}
-                </button>
-              )}
-            </>
-          ) : null}
-        </div>
       </div>
     </>
   );

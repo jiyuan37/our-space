@@ -17,6 +17,11 @@ const zhCN = {
   "map.chooseArea": "选择浏览区域",
   "map.areaNote": "这里只是你想看的地图，不是任何人的当前位置。",
   "map.loading": "正在铺开地图…",
+  "map.baseError": "底图暂时没有铺开。人物与此刻仍然可用，可以稍后再试。",
+  "map.enrichmentLoad": "加载更多建筑细节",
+  "map.enrichmentLoading": "正在轻轻添上细节…",
+  "map.enrichmentReady": "更多地图细节已叠加。",
+  "map.enrichmentError": "更多细节暂时不可用，底图不受影响。",
   "map.error": "地图暂时没能展开。家里的人和此刻仍在这里。",
   "map.retry": "重新加载地图",
 
@@ -195,6 +200,13 @@ const enUS: Messages = {
   "map.chooseArea": "Choose an area to browse",
   "map.areaNote": "An area you want to see, not anyone’s current location.",
   "map.loading": "Unfolding the map…",
+  "map.baseError":
+    "The base map could not unfold. Your people and Presence are still available; please try again later.",
+  "map.enrichmentLoad": "Load more building detail",
+  "map.enrichmentLoading": "Gently adding more detail…",
+  "map.enrichmentReady": "More map detail is now layered in.",
+  "map.enrichmentError":
+    "More detail is unavailable right now. The base map is unaffected.",
   "map.error":
     "The map could not load. Your people and their Presence are still here.",
   "map.retry": "Reload map",

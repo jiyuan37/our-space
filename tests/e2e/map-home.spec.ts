@@ -76,8 +76,11 @@ test("正式地图 Home：主动浏览、真实成员、无位置入口、双语
       await page.setViewportSize({ width: 375, height: 812 });
     else await page.setViewportSize({ width: 1280, height: 850 });
     let mapRequests = 0;
+    let openFreeMapRequests = 0;
     page.on("request", (request) => {
       if (request.url().includes("/api/map?")) mapRequests++;
+      if (request.url().startsWith("https://tiles.openfreemap.org/"))
+        openFreeMapRequests++;
     });
     if (process.env.MAP_REAL_CACHE_EVIDENCE !== "true") {
       await page.route("**/api/map?*", async (route) => {
@@ -94,16 +97,22 @@ test("正式地图 Home：主动浏览、真实成员、无位置入口、双语
     ).toBeVisible();
     await expect(page.locator(".resident-location-note")).toBeVisible();
     expect(mapRequests).toBe(0);
-    await page
-      .getByRole("button", { name: "巴黎 · 塞纳河畔", exact: true })
-      .click();
     expect(
       await page
         .locator(".map-home")
         .evaluate((el) => el.getBoundingClientRect().width),
     ).toBeGreaterThan((page.viewportSize()?.width ?? 375) * 0.95);
-    const map = page.getByRole("img", { name: /像素地图/ });
+    const map = page.getByRole("region", { name: /像素地图/ });
     await expect(map).toBeVisible();
+    await expect.poll(() => openFreeMapRequests).toBeGreaterThan(0);
+    await expect(page.getByRole("link", { name: /OpenFreeMap/ })).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: /OpenStreetMap contributors/ }),
+    ).toBeVisible();
+    await page.getByText("巴黎 · 塞纳河畔", { exact: true }).click();
+    await page.getByRole("button", { name: "加载更多建筑细节" }).click();
+    await expect(page.getByText("更多地图细节已叠加。")).toBeVisible();
+    expect(mapRequests).toBe(1);
     if (process.env.MAP_REAL_CACHE_EVIDENCE === "true") {
       const loaded = await page.request.get("/api/map?area=paris-seine");
       expect(loaded.status()).toBe(200);
@@ -120,17 +129,14 @@ test("正式地图 Home：主动浏览、真实成员、无位置入口、双语
     await expect(page.locator("[data-latitude], [data-longitude]")).toHaveCount(
       0,
     );
-    await page.getByRole("button", { name: "放大地图", exact: true }).click();
-    const transform = await map
-      .locator("g[transform]")
-      .first()
-      .getAttribute("transform");
+    const centerBefore = await page
+      .locator(".maplibregl-map")
+      .getAttribute("class");
     await page.getByRole("button", { name: "小满", exact: true }).click();
     await page.getByRole("button", { name: "小满", exact: true }).click();
-    expect(
-      await map.locator("g[transform]").first().getAttribute("transform"),
-    ).toBe(transform);
-    await page.getByRole("button", { name: "回到原始地图视野" }).click();
+    expect(await page.locator(".maplibregl-map").getAttribute("class")).toBe(
+      centerBefore,
+    );
     await page.getByRole("button", { name: "写下我的此刻" }).click();
     await page.getByLabel("此刻的我").fill("在阳光里坐一会儿");
     await page.getByRole("button", { name: "保存", exact: true }).click();
@@ -152,9 +158,9 @@ test("正式地图 Home：主动浏览、真实成员、无位置入口、双语
       });
     }
     await page.reload();
-    await expect(page.getByRole("img", { name: /像素地图/ })).toBeVisible();
+    await expect(page.getByRole("region", { name: /像素地图/ })).toBeVisible();
     await page.getByRole("button", { name: "EN English", exact: true }).click();
-    await expect(page.getByRole("button", { name: "Zoom in" })).toBeVisible();
+    await expect(page.getByRole("region", { name: /Pixel map/ })).toBeVisible();
     await expect(page.locator(".resident-location-note")).toBeVisible();
     await page.emulateMedia({ reducedMotion: "reduce" });
     expect(
