@@ -4,6 +4,12 @@
 
 ## [未发布]
 
+### MAP-01A 有界批量查询修复（2026-09-24）
+
+- 在既有0.005°固定cell与geometry裁剪基础上，将同layer多cell selection组成Overpass集合并只输出一次固定cell包络geometry，避免长way/relation在同一响应跨cell重复；缓存版本升至cell-v4。
+- 保留七层feature白名单、zoom门槛、relation无递归、count完整性、分层预算、点预算和5MiB响应上限；补充相邻cell输出去重与query snapshot断言。
+- 离线format/lint/typecheck及203项Vitest中的163项非数据库测试通过。第1次真实巴黎小cell请求因执行环境`ENETUNREACH`未获得HTTP响应；未重试、未执行第2次、未生成真实截图，MAP-01A仍未完成。
+
 ### MAP-01A有界geometry与cell预算（2026-09-07；09-20收尾）
 
 - 09-20生产审计发现新披露漏洞，升级Next.js/eslint-config-next至15.5.25、sharp至0.35.4；不改头像功能或外部调用。

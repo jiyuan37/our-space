@@ -20,6 +20,7 @@ export const MAP_LAYERS = [
     elementType: "way",
     minZoom: 15,
     maxElements: 350,
+    maxBatchElements: 1800,
     maxPoints: 10000,
     selectors: [
       'way[highway~"^(primary|secondary|tertiary|residential|unclassified|living_street|service|pedestrian|primary_link|secondary_link|tertiary_link)$"][area!=yes][indoor!=yes]',
@@ -30,6 +31,7 @@ export const MAP_LAYERS = [
     elementType: "way",
     minZoom: 16,
     maxElements: 450,
+    maxBatchElements: 2500,
     maxPoints: 16000,
     selectors: ["way[building][building!=no]"],
   },
@@ -38,6 +40,7 @@ export const MAP_LAYERS = [
     elementType: "relation",
     minZoom: 16,
     maxElements: 32,
+    maxBatchElements: 96,
     maxPoints: 4000,
     selectors: ["relation[type=multipolygon][building][building!=no]"],
   },
@@ -46,6 +49,7 @@ export const MAP_LAYERS = [
     elementType: "way",
     minZoom: 15,
     maxElements: 100,
+    maxBatchElements: 300,
     maxPoints: 8000,
     selectors: [
       'way[leisure~"^(park|garden|recreation_ground)$"]',
@@ -57,6 +61,7 @@ export const MAP_LAYERS = [
     elementType: "relation",
     minZoom: 15,
     maxElements: 32,
+    maxBatchElements: 96,
     maxPoints: 4000,
     selectors: [
       'relation[type=multipolygon][leisure~"^(park|garden|recreation_ground)$"]',
@@ -68,6 +73,7 @@ export const MAP_LAYERS = [
     elementType: "way",
     minZoom: 15,
     maxElements: 100,
+    maxBatchElements: 300,
     maxPoints: 10000,
     selectors: [
       'way[natural~"^(water|coastline)$"]',
@@ -79,6 +85,7 @@ export const MAP_LAYERS = [
     elementType: "relation",
     minZoom: 15,
     maxElements: 32,
+    maxBatchElements: 96,
     maxPoints: 8000,
     selectors: ["relation[type=multipolygon][natural=water]"],
   },
@@ -93,18 +100,34 @@ export function overpassCellsQuery(
   if (!cells.length || cells.length > MAX_VIEW_CELLS || zoom !== HOME_MAP_ZOOM)
     throw new Error("MAP_INVALID_AREA");
   const parts = ["[out:json][timeout:20][maxsize:33554432];"];
-  for (const cell of cells) {
-    const [w, s, e, n] = boundsSchema.parse(cell),
-      bbox = `(${s},${w},${n},${e})`;
-    for (const layer of MAP_LAYERS.filter((l) => zoom >= l.minZoom)) {
-      parts.push(
-        `(${layer.selectors.map((selector) => `${selector}${bbox};`).join("")});`,
-      );
-      // sentinel=count校验上游是否被元素上限截断，不接受静默缺层。geometry与selection共用同一cell。
-      parts.push(
-        `out ${layer.elementType === "relation" ? "body" : "tags"} geom${bbox} qt ${layer.maxElements + 1};out count;`,
-      );
-    }
+  const parsed = cells.map((cell) => boundsSchema.parse(cell));
+  const envelope = [
+    Math.min(...parsed.map(([w]) => w)),
+    Math.min(...parsed.map(([, s]) => s)),
+    Math.max(...parsed.map(([, , e]) => e)),
+    Math.max(...parsed.map(([, , , n]) => n)),
+  ] as Bounds;
+  const [w, s, e, n] = envelope;
+  const outputBounds = `(${s},${w},${n},${e})`;
+  for (const layer of MAP_LAYERS.filter((l) => zoom >= l.minZoom)) {
+    // 多个固定cell先组成Overpass集合，OSM type/id由集合语义去重；避免跨cell长way/relation
+    // 在同一次HTTP响应中被完整重复。输出仍裁到固定cell包络，不使用任意viewport。
+    parts.push(
+      `(${parsed
+        .flatMap(([cw, cs, ce, cn]) =>
+          layer.selectors.map(
+            (selector) => `${selector}(${cs},${cw},${cn},${ce});`,
+          ),
+        )
+        .join("")});`,
+    );
+    const batchLimit = Math.min(
+      layer.maxBatchElements,
+      layer.maxElements * parsed.length,
+    );
+    parts.push(
+      `out ${layer.elementType === "relation" ? "body" : "tags"} geom${outputBounds} qt ${batchLimit + 1};out count;`,
+    );
   }
   return parts.join("\n");
 }

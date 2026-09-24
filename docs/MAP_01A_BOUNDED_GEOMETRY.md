@@ -66,4 +66,12 @@ relation必须获得必要的成员geometry；仅有tags/bounds时明确拒绝�
 
 本轮提交信息`fix: bound map geometry by cells and layer budgets`，完整hash由包含本记录的提交定位。正常push，保持main、干净和origin同步0/0，最终以实际Git命令复核。
 
+## 2026-09-24 cell集合去重修复与真实请求结果
+
+在`97b37a8`已有bounding基础上，没有重复实现裁剪，也没有提高5MiB上限。离线定位到剩余响应放大路径：旧查询按cell分别选择并输出，同一跨cell的way/relation会在同一个HTTP正文重复出现。新版对每个layer把固定cell bbox selection组成Overpass集合，通过type/id去重后，只对固定cell包络输出一次有界geometry；返回后仍逐cell裁剪、以cell-v4键缓存，并在最终视野按type/id及真实片段去重。
+
+道路、建筑、绿地、水体的tags、geometry要求和zoom门槛不变；新增明确批次元素上限1800/2500/96/300/96/300/96，同时保留解析点预算、relation成员预算、count完整性和response byte cap。query snapshot断言禁止unrestricted `out geom`、recurse/meta，并覆盖相邻cell只有一次包络geometry输出。离线`format:check`、lint、typecheck和203项Vitest中的163项非数据库测试通过；40项数据库测试因本次命令未配置`TEST_DATABASE_URL`按既有规则skip。
+
+按最多2次授权只执行了第1次真实请求：巴黎典型单个0.005° cell。请求没有获得HTTP响应，Node `fetch failed`，底层列出的IPv4与IPv6地址均为`ENETUNREACH`。因此没有响应字节、没有解析结果、没有正式cell缓存；遵守no retry并停止，没有执行第2次正式Home viewport请求。当前blocker从响应体过大收敛为本执行环境到公共Overpass的网络不可达，但尚无真实证据证明新版正式viewport低于5MiB或可渲染，MAP-01A保持未完成，也不提供fixture截图冒充真实验收。
+
 依据：[官方Overpass QL输出、bbox与count语义](https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL)、[官方bbox裁剪说明](https://dev.overpass-api.de/overpass-doc/en/full_data/bbox.html)。relation输出差异由本轮真实响应结构复核；不把文档推测当作真实接口验证。

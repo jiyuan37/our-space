@@ -31,7 +31,7 @@ export interface GeographyCache {
 export class FileGeographyCache implements GeographyCache {
   constructor(private readonly root: string) {}
   async read(id: string) {
-    if (!/^cell-v3--?\d+--?\d+-z16$/.test(id))
+    if (!/^cell-v4--?\d+--?\d+-z16$/.test(id))
       throw new MapReadError("MAP_INVALID_AREA");
     try {
       return JSON.parse(
@@ -43,7 +43,7 @@ export class FileGeographyCache implements GeographyCache {
     }
   }
   async write(id: string, data: Geography) {
-    if (!/^cell-v3--?\d+--?\d+-z16$/.test(id))
+    if (!/^cell-v4--?\d+--?\d+-z16$/.test(id))
       throw new MapReadError("MAP_INVALID_AREA");
     await mkdir(this.root, { recursive: true, mode: 0o700 });
     const temporary = path.join(this.root, `${id}.${crypto.randomUUID()}.tmp`);

@@ -1,11 +1,11 @@
 # Our Space — 当前状态
 
-最后更新：2026-09-20
+最后更新：2026-09-24
 
 ## 当前 Phase
 
 - 当前工作包：MAP-01A — Production Map-first Home；用户已明确批准正式 `/home` 接入，Phase 1–3 与头像闭环保留。
-- 当前状态：**头像生成风格已批准，产品 pipeline 已实现，当前真实 candidate 未确认为个人头像。MAP-01A 正在实施，公共Overpass接入已批准；最新有界请求响应678954 bytes，分层元素预算拒绝了截断结果，随后0.005° cell/relation修正尚未真实验收。**
+- 当前状态：**头像生成风格已批准，产品 pipeline 已实现，当前真实 candidate 未确认为个人头像。MAP-01A 正在实施；固定cell批量查询已离线去除跨cell重复geometry，但2026-09-24首个真实小街区请求因执行环境网络`ENETUNREACH`失败，未执行第二次，真实接入仍未验收。**
 - Phase 3 implementation 已完成并通过 Final Review；本轮不重做历史验收。
 - 实际项目根目录：`/Users/yuan/Desktop/our-space`。
 - 最新授权为 MAP-01A 正式地图 Home。定位采集、movement replay、ANIMATION-01 和 LifePoint 产品行为不在本轮范围，不自动开始后续工作包。
@@ -13,6 +13,11 @@
 - **Phase 4 尚未开始，也未获得批准。**
 
 ## MAP-01A（本轮离线修复，真实验收未通过）
+
+- 2026-09-24在`97b37a8`之后继续修复：同一layer的固定cell selection先组成Overpass集合，由OSM type/id集合语义去重，只输出一次固定cell包络内geometry；避免同一超长way/relation按cell重复进入单个HTTP响应。cell缓存版本升至v4，5MiB上限不变。
+- 保留道路/建筑/绿地/水体七层、zoom门槛、way/relation区分和批次预算；无行政边界、recurse、meta或无UI metadata。响应解析后再按每个固定cell裁剪、缓存，邻格仍按OSM type/id拼接去重，不改变真实坐标。
+- 离线33 files / 203 tests中的非数据库163项通过，format/lint/typecheck通过。第1次真实请求为巴黎单个0.005°典型cell，实际发出后连接公共Overpass失败：`fetch failed`，底层IPv4/IPv6均`ENETUNREACH`；无HTTP响应、无响应字节、无可缓存地理。遵守no retry，没有执行正式Home viewport第2次请求。
+- 因未获得HTTP成功及真实缓存，不提供fixture冒充的正式Home截图，**MAP-01A仍未完成**。当前真实blocker是本执行环境到Overpass的网络不可达；恢复网络后仍须在剩余一次额度/新明确授权下验证正式viewport、真实渲染与双端截图。
 
 - 本轮起点`be66c323822ac2350b6e439a23f7d0e1dfc7341f`，main、干净、origin/main 0/0，remote未改。
 - 完成固定cell-v3、分层selection/output同bbox、way/relation必要输出、预算/count、裁剪缺口、接缝去重与持久cell缓存；5MiB响应上限未提高。

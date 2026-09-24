@@ -47,6 +47,16 @@ describe("有界cell几何与查询", () => {
     ).toHaveLength(3);
     expect(query).not.toMatch(/footway|steps|cycleway/);
     expect(query).toMatchSnapshot();
+
+    const adjacent = overpassCellsQuery([
+      queryBounds,
+      [10.005, 50, 10.01, 50.005],
+    ]);
+    expect(adjacent.match(/way\[building\]/g)).toHaveLength(2);
+    expect(adjacent.match(/out tags geom\(50,10,50.005,10.01\)/g)).toHaveLength(
+      4,
+    );
+    expect(adjacent).not.toContain("geom(50,10.005,50.005,10.01)");
   });
   it("bbox内闭合way可填色，真实坐标不改变", () => {
     const data = parseOverpass({ elements: [way(geometry)] }, bounds);
@@ -200,7 +210,15 @@ describe("有界cell几何与查询", () => {
     ).toThrow("MAP_PROVIDER_TOO_LARGE");
     expect(() =>
       parseCellResponse(
-        { elements: [{ type: "count", tags: { total: "351" } }] },
+        {
+          elements: [
+            { type: "count", tags: { total: "351" } },
+            ...Array.from({ length: 6 }, () => ({
+              type: "count",
+              tags: { total: "0" },
+            })),
+          ],
+        },
         [bounds],
       ),
     ).toThrow("MAP_PROVIDER_TOO_LARGE");
@@ -232,10 +250,18 @@ describe("有界cell几何与查询", () => {
       )[0].features,
     ).toEqual([]);
   });
-  it("真实失败schema回归：层总量1371被拒绝，缺成员的relation不能悄悄当作完整数据", () => {
+  it("真实失败schema回归：批量层超预算被拒绝，缺成员的relation不能悄悄当作完整数据", () => {
     expect(() =>
       parseCellResponse(
-        { elements: [{ type: "count", id: 0, tags: { total: "1371" } }] },
+        {
+          elements: [
+            { type: "count", id: 0, tags: { total: "351" } },
+            ...Array.from({ length: 6 }, () => ({
+              type: "count",
+              tags: { total: "0" },
+            })),
+          ],
+        },
         [queryBounds],
       ),
     ).toThrow("MAP_PROVIDER_TOO_LARGE");
