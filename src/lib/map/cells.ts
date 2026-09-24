@@ -26,7 +26,7 @@ export function cellsForBounds(bounds: Bounds): MapCell[] {
   for (let y = y0; y < y1; y++)
     for (let x = x0; x < x1; x++)
       cells.push({
-        key: `cell-v3-${x}-${y}-z${HOME_MAP_ZOOM}`,
+        key: `cell-v4-${x}-${y}-z${HOME_MAP_ZOOM}`,
         bounds: [x / 200, y / 200, (x + 1) / 200, (y + 1) / 200],
       });
   return cells;

@@ -17,7 +17,6 @@ import type {
 } from "@/lib/map/model";
 
 export { boundsSchema, overpassQuery } from "./layers";
-import { MAX_VIEW_CELLS } from "@/lib/map/cells";
 import { MAP_LAYERS, overpassCellsQuery } from "./layers";
 import {
   same,
@@ -58,6 +57,7 @@ export function parseOverpass(
   value: unknown,
   bounds: Bounds,
   now = new Date(),
+  enforceCellBudgets = true,
 ): Geography {
   const parsed = responseSchema.parse(value);
   if (parsed.remark) throw new Error("MAP_PROVIDER_INCOMPLETE");
@@ -113,7 +113,10 @@ export function parseOverpass(
     usage.elements++;
     usage.points += pointCount;
     counts.set(budgetKey, usage);
-    if (usage.elements > budget.maxElements || usage.points > budget.maxPoints)
+    if (
+      enforceCellBudgets &&
+      (usage.elements > budget.maxElements || usage.points > budget.maxPoints)
+    )
       throw new Error("MAP_PROVIDER_TOO_LARGE", {
         cause: {
           stage:
@@ -182,9 +185,7 @@ export function parseCellResponse(
 ): Geography[] {
   const envelope = z
     .object({
-      elements: z
-        .array(z.unknown())
-        .max(12000 + MAX_VIEW_CELLS * MAP_LAYERS.length),
+      elements: z.array(z.unknown()).max(12000 + MAP_LAYERS.length),
       remark: z.string().optional(),
     })
     .parse(value);
@@ -201,27 +202,25 @@ export function parseCellResponse(
       const count = z
         .object({ tags: z.object({ total: z.string().regex(/^\d+$/) }) })
         .parse(raw);
-      if (groups.length >= cells.length * MAP_LAYERS.length)
+      if (groups.length >= MAP_LAYERS.length)
         throw new Error("MAP_PROVIDER_INCOMPLETE");
-      const budget = MAP_LAYERS[groups.length % MAP_LAYERS.length];
+      const budget = MAP_LAYERS[groups.length];
       const total = Number(count.tags.total);
-      if (total > budget.maxElements) throw new Error("MAP_PROVIDER_TOO_LARGE");
+      const batchLimit = Math.min(
+        budget.maxBatchElements,
+        budget.maxElements * cells.length,
+      );
+      if (total > batchLimit) throw new Error("MAP_PROVIDER_TOO_LARGE");
       if (total !== current.length) throw new Error("MAP_PROVIDER_INCOMPLETE");
       groups.push(current);
       current = [];
     } else current.push(raw);
   }
-  if (current.length || groups.length !== cells.length * MAP_LAYERS.length)
+  if (current.length || groups.length !== MAP_LAYERS.length)
     throw new Error("MAP_PROVIDER_INCOMPLETE");
-  return cells.map((bounds, i) =>
-    parseOverpass(
-      {
-        elements: groups
-          .slice(i * MAP_LAYERS.length, (i + 1) * MAP_LAYERS.length)
-          .flat(),
-      },
-      bounds,
-    ),
+  const elements = groups.flat();
+  return cells.map((bounds) =>
+    parseOverpass({ elements }, bounds, undefined, false),
   );
 }
 export class OverpassProvider implements GeographyProvider {
